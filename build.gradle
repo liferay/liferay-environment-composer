@@ -1,1 +1,124 @@
-// Check GETTING_STARTED.markdown for information regarding usage.
+import de.undercouch.gradle.tasks.download.Download
+
+plugins {
+	id "com.avast.gradle.docker-compose" version "0.17.10"
+}
+
+File projectDir = project.projectDir as File
+
+class Config {
+	public List<String> hotfixURLs = new ArrayList<String>()
+	public String namespace
+	public List<String> composeFiles = new ArrayList<String>()
+	public List<String> composeProfiles = new ArrayList<String>()
+	public String databaseName
+	public String liferayDockerImageId
+
+	@Override
+	public String toString() {
+
+		return """
+
+Config:
+------------------------
+hotfixURLs: ${hotfixURLs}
+namespace: ${namespace}
+composeFiles: ${composeFiles}
+composeProfiles: ${composeProfiles}
+databaseName: ${databaseName}
+liferayDockerImageId: ${liferayDockerImageId}
+
+"""
+	}
+}
+
+Config config = new Config()
+
+config.composeFiles.add("docker-compose.yaml")
+
+/*
+--- BEGIN User configuration
+ */
+
+config.composeFiles.addAll([
+])
+config.composeProfiles.addAll([
+	"liferay",
+
+	"mysql",
+])
+config.hotfixURLs.addAll([
+	// "https://releases-cdn.liferay.com/dxp/hotfix/2024.q2.7/liferay-dxp-2024.q2.7-hotfix-4.zip",
+])
+config.namespace = project.name
+config.databaseName = "lportal"
+config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
+
+/*
+--- END User configuration
+ */
+
+ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
+	include "**/docker-compose.*.yaml"
+}
+
+List<String> possibleProfiles = dockerComposeFileTree.collect {
+	File file ->
+
+	file.name.substring("docker-compose.".length(), file.name.indexOf(".yaml"))
+} as List<String>
+
+List<String> composeProfileFiles = config.composeProfiles.collect {
+	String profile ->
+
+	FileTree matchingFileTree = dockerComposeFileTree.matching {
+		include "**/docker-compose.${profile}.yaml"
+	}
+
+	if (matchingFileTree.isEmpty()) {
+		throw new GradleException(
+			"The profile '${profile}' does not have a matching docker-compose file. Possible profiles are: ${possibleProfiles}");
+	}
+
+	projectDir.relativePath(matchingFileTree.singleFile as File)
+}
+
+config.composeFiles.addAll(composeProfileFiles)
+
+tasks.register("prepareHotfixes", Download) {
+	dest project.layout.dir(project.provider {project.file("configs/docker/patching")})
+	onlyIf {
+		!config.hotfixURLs.isEmpty()
+	}
+	src config.hotfixURLs
+}
+tasks.register("possibleProfiles") {
+	description "Displays the possible profile names that can be used with docker-compose."
+	doFirst {
+		println "Possible profiles: ${possibleProfiles}"
+	}
+	group "help"
+}
+
+clean.dependsOn ":cleanPrepareHotfixes"
+dockerDeploy.dependsOn ":prepareHotfixes"
+
+composeUp {
+	dependsOn ":buildDockerImage"
+
+	doFirst {
+		println "Using config: ${config}"
+	}
+
+	onlyIf {
+		!config.composeFiles.isEmpty()
+	}
+}
+
+dockerCompose {
+	environment.put "DATABASE_NAME", config.databaseName
+	environment.put "LIFERAY_IMAGE_NAME",config.liferayDockerImageId
+	environment.put "NAMESPACE", config.namespace
+
+	useComposeFiles = config.composeFiles
+}

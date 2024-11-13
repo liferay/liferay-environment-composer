@@ -16,6 +16,7 @@
 .gradle
 .idea
 /bundles
+/configs/docker/patching/
 /gradle-*.properties
 /plugins-sdk/**/classes
 /plugins-sdk/**/ivy.xml.MD5

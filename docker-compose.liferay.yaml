@@ -1,0 +1,10 @@
+services:
+    liferay:
+        container_name: ${NAMESPACE}-liferay
+        healthcheck:
+            interval: 5s
+            start_period: 2m
+            test: "/opt/liferay/health-check.sh"
+            timeout: 5m
+        image: "${LIFERAY_IMAGE_NAME}"
+        network_mode: host

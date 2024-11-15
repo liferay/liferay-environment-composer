@@ -13,6 +13,8 @@ class Config {
 	public List<String> composeProfiles = new ArrayList<String>()
 	public String databaseName
 	public String liferayDockerImageId
+	public int liferayDebugPort
+	public int liferayTelnetPort
 
 	@Override
 	public String toString() {
@@ -52,6 +54,8 @@ config.hotfixURLs.addAll([
 ])
 config.namespace = project.name
 config.databaseName = "lportal"
+config.liferayDebugPort = 8000
+config.liferayTelnetPort = 11311
 config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
 
 /*
@@ -118,7 +122,10 @@ composeUp {
 dockerCompose {
 	environment.put "DATABASE_NAME", config.databaseName
 	environment.put "LIFERAY_IMAGE_NAME",config.liferayDockerImageId
+	environment.put "LIFERAY_DEBUG_PORT", config.liferayDebugPort
+	environment.put "LIFERAY_TELNET_PORT", config.liferayTelnetPort
 	environment.put "NAMESPACE", config.namespace
 
+	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
 	useComposeFiles = config.composeFiles
 }

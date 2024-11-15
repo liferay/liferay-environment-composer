@@ -90,7 +90,7 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 config.composeFiles.addAll(composeProfileFiles)
 
 tasks.register("prepareHotfixes", Download) {
-	dest project.layout.dir(project.provider {project.file("configs/docker/patching")})
+	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 	onlyIf {
 		!config.hotfixURLs.isEmpty()
 	}

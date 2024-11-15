@@ -1,4 +1,5 @@
 **/*.iml
+**/*hotfix*.zip
 **/.ivy
 **/.classpath
 **/.project
@@ -16,7 +17,6 @@
 .gradle
 .idea
 /bundles
-/configs/docker/patching/
 /data
 /gradle-*.properties
 /plugins-sdk/**/classes

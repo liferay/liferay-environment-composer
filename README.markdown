@@ -23,6 +23,24 @@ You can see the list of available profiles by running the task: `./gradlew possi
 
 A list of hotfix URLs. Each URL listed will be downloaded and placed into the `./configs/common/patching` directory, which will be copied to the Liferay docker image when it is built.
 
+## Declaring a Liferay version
+
+The Liferay version can be set in `gradle.properties`:
+
+```properties
+liferay.workspace.product=dxp-2024.q3.8
+```
+
+Possible values for that property can be found in the [releases.json](https://releases.liferay.com/releases.json) under the `releaseKey` key.
+
+#### Quick tip:
+
+If you are on Linux or MacOS and have `jq` installed, you can quickly see each of these values with the following shell one-liner:
+
+```sh
+curl -s https://releases-cdn.liferay.com/releases.json | jq -r '.[].releaseKey'
+```
+
 ## Adding a database dump
 
 If you are using the `mysql` profile, then a database dump can be added to the `./data/dumps/mysql` directory.

@@ -5,7 +5,7 @@ function _log() {
 }
 
 _log "Checking for license registration..."
-if ! grep "License registered for DXP Development" logs/liferay.*.log
+if ! grep "Processing trial-dxp-license" logs/liferay.*.log
 then
 	_log "License not registered"
 	exit 1

@@ -12,6 +12,9 @@ services:
         image: mysql:5.7
         ports:
             - "3307:3306"
+        volumes:
+          - ./data/dumps/mysql:/docker-entrypoint-initdb.d
+          - ./data/mysql:/var/lib/mysql
     liferay:
         depends_on:
             database:

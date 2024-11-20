@@ -132,4 +132,7 @@ dockerCompose {
 
 	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
 	useComposeFiles = config.composeFiles
+
+	// DEBUG: Set to true if container startup is failing
+	retainContainersOnStartupFailure = false
 }

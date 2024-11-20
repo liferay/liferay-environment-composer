@@ -12,6 +12,11 @@ services:
         image: mysql:5.7
         ports:
             - "3307:3306"
+        ulimits:
+            nproc: 65535
+            nofile:
+              soft: 20000
+              hard: 40000
         volumes:
           - ./data/dumps/mysql:/docker-entrypoint-initdb.d
           - ./data/mysql:/var/lib/mysql

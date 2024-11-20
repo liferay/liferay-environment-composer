@@ -128,6 +128,8 @@ dockerCompose {
 	environment.put "LIFERAY_TELNET_PORT", config.liferayTelnetPort
 	environment.put "NAMESPACE", config.namespace
 
+	removeVolumes = false
+
 	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
 	useComposeFiles = config.composeFiles
 }

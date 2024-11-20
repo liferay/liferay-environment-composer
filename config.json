@@ -1,0 +1,12 @@
+{
+	"composeFiles": [],
+	"composeProfiles": [
+		"liferay",
+
+		"mysql"
+	],
+	"databaseName": "lportal",
+	"hotfixURLs": [
+	],
+	"namespace": "lrwsde"
+}

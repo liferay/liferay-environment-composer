@@ -20,6 +20,7 @@
 /containerLogs
 /data
 /dumps
+/exported_data
 /gradle-*.properties
 /helper/data
 /helper/dumps

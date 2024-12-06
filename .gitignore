@@ -19,7 +19,10 @@
 /bundles
 /containerLogs
 /data
+/dumps
 /gradle-*.properties
+/helper/data
+/helper/dumps
 /plugins-sdk/**/classes
 /plugins-sdk/**/ivy.xml.MD5
 /plugins-sdk/**/liferay-hook.xml.processed

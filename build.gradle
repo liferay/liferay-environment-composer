@@ -13,6 +13,7 @@ class Config {
 	public List<String> composeFiles = new ArrayList<String>()
 	public List<String> composeProfiles = new ArrayList<String>()
 	public String databaseName
+	public String dataDirectory
 	public String liferayDockerImageId
 	public int liferayDebugPort
 	public int liferayTelnetPort
@@ -29,6 +30,7 @@ namespace: ${namespace}
 composeFiles: ${composeFiles}
 composeProfiles: ${composeProfiles}
 databaseName: ${databaseName}
+dataDirectory: ${dataDirectory}
 liferayDockerImageId: ${liferayDockerImageId}
 
 """
@@ -55,6 +57,7 @@ config.hotfixURLs.addAll([
 ])
 config.namespace = project.name
 config.databaseName = "lportal"
+config.dataDirectory = "data"
 config.liferayDebugPort = 8000
 config.liferayTelnetPort = 11311
 config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
@@ -88,6 +91,7 @@ if (configFile.exists()) {
 
 	List composeProfiles = configFileObject.composeProfiles as List
 	String databaseName = configFileObject.databaseName as String
+	String dataDirectory = configFileObject.dataDirectory as String
 	List hotfixURLs = configFileObject.hotfixURLs as List
 	String namespace = configFileObject.namespace as String
 
@@ -97,6 +101,10 @@ if (configFile.exists()) {
 
 	if (databaseName != null) {
 		config.databaseName = databaseName
+	}
+
+	if (dataDirectory != null && dataDirectory.length() > 0) {
+		config.dataDirectory = dataDirectory
 	}
 
 	if (isNotEmpty(hotfixURLs)) {
@@ -135,6 +143,16 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 
 config.composeFiles.addAll(composeProfileFiles)
 
+tasks.register("prepareDataDirectory", Copy) {
+	from config.dataDirectory
+	include "**/*"
+	into "helper/data"
+}
+tasks.register("prepareDumps", Copy) {
+	from "dumps"
+	include "**/*"
+	into "helper/dumps"
+}
 tasks.register("prepareHotfixes", Download) {
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 	onlyIf {
@@ -150,8 +168,16 @@ tasks.register("possibleProfiles") {
 	group "help"
 }
 
-clean.dependsOn ":cleanPrepareHotfixes"
-dockerDeploy.dependsOn ":prepareHotfixes"
+clean {
+	dependsOn ":cleanPrepareDataDirectory"
+	dependsOn ":cleanPrepareDumps"
+	dependsOn ":cleanPrepareHotfixes"
+}
+dockerDeploy {
+	dependsOn ":prepareDataDirectory"
+	dependsOn ":prepareDumps"
+	dependsOn ":prepareHotfixes"
+}
 
 composeUp {
 	dependsOn ":buildDockerImage"
@@ -175,7 +201,8 @@ dockerCompose {
 	environment.put "LIFERAY_TELNET_PORT", config.liferayTelnetPort
 	environment.put "NAMESPACE", config.namespace
 
-	removeVolumes = false
+	// DEBUG: Set to false to retain volume data on restart
+	removeVolumes = true
 
 	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
 	useComposeFiles = config.composeFiles

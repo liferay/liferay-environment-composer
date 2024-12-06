@@ -12,4 +12,8 @@ services:
           - "${LIFERAY_TELNET_PORT}:11311"
           - "${LIFERAY_DEBUG_PORT}:8000"
         volumes:
-          - ./data/liferay/data:/opt/liferay/data
+          - type: volume
+            source: data
+            target: /opt/liferay/data
+            volume:
+                subpath: container-data/liferay

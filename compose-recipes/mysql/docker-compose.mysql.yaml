@@ -18,8 +18,16 @@ services:
               soft: 20000
               hard: 40000
         volumes:
-          - ./dumps/mysql:/docker-entrypoint-initdb.d
-          - ./data/mysql:/var/lib/mysql
+          - source: data
+            target: /docker-entrypoint-initdb.d
+            type: volume
+            volume:
+                subpath: dumps/mysql
+          - source: data
+            target: /var/lib/mysql
+            type: volume
+            volume:
+                subpath: container-data/mysql
     liferay:
         depends_on:
             database:

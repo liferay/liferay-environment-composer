@@ -6,6 +6,7 @@
 		"mysql"
 	],
 	"databaseName": "lportal",
+	"dataDirectory": "data",
 	"hotfixURLs": [
 	],
 	"namespace": "lrwsde"

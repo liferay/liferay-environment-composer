@@ -1,5 +1,7 @@
+import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
 import de.undercouch.gradle.tasks.download.Download
 import groovy.json.JsonSlurper
+import java.time.format.DateTimeFormatter
 
 plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
@@ -143,6 +145,24 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 
 config.composeFiles.addAll(composeProfileFiles)
 
+tasks.register("exportContainerData", DockerCopyFileFromContainer) {
+	containerId = "${config.namespace}-data-helper"
+
+	doFirst {
+		mkdir hostPath.get()
+	}
+
+	hostPath = provider {
+		DateTimeFormatter formatter = DateTimeFormatter.
+			ofPattern("yyyyMMdd.HHmmss").
+			withZone(ZoneId.systemDefault())
+
+		"exported_data/data_${formatter.format(Instant.now())}"
+	}
+
+	remotePath = "/data/container-data"
+
+}
 tasks.register("prepareDataDirectory") {
 	doFirst {
 		mkdir "helper/data"

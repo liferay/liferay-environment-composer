@@ -1,6 +1,9 @@
 import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
+
 import de.undercouch.gradle.tasks.download.Download
+
 import groovy.json.JsonSlurper
+
 import java.time.format.DateTimeFormatter
 
 plugins {
@@ -67,7 +70,6 @@ config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
 /*
 --- END User configuration
  */
-
 
 static boolean isEmpty(List list) {
 	if (list == null) {

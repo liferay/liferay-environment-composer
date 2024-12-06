@@ -13,21 +13,21 @@ services:
         ports:
             - "3307:3306"
         ulimits:
-            nproc: 65535
             nofile:
-              soft: 20000
-              hard: 40000
+                hard: 40000
+                soft: 20000
+            nproc: 65535
         volumes:
-          - source: data
-            target: /docker-entrypoint-initdb.d
-            type: volume
-            volume:
-                subpath: dumps/mysql
-          - source: data
-            target: /var/lib/mysql
-            type: volume
-            volume:
-                subpath: container-data/mysql
+            - source: data
+              target: /docker-entrypoint-initdb.d
+              type: volume
+              volume:
+                  subpath: dumps/mysql
+            - source: data
+              target: /var/lib/mysql
+              type: volume
+              volume:
+                  subpath: container-data/mysql
     liferay:
         depends_on:
             database:

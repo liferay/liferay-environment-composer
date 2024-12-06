@@ -7,7 +7,8 @@ Sample docker-compose configurations for re-creating different environments
 ### Start up the environment
 
 1. Configure the `config.json` file
-2. Run `./gradlew composeUp`
+
+1. Run `./gradlew composeUp`
 
 ### Shut down the environment
 

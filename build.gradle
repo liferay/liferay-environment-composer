@@ -143,15 +143,31 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 
 config.composeFiles.addAll(composeProfileFiles)
 
-tasks.register("prepareDataDirectory", Copy) {
-	from config.dataDirectory
-	include "**/*"
-	into "helper/data"
+tasks.register("prepareDataDirectory") {
+	doFirst {
+		mkdir "helper/data"
+
+		copy {
+			from config.dataDirectory
+			include "**/*"
+			into "helper/data"
+		}
+	}
+
+	outputs.dir "helper/data"
 }
-tasks.register("prepareDumps", Copy) {
-	from "dumps"
-	include "**/*"
-	into "helper/dumps"
+tasks.register("prepareDumps") {
+	doFirst {
+		mkdir "helper/dumps"
+
+		copy {
+			from config.dataDirectory
+			include "**/*"
+			into "helper/dumps"
+		}
+	}
+
+	outputs.dir "helper/dumps"
 }
 tasks.register("prepareHotfixes", Download) {
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})

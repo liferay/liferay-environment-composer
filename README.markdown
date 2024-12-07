@@ -28,6 +28,12 @@ A list of "profiles" that defines the services to use in the environment. Each p
 
 You can see the list of available profiles by running the task: `./gradlew possibleProfiles`.
 
+### `dataDirectory`
+
+An absolute or relative path to a directory containing data that will be mapped to each service container.
+
+See [Persisting data](#persisting-data) for more information on how to import and export the mapped data directories.
+
 ### `hotfixURLs`
 
 A list of hotfix URLs. Each URL listed will be downloaded and placed into the `./configs/common/patching` directory, which will be copied to the Liferay docker image when it is built.
@@ -56,10 +62,21 @@ If you are using the `mysql` profile, then a database dump can be added to the `
 
 ## Persisting data
 
-Bound data directories will persist across container restarts.
+If a `dataDirectory` is defined, data from that directory will be copied into their respective containers on startup. Where each service's data is mapped is declared in the corresponding `docker-compose.{serviceName}.yaml` file. Each service's data should be inside a sub-folder with the service's name.
 
-The Liferay bundle's `data` folder is bound to the `./data/liferay/data` directory.
-MySQL data is bound to the `./data/mysql` directory.
+### Exporting data for re-use
+
+```
+./gradlew exportContainerData
+```
+
+In order to retrieve data from the containers while they are running, use the `./gradlew exportContainerData` Gradle task. The data will be copied to a timestamped folder inside of `./exported_data`. The exported folder can then be referenced by the `dataDirectory` property in `config.json` like so:
+
+```json
+{
+	"dataDirectory": "exported_data/data_20241206.175343"
+}
+```
 
 ## Deploying configuration and other files to the Liferay Docker image
 
@@ -78,6 +95,8 @@ Document library files:
 ```
 ./configs/common/data/document_library
 ```
+
+**Note:** both this method and the `dataDirectory` property are valid ways of providing files to Liferay container's `data` directory.
 
 Properties files:
 

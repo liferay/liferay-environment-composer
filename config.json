@@ -3,6 +3,7 @@
 	],
 	"composeProfiles": [
 		"liferay",
+		"elasticsearch",
 		"mysql"
 	],
 	"dataDirectory": "data",

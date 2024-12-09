@@ -2,6 +2,7 @@ FROM busybox:latest
 
 COPY ./data /data/container-data
 
+RUN mkdir -p /data/container-data/elasticsearch
 RUN mkdir -p /data/container-data/liferay
 RUN mkdir -p /data/container-data/mysql
 

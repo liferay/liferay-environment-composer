@@ -1,6 +1,14 @@
 services:
     elasticsearch:
-        build: ./compose-recipes/elasticsearch
+        build:
+            dockerfile_inline:
+                FROM elasticsearch:7.17.9
+
+                RUN /usr/share/elasticsearch/bin/elasticsearch-plugin install
+                    analysis-icu
+                    analysis-kuromoji
+                    analysis-smartcn
+                    analysis-stempel
         container_name: "${NAMESPACE}-elasticsearch"
         environment:
             - ES_JAVA_OPTS=-Xms1g -Xmx1g

@@ -1,15 +1,24 @@
 services:
     database:
-        command: mysqld --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci --lower_case_table_names=1 --log_warnings=1
+        build:
+            dockerfile_inline: |
+                FROM mysql:5.7
+
+                RUN touch /startup_log.txt
+                RUN chown mysql:mysql /startup_log.txt
+                RUN sed -i -E 's,(^\s*printf .*$),\1\n\1 >> /startup_log.txt,' /usr/local/bin/docker-entrypoint.sh
+                RUN sed -i -E 's,(^\s*)(exec "\$@"),\1mysql_note "STARTING_UP"\n\1\2,' /usr/local/bin/docker-entrypoint.sh
+
+                CMD ["mysqld", "--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8", "--collation-server=utf8_general_ci", "--lower_case_table_names=1", "--log_warnings=1"]
         container_name: "${NAMESPACE}-database-mysql"
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=1
             - MYSQL_DATABASE=${DATABASE_NAME}
         healthcheck:
             retries: 10
-            test: "mysqladmin ping -h localhost"
+            start_period: 5m
+            test: "mysqladmin ping -h localhost && grep 'STARTING_UP' /startup_log.txt"
             timeout: 20s
-        image: mysql:5.7
         ports:
             - "3307:3306"
         ulimits:

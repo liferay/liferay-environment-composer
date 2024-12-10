@@ -8,4 +8,4 @@ RUN mkdir -p /data/container-data/mysql
 
 COPY --chown=1000:1000 ./dumps /data/dumps
 
-RUN mkdir -p /data/dumps/mysql
+RUN mkdir -p /data/dumps

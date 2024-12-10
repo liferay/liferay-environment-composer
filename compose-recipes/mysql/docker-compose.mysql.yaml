@@ -32,7 +32,7 @@ services:
               target: /docker-entrypoint-initdb.d
               type: volume
               volume:
-                  subpath: dumps/mysql
+                  subpath: dumps
             - source: data-volume
               target: /var/lib/mysql
               type: volume

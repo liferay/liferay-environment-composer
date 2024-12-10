@@ -58,7 +58,7 @@ curl -s https://releases-cdn.liferay.com/releases.json | jq -r '.[].releaseKey'
 
 ## Adding a database dump
 
-If you are using the `mysql` profile, then a database dump can be added to the `./dumps/mysql` directory.
+If you are using the `mysql` profile, then a database dump can be added to the `./dumps` directory.
 
 ## Persisting data
 

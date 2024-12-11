@@ -6,7 +6,7 @@ Sample docker-compose configurations for re-creating different environments
 
 ### Start up the environment
 
-1. Configure the `config.json` file
+1. Configure the environment in the `gradle.properties` file
 
 1. Run `./gradlew composeUp`
 
@@ -16,25 +16,25 @@ Sample docker-compose configurations for re-creating different environments
 ./gradlew composeDown
 ```
 
-## `config.json` file reference
+## `gradle.properties` file reference
 
-### `composeFiles`
+### `lr.docker.environment.compose.files`
 
 A list of compose file paths that will be used to set up the environment. You should not have to manually adjust this, as it is much easier to use the `composeProfiles` property instead.
 
-### `composeProfiles`
+### `lr.docker.environment.compose.profiles`
 
 A list of "profiles" that defines the services to use in the environment. Each profile corresponds to a `docker-compose.{profileName}.yaml` file. For example, a file named `docker-compose.foobar.yaml` would make the `foobar` profile available. You can include as many profiles as you'd like.
 
 You can see the list of available profiles by running the task: `./gradlew possibleProfiles`.
 
-### `dataDirectory`
+### `lr.docker.environment.data.directory`
 
 An absolute or relative path to a directory containing data that will be mapped to each service container.
 
 See [Persisting data](#persisting-data) for more information on how to import and export the mapped data directories.
 
-### `hotfixURLs`
+### `lr.docker.environment.hotfix.urls`
 
 A list of hotfix URLs. Each URL listed will be downloaded and placed into the `./configs/common/patching` directory, which will be copied to the Liferay docker image when it is built.
 

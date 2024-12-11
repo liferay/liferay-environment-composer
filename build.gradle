@@ -71,53 +71,35 @@ config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
 --- END User configuration
  */
 
-static boolean isEmpty(List list) {
-	if (list == null) {
-		return true;
-	}
-
-	if (list.isEmpty()) {
-		return true;
-	}
-
-	return false;
-}
-static boolean isNotEmpty(List list) {
-	return !isEmpty(list)
+static List toList(String s) {
+	return s.trim().split(",").grep()
 }
 
-JsonSlurper jsonSlurper = new JsonSlurper()
+def composeFiles = toList(project.getProperty("lr.docker.environment.compose.files"))
+List composeProfiles = toList(project.getProperty("lr.docker.environment.compose.profiles"))
+String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
+String databaseName = project.getProperty("lr.docker.environment.database.name")
+List hotfixURLs = toList(project.getProperty("lr.docker.environment.hotfix.urls"))
+String namespace = project.getProperty("lr.docker.environment.namespace")
 
-File configFile = project.file("config.json")
+if (!composeProfiles.isEmpty()) {
+	config.composeProfiles = composeProfiles
+}
 
-if (configFile.exists()) {
-	Object configFileObject = jsonSlurper.parseText(configFile.text)
+if (databaseName != null) {
+	config.databaseName = databaseName
+}
 
-	List composeProfiles = configFileObject.composeProfiles as List
-	String databaseName = configFileObject.databaseName as String
-	String dataDirectory = configFileObject.dataDirectory as String
-	List hotfixURLs = configFileObject.hotfixURLs as List
-	String namespace = configFileObject.namespace as String
+if (dataDirectory != null && dataDirectory.length() > 0) {
+	config.dataDirectory = dataDirectory
+}
 
-	if (isNotEmpty(composeProfiles)) {
-		config.composeProfiles = composeProfiles
-	}
+if (!hotfixURLs.isEmpty()) {
+	config.hotfixURLs = hotfixURLs
+}
 
-	if (databaseName != null) {
-		config.databaseName = databaseName
-	}
-
-	if (dataDirectory != null && dataDirectory.length() > 0) {
-		config.dataDirectory = dataDirectory
-	}
-
-	if (isNotEmpty(hotfixURLs)) {
-		config.hotfixURLs = hotfixURLs
-	}
-
-	if (namespace != null) {
-		config.namespace = namespace
-	}
+if (namespace != null) {
+	config.namespace = namespace
 }
 
 ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {

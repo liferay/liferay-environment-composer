@@ -3,7 +3,7 @@ services:
         container_name: ${NAMESPACE}-liferay
         healthcheck:
             interval: 5s
-            start_period: 2m
+            start_period: 5m
             test: "/opt/liferay/health-check.sh"
             timeout: 5m
         image: "${LIFERAY_IMAGE_NAME}"

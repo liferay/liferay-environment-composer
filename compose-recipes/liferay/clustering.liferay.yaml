@@ -1,0 +1,22 @@
+services:
+    liferay:
+        environment:
+            - LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED=true
+            - LIFERAY_DISABLE_TRIAL_LICENSE=true
+    liferay-cluster-node:
+        depends_on:
+            liferay:
+                condition: service_healthy
+        environment:
+            - LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED=true
+            - LIFERAY_DISABLE_TRIAL_LICENSE=true
+        healthcheck:
+            interval: 5s
+            start_period: 5m
+            test: "/opt/liferay/health-check.sh"
+            timeout: 5m
+        image: "${LIFERAY_IMAGE_NAME}"
+        ports:
+            - "8081-8089:8080"
+            - "11312-11319:11311"
+            - "8001-8009:8000"

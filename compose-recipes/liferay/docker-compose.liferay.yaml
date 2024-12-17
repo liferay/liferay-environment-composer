@@ -9,8 +9,8 @@ services:
         image: "${LIFERAY_IMAGE_NAME}"
         ports:
             - "8080:8080"
-            - "${LIFERAY_TELNET_PORT}:11311"
-            - "${LIFERAY_DEBUG_PORT}:8000"
+            - "11311:11311"
+            - "8000:8000"
         volumes:
             - source: data-volume
               target: /opt/liferay/data

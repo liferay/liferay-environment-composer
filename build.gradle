@@ -21,8 +21,6 @@ class Config {
 	public String databaseName
 	public String dataDirectory
 	public String liferayDockerImageId
-	public int liferayDebugPort
-	public int liferayTelnetPort
 
 	@Override
 	public String toString() {
@@ -65,8 +63,6 @@ config.namespace = project.name
 config.clusterNodes = 0
 config.databaseName = "lportal"
 config.dataDirectory = "data"
-config.liferayDebugPort = 8000
-config.liferayTelnetPort = 11311
 config.liferayDockerImageId = gradle.liferayWorkspace.dockerImageId as String
 
 /*
@@ -246,8 +242,6 @@ dockerCompose {
 
 	environment.put "DATABASE_NAME", config.databaseName
 	environment.put "LIFERAY_IMAGE_NAME", config.liferayDockerImageId
-	environment.put "LIFERAY_DEBUG_PORT", config.liferayDebugPort
-	environment.put "LIFERAY_TELNET_PORT", config.liferayTelnetPort
 	environment.put "NAMESPACE", config.namespace
 
 	// DEBUG: Set to false to retain volume data on restart
@@ -257,7 +251,7 @@ dockerCompose {
 		scale = ["liferay-cluster-node": config.clusterNodes]
 	}
 
-	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
+	tcpPortsToIgnoreWhenWaiting = [8000, 11311]
 	useComposeFiles = config.composeFiles
 
 	// DEBUG: Set to true if container startup is failing

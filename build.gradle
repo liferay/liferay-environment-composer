@@ -15,6 +15,7 @@ File projectDir = project.projectDir as File
 class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String namespace
+	public int clusterNodes
 	public List<String> composeFiles = new ArrayList<String>()
 	public List<String> composeProfiles = new ArrayList<String>()
 	public String databaseName
@@ -61,6 +62,7 @@ config.hotfixURLs.addAll([
 	// "https://releases-cdn.liferay.com/dxp/hotfix/2024.q2.7/liferay-dxp-2024.q2.7-hotfix-4.zip",
 ])
 config.namespace = project.name
+config.clusterNodes = 0
 config.databaseName = "lportal"
 config.dataDirectory = "data"
 config.liferayDebugPort = 8000
@@ -75,12 +77,17 @@ static List toList(String s) {
 	return s.trim().split(",").grep()
 }
 
+Integer clusterNodes = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
 def composeFiles = toList(project.getProperty("lr.docker.environment.compose.files"))
 List composeProfiles = toList(project.getProperty("lr.docker.environment.compose.profiles"))
 String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
 String databaseName = project.getProperty("lr.docker.environment.database.name")
 List hotfixURLs = toList(project.getProperty("lr.docker.environment.hotfix.urls"))
 String namespace = project.getProperty("lr.docker.environment.namespace")
+
+if (clusterNodes != null) {
+	config.clusterNodes = clusterNodes
+}
 
 if (!composeProfiles.isEmpty()) {
 	config.composeProfiles = composeProfiles
@@ -104,6 +111,10 @@ if (namespace != null) {
 
 ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 	include "**/docker-compose.*.yaml"
+
+	if (config.clusterNodes > 0) {
+		include "**/clustering.*.yaml"
+	}
 }
 
 List<String> possibleProfiles = dockerComposeFileTree.collect {
@@ -116,7 +127,7 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 	String profile ->
 
 	FileTree matchingFileTree = dockerComposeFileTree.matching {
-		include "**/docker-compose.${profile}.yaml"
+		include "**/*.${profile}.yaml"
 	}
 
 	if (matchingFileTree.isEmpty()) {
@@ -124,7 +135,9 @@ List<String> composeProfileFiles = config.composeProfiles.collect {
 			"The profile '${profile}' does not have a matching docker-compose file. Possible profiles are: ${possibleProfiles}");
 	}
 
-	projectDir.relativePath(matchingFileTree.singleFile as File)
+	matchingFileTree.getFiles()
+}.flatten().collect {
+	projectDir.relativePath(it)
 }
 
 config.composeFiles.addAll(composeProfileFiles)
@@ -239,6 +252,10 @@ dockerCompose {
 
 	// DEBUG: Set to false to retain volume data on restart
 	removeVolumes = true
+
+	if (config.clusterNodes > 0) {
+		scale = ["liferay-cluster-node": config.clusterNodes]
+	}
 
 	tcpPortsToIgnoreWhenWaiting = [config.liferayDebugPort, config.liferayTelnetPort]
 	useComposeFiles = config.composeFiles

@@ -6,6 +6,7 @@
 **/.sass-cache
 **/.settings
 **/.web_bundle_build
+**/activation-key-*.xml
 **/bin
 **/build
 **/build_gradle

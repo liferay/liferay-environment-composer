@@ -38,6 +38,15 @@ See [Persisting data](#persisting-data) for more information on how to import an
 
 A list of hotfix URLs. Each URL listed will be downloaded and placed into the `./configs/common/patching` directory, which will be copied to the Liferay docker image when it is built.
 
+### `lr.docker.environment.cluster.nodes`
+
+The number of cluster nodes to start up in addition to the main Liferay instance. Setting this to 0 means there is no clustering.
+
+```properties
+# This will start the main Liferay instance and 2 additional cluster nodes
+lr.docker.environment.cluster.nodes=2
+```
+
 ## Declaring a Liferay version
 
 The Liferay version can be set in `gradle.properties`:

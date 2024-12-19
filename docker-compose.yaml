@@ -1,7 +1,21 @@
 name: "${NAMESPACE}"
 services:
     data-helper:
-        build: ./helper
+        build:
+            dockerfile_inline: |
+                FROM busybox:latest
+
+                USER 1000
+
+                COPY --chown=1000:1000 ${DATA_DIRECTORY} /data/container-data
+
+                RUN mkdir -p /data/container-data/elasticsearch
+                RUN mkdir -p /data/container-data/liferay
+                RUN mkdir -p /data/container-data/mysql
+
+                COPY --chown=1000:1000 dumps /data/dumps
+
+                RUN mkdir -p /data/dumps
         container_name: ${NAMESPACE}-data-helper
         volumes:
             - data-volume:/data

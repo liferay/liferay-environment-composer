@@ -19,8 +19,8 @@
 .idea
 /bundles
 /containerLogs
-/data
-/dumps
+/data/*
+/dumps/*
 /exported_data
 /gradle-*.properties
 /helper/data

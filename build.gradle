@@ -149,47 +149,6 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/data/container-data"
 
 }
-File sourceDataDirectory = project.file config.dataDirectory
-File targetDataDirectory = project.file "helper/data"
-
-tasks.register("prepareDataDirectory") {
-	doFirst {
-		mkdir targetDataDirectory
-
-		copy {
-			from sourceDataDirectory
-			include "**/*"
-			into targetDataDirectory
-		}
-	}
-
-	if (sourceDataDirectory.isDirectory()) {
-		inputs.dir sourceDataDirectory
-	}
-
-	outputs.dir targetDataDirectory
-}
-
-File sourceDumpsDirectory = project.file "dumps"
-File targetDumpsDirectory = project.file "helper/dumps"
-
-tasks.register("prepareDumps") {
-	doFirst {
-		mkdir targetDumpsDirectory
-
-		copy {
-			from sourceDumpsDirectory
-			include "**/*"
-			into targetDumpsDirectory
-		}
-	}
-
-	if (sourceDumpsDirectory.isDirectory()) {
-		inputs.dir sourceDumpsDirectory
-	}
-
-	outputs.dir targetDumpsDirectory
-}
 
 tasks.register("prepareHotfixes", Download) {
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
@@ -207,8 +166,6 @@ tasks.register("possibleProfiles") {
 }
 
 clean {
-	dependsOn ":cleanPrepareDataDirectory"
-	dependsOn ":cleanPrepareDumps"
 	dependsOn ":cleanPrepareHotfixes"
 }
 dockerDeploy {
@@ -217,10 +174,6 @@ dockerDeploy {
 	}
 }
 
-composeBuild {
-	dependsOn ":prepareDataDirectory"
-	dependsOn ":prepareDumps"
-}
 composeUp {
 	if (useLiferay) {
 		dependsOn ":buildDockerImage"

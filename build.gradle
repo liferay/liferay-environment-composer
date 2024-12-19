@@ -239,6 +239,7 @@ dockerCompose {
 	captureContainersOutput = true
 	captureContainersOutputToFiles = project.file('containerLogs')
 
+	environment.put "DATA_DIRECTORY", config.dataDirectory
 	environment.put "DATABASE_NAME", config.databaseName
 	environment.put "NAMESPACE", config.namespace
 

@@ -27,6 +27,7 @@ To shut down the environment, run `./gradlew composeDown`.
 ### Database features overview
 
 - [Enable MySQL 5.7](#enable-mysql-57)
+- [Enable PostgreSQL 16.3](#enable-postgresql-163)
 - [Import a database dump](#import-a-database-dump)
 - Supports Liferay clustering OOTB
 
@@ -154,6 +155,16 @@ Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1`
 
 ```properties
 lr.docker.environment.service.enabled[mysql]=true
+```
+
+#### Enable PostgreSQL 16.3
+
+Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[postgres]=true
 ```
 
 #### Import a database dump

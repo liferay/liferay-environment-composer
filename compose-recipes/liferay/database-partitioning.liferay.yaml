@@ -1,0 +1,5 @@
+services:
+    liferay:
+        environment:
+            - LIFERAY_DATABASE_PERIOD_PARTITION_PERIOD_ENABLED=true
+            - LIFERAY_DATABASE_PERIOD_PARTITION_PERIOD_THREAD_PERIOD_POOL_PERIOD_ENABLED=true

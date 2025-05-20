@@ -25,6 +25,7 @@ class Config {
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
+	public boolean databasePartitioningEnabled = false
 
 	@Override
 	public String toString() {
@@ -41,6 +42,7 @@ hotfixURLs: ${hotfixURLs}
 liferayDockerImageId: ${liferayDockerImageId}
 namespace: ${namespace}
 services: ${services}
+databasePartitioningEnabled: ${databasePartitioningEnabled}
 
 """
 	}
@@ -63,6 +65,7 @@ List services = project.properties.findAll {
 }.collect {
 	it.key.substring(it.key.indexOf("[") + 1, it.key.indexOf("]"))
 }
+boolean databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled").toBoolean()
 
 if (clusterNodes != null) {
 	config.clusterNodes = clusterNodes
@@ -90,6 +93,8 @@ if (!services.isEmpty()) {
 
 config.liferayDockerImageId = "${config.namespace.toLowerCase()}-liferay"
 
+config.databasePartitioningEnabled = databasePartitioningEnabled
+
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
 }
@@ -97,6 +102,10 @@ gradle.liferayWorkspace {
 boolean useLiferay = config.services.contains("liferay")
 
 boolean useClustering = useLiferay && config.clusterNodes > 0
+
+boolean useMysql = config.services.contains("mysql")
+
+boolean usePostgres = config.services.contains("postgres")
 
 ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 	include "**/service.*.yaml"
@@ -107,6 +116,10 @@ ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 
 	if (useLiferay) {
 		include "**/liferay.*.yaml"
+	}
+
+	if((useMysql || usePostgres) && databasePartitioningEnabled) {
+		include "**/database-partitioning.*.yaml"
 	}
 }
 

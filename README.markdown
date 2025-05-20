@@ -29,6 +29,7 @@ To shut down the environment, run `./gradlew composeDown`.
 - [Enable MySQL 5.7](#enable-mysql-57)
 - [Enable PostgreSQL 16.3](#enable-postgresql-163)
 - [Import a database dump](#import-a-database-dump)
+- [Enable database partitioning (MySQL and PostgreSQL only)](#enable-database-partitioning-mysql-and-postgresql-only)
 - Supports Liferay clustering OOTB
 
 ### Elasticsearch features overview
@@ -173,6 +174,16 @@ Database dump files can be added to the `./dumps` directory at the root of the W
 
 ```
 ./dumps/dumpfile.sql
+```
+
+#### Enable database partitioning (MySQL and PostgreSQL only)
+
+Set the `lr.docker.environment.database.partitioning.enabled` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.database.partitioning.enabled=true
 ```
 
 ### Elasticsearch Features

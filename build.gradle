@@ -56,7 +56,7 @@ config.composeFiles.add("docker-compose.yaml")
 Integer clusterNodes = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
 def composeFiles = toList(project.getProperty("lr.docker.environment.compose.files"))
 String databaseName = project.getProperty("lr.docker.environment.database.name")
-boolean databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled").toBoolean()
+String databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled")
 String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
 List hotfixURLs = toList(project.getProperty("lr.docker.environment.hotfix.urls"))
 String namespace = project.getProperty("lr.docker.environment.namespace")
@@ -76,7 +76,9 @@ if (databaseName != null) {
 	config.databaseName = databaseName
 }
 
-config.databasePartitioningEnabled = databasePartitioningEnabled
+if (databasePartitioningEnabled != null) {
+	config.databasePartitioningEnabled = databasePartitioningEnabled.toBoolean()
+}
 
 if (dataDirectory != null && dataDirectory.length() > 0) {
 	config.dataDirectory = dataDirectory
@@ -115,7 +117,7 @@ ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 		include "**/liferay.*.yaml"
 	}
 
-	if(databasePartitioningEnabled) {
+	if(config.databasePartitioningEnabled) {
 		if (!config.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
 			throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
 		}

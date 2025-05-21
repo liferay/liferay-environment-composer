@@ -32,4 +32,4 @@ services:
                 target: /var/lib/postgresql/data
                 type: volume
                 volume:
-                    subpath: container-data/postgres
+                    subpath: container-data/database

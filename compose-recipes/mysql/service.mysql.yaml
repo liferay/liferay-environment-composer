@@ -28,4 +28,4 @@ services:
               target: /var/lib/mysql
               type: volume
               volume:
-                  subpath: container-data/mysql
+                  subpath: container-data/database

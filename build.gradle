@@ -117,7 +117,7 @@ ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 		include "**/liferay.*.yaml"
 	}
 
-	if(config.databasePartitioningEnabled) {
+	if (config.databasePartitioningEnabled) {
 		if (!config.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
 			throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
 		}

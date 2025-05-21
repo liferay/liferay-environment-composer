@@ -21,12 +21,12 @@ class Config {
 	public int clusterNodes = 0
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
+	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
-	public boolean databasePartitioningEnabled = false
 
 	@Override
 	public String toString() {
@@ -38,12 +38,12 @@ Config:
 clusterNodes: ${clusterNodes}
 composeFiles: ${composeFiles}
 databaseName: ${databaseName}
+databasePartitioningEnabled: ${databasePartitioningEnabled}
 dataDirectory: ${dataDirectory}
 hotfixURLs: ${hotfixURLs}
 liferayDockerImageId: ${liferayDockerImageId}
 namespace: ${namespace}
 services: ${services}
-databasePartitioningEnabled: ${databasePartitioningEnabled}
 
 """
 	}
@@ -55,8 +55,9 @@ config.composeFiles.add("docker-compose.yaml")
 
 Integer clusterNodes = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
 def composeFiles = toList(project.getProperty("lr.docker.environment.compose.files"))
-String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
 String databaseName = project.getProperty("lr.docker.environment.database.name")
+boolean databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled").toBoolean()
+String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
 List hotfixURLs = toList(project.getProperty("lr.docker.environment.hotfix.urls"))
 String namespace = project.getProperty("lr.docker.environment.namespace")
 List services = project.properties.findAll {
@@ -66,7 +67,6 @@ List services = project.properties.findAll {
 }.collect {
 	it.key.substring(it.key.indexOf("[") + 1, it.key.indexOf("]"))
 }
-boolean databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled").toBoolean()
 
 if (clusterNodes != null) {
 	config.clusterNodes = clusterNodes
@@ -75,6 +75,8 @@ if (clusterNodes != null) {
 if (databaseName != null) {
 	config.databaseName = databaseName
 }
+
+config.databasePartitioningEnabled = databasePartitioningEnabled
 
 if (dataDirectory != null && dataDirectory.length() > 0) {
 	config.dataDirectory = dataDirectory
@@ -93,8 +95,6 @@ if (!services.isEmpty()) {
 }
 
 config.liferayDockerImageId = "${config.namespace.toLowerCase()}-liferay"
-
-config.databasePartitioningEnabled = databasePartitioningEnabled
 
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId

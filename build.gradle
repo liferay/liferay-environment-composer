@@ -14,6 +14,7 @@ static List toList(String s) {
 	return s.trim().split(",").grep()
 }
 
+String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
 File projectDir = project.projectDir as File
 
 class Config {
@@ -103,10 +104,6 @@ boolean useLiferay = config.services.contains("liferay")
 
 boolean useClustering = useLiferay && config.clusterNodes > 0
 
-boolean useMysql = config.services.contains("mysql")
-
-boolean usePostgres = config.services.contains("postgres")
-
 ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 	include "**/service.*.yaml"
 
@@ -118,7 +115,11 @@ ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 		include "**/liferay.*.yaml"
 	}
 
-	if((useMysql || usePostgres) && databasePartitioningEnabled) {
+	if(databasePartitioningEnabled) {
+		if (!config.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
+			throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
+		}
+
 		include "**/database-partitioning.*.yaml"
 	}
 }

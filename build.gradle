@@ -238,7 +238,7 @@ composeUp {
 	}
 }
 
-Map<String, Object> environmentMap = [:]
+Map<String, String> environmentMap = [:]
 
 environmentMap.put "DATA_DIRECTORY", config.dataDirectory
 environmentMap.put "DATABASE_NAME", config.databaseName
@@ -250,6 +250,19 @@ if (useClustering) {
 
 if (useLiferay) {
 	environmentMap.put "LIFERAY_IMAGE_NAME", config.liferayDockerImageId
+}
+
+environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
+environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace.toLowerCase())
+
+new File('.env').withOutputStream {
+	BufferedOutputStream envFileOutputStream ->
+
+	environmentMap.forEach {
+		key, value ->
+
+		envFileOutputStream << key << "=" << value << "\n"
+	}
 }
 
 dockerCompose {

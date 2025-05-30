@@ -1,0 +1,109 @@
+import groovy.json.JsonSlurper
+
+ext {
+	getExistingVolumeNames = {
+		String prefix ->
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		List<String> volumeNames = []
+
+		waitForCommand("docker volume ls --filter name=^${prefix} --format json").eachLine {
+			String line ->
+
+			volumeNames.add(jsonSlurper.parseText(line)["Name"])
+		}
+
+		return volumeNames
+	}
+
+	restoreVolume = {
+		String volumeName, File backupFile, boolean importFileListOnly ->
+
+		String importPath = backupFile.getAbsolutePath()
+
+		if (importPath.endsWith(".tar")) {
+			if (importFileListOnly) {
+				println "Restoring ${volumeName} from ${importPath} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar busybox:latest sh -c 'cd target; tar t -f /source.tar | grep \"/\$\" | sort | xargs mkdir -p; tar t -f /source.tar | grep -v \"/\$\" | xargs touch'")
+			}
+			else {
+				println "Restoring volume ${volumeName} from ${importPath}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar busybox:latest tar x -f /source.tar -C /target/")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+
+			println "Restored volume ${volumeName} from ${importPath}"
+		}
+		else if (importPath.endsWith(".tar.gz")) {
+			if (importFileListOnly) {
+				println "Restoring ${volumeName} from ${importPath} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar.gz busybox:latest sh -c 'cd target; tar t -zf /source.tar.gz | grep \"/\$\" | sort | xargs mkdir -p; tar t -zf /source.tar.gz | grep -v \"/\$\" | xargs touch'")
+			}
+			else {
+				println "Restoring volume ${volumeName} from ${importPath}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar.gz busybox:latest tar x -zf /source.tar.gz -C /target/")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+
+			println "Restored volume ${volumeName} from ${importPath}"
+		}
+		else if (backupFile.isDirectory()) {
+			if (importFileListOnly) {
+				println "Copying directory ${importPath} to ${volumeName} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cd /source; find . -type d | sort | sed \"s@^@/target/@g\" | xargs mkdir -p; find . -type f | sed \"s@^@/target/@g\" | xargs touch'")
+			}
+			else {
+				println "Copying directory ${importPath} to ${volumeName}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cp --no-clobber --recursive /source/* /target/'")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+		}
+		else {
+			String fileName = backupFile.getName()
+
+			if (importFileListOnly) {
+				println "Copying file ${importPath} to ${volumeName} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v busybox:latest touch /target/${fileName}")
+			}
+			else {
+				println "Copying file ${importPath} to ${volumeName}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source/${fileName} busybox:latest sh -c 'cp --no-clobber /source/* /target/'")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${fileName}")
+
+			println "Copied file ${importPath} to ${volumeName}"
+		}
+	}
+
+	waitForCommand = {
+		String command ->
+
+		StringBuffer err = new StringBuffer()
+		StringBuffer out = new StringBuffer()
+
+		Process process = ['bash', '-c', command].execute()
+
+		process.waitForProcessOutput(out, err)
+
+		if (process.exitValue() != 0) {
+			throw new GradleException("Process exit code ${process.exitValue()}: ${err.toString()}")
+		}
+
+		if (err.length() > 0) {
+			System.err.println err.toString()
+		}
+
+		return out.toString()
+	}
+}
+
+tasks.register("dockerCreate") {
+	doFirst {
+		waitForCommand("docker compose create")
+	}
+}

@@ -1,5 +1,3 @@
-import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
-
 import com.liferay.docker.workspace.environments.Config
 
 import de.undercouch.gradle.tasks.download.Download
@@ -10,30 +8,16 @@ import java.time.format.DateTimeFormatter
 
 plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
+	id "docker-export-backup"
+	id "docker-import-backup"
 }
 
-Config config = new Config(project)
+ext {
+	config = new Config(project)
+}
 
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
-}
-
-tasks.register("exportContainerData", DockerCopyFileFromContainer) {
-	containerId = "${config.namespace}-data-helper"
-
-	doFirst {
-		mkdir hostPath.get()
-	}
-
-	hostPath = provider {
-		DateTimeFormatter formatter = DateTimeFormatter.
-		ofPattern("yyyyMMdd.HHmmss").
-		withZone(ZoneId.systemDefault())
-
-		"exported_data/data_${config.namespace}_${formatter.format(Instant.now())}"
-	}
-
-	remotePath = "/data/container-data"
 }
 
 tasks.register("prepareHotfixes", Download) {

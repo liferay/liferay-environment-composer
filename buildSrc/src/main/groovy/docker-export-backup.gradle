@@ -1,0 +1,24 @@
+import java.time.format.DateTimeFormatter
+
+project.plugins.apply "docker-common"
+
+tasks.register("exportContainerData") {
+	doFirst {
+		String prefix = "${config.namespace.toLowerCase()}_"
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss").withZone(ZoneId.systemDefault())
+
+		String exportPath = new File(projectDir, "exported_data/data_${config.namespace}_${formatter.format(Instant.now())}").getAbsolutePath()
+
+		getExistingVolumeNames(prefix).each {
+			String volumeName ->
+
+			String backupFileName = "${volumeName.substring(prefix.length())}.tar"
+
+			println "Creating backup of volume ${volumeName} in ${exportPath}/${backupFileName}"
+			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportPath}:/target busybox:latest tar cf /target/${backupFileName} -C /source .")
+
+			println "Created backup of volume ${volumeName} in ${exportPath}/${backupFileName}"
+		}
+	}
+}

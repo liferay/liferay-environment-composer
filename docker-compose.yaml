@@ -1,13 +1,1 @@
 name: "${NAMESPACE}"
-services:
-    data-helper:
-        build:
-            args:
-                DATA_DIRECTORY: ${DATA_DIRECTORY}
-            context: .
-            dockerfile: Dockerfile.helper
-        container_name: ${NAMESPACE}-data-helper
-        volumes:
-            - data-volume:/data
-volumes:
-    data-volume:

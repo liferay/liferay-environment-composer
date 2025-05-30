@@ -14,8 +14,8 @@ services:
             - "11311:11311"
             - "8000:8000"
         volumes:
-            - source: data-volume
+            - source: liferay-data-volume
               target: /opt/liferay/data
               type: volume
-              volume:
-                  subpath: container-data/liferay
+volumes:
+    liferay-data-volume:

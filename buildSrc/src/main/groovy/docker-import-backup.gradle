@@ -1,0 +1,72 @@
+project.plugins.apply "docker-common"
+
+Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
+	String prefix, List<String> existingVolumeNames, File[] candidates ->
+
+	return candidates.collect {
+		File candidate ->
+
+		List<File> tarFiles = candidate.listFiles().findAll {
+			it.getName().endsWith(".tar") || it.getName().endsWith(".tar.gz")
+		}
+
+		Map<String, String> eligibleVolumeBackups = [:]
+
+		tarFiles.each {
+			String volumeName = prefix + it.getName().substring(0, it.getName().length() - 4)
+
+			if (existingVolumeNames.contains(volumeName)) {
+				eligibleVolumeBackups.put(it, volumeName)
+			}
+		}
+
+		return eligibleVolumeBackups
+	}.findAll {
+		!it.isEmpty()
+	}
+}
+
+tasks.register("importContainerData") {
+	dependsOn dockerCreate
+
+	doFirst {
+		String prefix = "${project.ext.config.namespace.toLowerCase()}_"
+
+		List<String> existingVolumeNames = getExistingVolumeNames(prefix)
+
+		List<Map<File, String>> volumeBackups = []
+
+		if (config.dataDirectory.length() > 0) {
+			File dataFolder = new File(projectDir, config.dataDirectory)
+
+			if (dataFolder.exists() && dataFolder.isDirectory()) {
+				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, [dataFolder] as File[])
+
+				if (volumeBackups.isEmpty()) {
+					volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, dataFolder.listFiles())
+				}
+			}
+		}
+
+		if (volumeBackups.isEmpty()) {
+			File exportedDataFolder = new File(projectDir, "exported_data")
+
+			if (exportedDataFolder.exists() && exportedDataFolder.isDirectory()) {
+				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, exportedDataFolder.listFiles())
+			}
+		}
+
+		if (volumeBackups.isEmpty()) {
+			throw new GradleException("Please set lr.docker.environment.data.directory in gradle.properties to a folder that contains backups")
+		}
+		else if (volumeBackups.size() > 1) {
+			throw new GradleException("Multiple exported container data folders found, please set lr.docker.environment.data.directory in gradle.properties")
+		}
+
+		volumeBackups[0].each {
+			File backupFile, String volumeName ->
+
+			restoreVolume(volumeName, backupFile)
+		}
+	}
+}

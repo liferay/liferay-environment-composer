@@ -17,6 +17,7 @@
 **/tmp
 .gradle
 .idea
+.vscode
 /bundles
 /containerLogs
 /data/*

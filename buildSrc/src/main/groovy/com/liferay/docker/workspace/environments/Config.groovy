@@ -55,6 +55,12 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		String liferayUserPassword = project.getProperty("lr.docker.environment.liferay.user.password")
+
+		if (liferayUserPassword != null) {
+			this.liferayUserPassword = liferayUserPassword
+		}
+
 		String lxcBackupOnePassword = project.getProperty("lr.docker.environment.lxc.backup.1password")
 
 		if ((lxcBackupOnePassword != null) && (lxcBackupOnePassword.trim().length() > 0)) {
@@ -182,6 +188,7 @@ class Config {
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
+	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()

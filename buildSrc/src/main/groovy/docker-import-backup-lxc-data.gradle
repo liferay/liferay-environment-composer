@@ -105,6 +105,51 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 	}
 }
 
+Closure<Void> resetLiferayUserPasswords = {
+	Map<String, String> virtualHost, String schema ->
+
+	String companyId = virtualHost["companyId"]
+	String hostname = virtualHost["hostname"]
+
+	println ""
+
+	executeSQLQuery("update User_ set password_ = '${config.liferayUserPassword}', passwordEncrypted = false where companyId = ${companyId}", schema)
+
+	println "Reset all user passwords to '${config.liferayUserPassword}' for ${hostname}"
+
+	List results = executeSQLQuery("select screenName, emailAddress from User_ where companyId = ${companyId} and userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", schema)
+	
+	if (results.isEmpty()) {
+		println("Unable to detect users explicitly granted the Administrator role")
+	}
+	else {
+		println("Detected the following users explicitly granted the Administrator role")
+
+		results.each {
+			println " - ${it["screenName"]} (${it["emailAddress"]})"
+		}
+	}
+}
+
+tasks.register("updateCloudBackupDatabaseForLocalDevelopment") {
+	doFirst {
+		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
+
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				resetLiferayUserPasswords(it, config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName)
+			}
+			catch (Exception e) {
+				println "Unable to update ${it["hostname"]}: ${e.getMessage()}"
+			}
+		}
+	}
+}
+
 tasks.register("importCloudBackupDatabase") {
 	dependsOn decryptCloudBackupDatabase
 
@@ -151,6 +196,8 @@ tasks.register("importCloudBackupDatabase") {
 
 		println "Loaded LXC database backup into database container"
 	}
+
+	finalizedBy updateCloudBackupDatabaseForLocalDevelopment
 }
 
 tasks.register("importCloudBackupDocumentLibrary") {
@@ -164,4 +211,9 @@ tasks.register("importCloudBackupDocumentLibrary") {
 	doFirst {
 		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", new File(projectDir, "doclib"), config.documentLibraryFileListOnly)
 	}
+}
+
+tasks.register("importCloudBackup") {
+	dependsOn importCloudBackupDatabase
+	dependsOn importCloudBackupDocumentLibrary
 }

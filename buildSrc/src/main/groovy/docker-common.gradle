@@ -27,6 +27,59 @@ ext {
 		}
 	}
 
+	getDefaultVirtualHost = {
+		List<Map<String, String>> companyVirtualHosts ->
+
+		File portalExtPropertiesFile = new File(projectDir, "configs/common/portal-ext.properties")
+
+		String propertyDefaultWebId = null
+
+		List<String> propertiesLines = []
+
+		portalExtPropertiesFile.eachLine {
+			String key = it.trim().split("=")[0]
+
+			if (key.equals("company.default.web.id")) {
+				defaultWebId = it.split("=")[1].trim()
+			}
+		}
+
+		Map<String, String> defaultCompanyVirtualHost = null
+
+		List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
+
+		if (!adminInstanceVirtualHosts.isEmpty()) {
+			config.databasePartitioningEnabled = true
+		}
+
+		if (config.databasePartitioningEnabled) {
+			String defaultCompanyId = adminInstanceVirtualHosts[0]["companyId"]
+
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				it["companyId"] == defaultCompanyId
+			}
+		}
+		else if (companyVirtualHosts.size() == 1) {
+			defaultCompanyVirtualHost = companyVirtualHosts[0]
+		}
+		else if (propertyDefaultWebId != null) {
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				it["webId"] == propertyDefaultWebId
+			}
+		}
+		else {
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				it["webId"] == "liferay.com"
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			throw new GradleException("Unable to auto-detect company.default.web.id, please set it manually in configs/common/portal-ext.properties manually")
+		}
+
+		return defaultCompanyVirtualHost["webId"]
+	}
+
 	getExistingVolumeNames = {
 		String prefix ->
 

@@ -55,6 +55,19 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		String lxcBackupOnePassword = project.getProperty("lr.docker.environment.lxc.backup.1password")
+
+		if ((lxcBackupOnePassword != null) && (lxcBackupOnePassword.trim().length() > 0)) {
+			this.lxcBackupPassword = project.ext.waitForCommand("op item get ${lxcBackupOnePassword} --fields password --reveal")
+		}
+		else {
+			String lxcBackupPassword = project.getProperty("lr.docker.environment.lxc.backup.password")
+
+			if (lxcBackupPassword != null) {
+				this.lxcBackupPassword = lxcBackupPassword
+			}
+		}
+
 		String namespace = project.getProperty("lr.docker.environment.namespace")
 
 		if (namespace != null) {
@@ -169,6 +182,7 @@ class Config {
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
+	public String lxcBackupPassword = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false

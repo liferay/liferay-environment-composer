@@ -1,6 +1,32 @@
 import groovy.json.JsonSlurper
 
 ext {
+	executeSQLQuery = {
+		String sql, String schema = null ->
+
+		if (config.services.contains("mysql")) {
+			List<String> results = []
+
+			if (schema == null) {
+				results = waitForCommand("docker compose exec -it database mysql --batch --user=root --execute=\"${sql}\"").split("\n")
+			}
+			else {
+				results = waitForCommand("docker compose exec -it database mysql --batch --user=root --database=${schema} --execute=\"${sql}\"").split("\n")
+			}
+
+			String[] columnHeaders = results[0].split("\t")
+			
+			return results.subList(1, results.size()).collect {
+				[columnHeaders, it.split("\t")].transpose().collectEntries {
+					[it[0], it[1]]
+				}
+			}
+		}
+		else {
+			throw new GradleException("Database service not detected")
+		}
+	}
+
 	getExistingVolumeNames = {
 		String prefix ->
 
@@ -99,6 +125,31 @@ ext {
 		}
 
 		return out.toString()
+	}
+
+	waitForContainer = {
+		String serviceName, String containerName ->
+
+		println "Starting service ${serviceName}"
+		waitForCommand("docker compose up -d ${serviceName}")
+
+		String status = null
+
+		while ((status == null) || !status.trim().equals("\"healthy\"")) {
+			if (status != null) {
+				Thread.sleep(10000)
+			}
+
+			println "Waiting for service ${serviceName}"
+
+			String logs = waitForCommand("docker compose logs ${serviceName} --since=10s")
+
+			if (logs.length() > 0) {
+				println logs
+			}
+
+			status = waitForCommand("docker inspect --format='{{json .State.Health.Status}}' ${containerName}")
+		}
 	}
 }
 

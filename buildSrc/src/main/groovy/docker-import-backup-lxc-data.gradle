@@ -1,0 +1,103 @@
+project.plugins.apply "docker-common"
+
+Closure<Void> validateDatabaseBackupFileExtensions = {
+	File dumpsFolder ->
+
+	List<File> decryptedBackupFiles = dumpsFolder.listFiles().findAll {
+		it.getName().endsWith(".gz") || it.getName().endsWith(".sql")
+	}
+
+	if (decryptedBackupFiles.isEmpty()) {
+		return false
+	}
+
+	decryptedBackupFiles.each {
+		if (it.getName().endsWith(".gz") && !it.getName().endsWith(".sql.gz")) {
+			String path = it.getAbsolutePath()
+			it.renameTo("${path.substring(0, path.length() - 3)}.sql.gz")
+		}
+	}
+
+	return true
+}
+
+tasks.register("decryptCloudBackupDatabase") {
+	doFirst {
+		File dumpsFolder = new File(projectDir, "dumps")
+
+		if (dumpsFolder.exists()) {
+			if (validateDatabaseBackupFileExtensions(dumpsFolder)) {
+				print("Found existing decrypted backups in ${dumpsFolder.getAbsolutePath()}")
+
+				return
+			}
+		}
+
+		File lxcFolder = new File(projectDir, "lxc")
+
+		if (!lxcFolder.exists()) {
+			throw new GradleException("Unable to identify database backup")
+		}
+
+		List<File> databaseBackupFiles = lxcFolder.listFiles().findAll {
+			!it.getName().startsWith("doclib") && it.getName().endsWith(".7z")
+		}
+
+		if (databaseBackupFiles.size() != 1) {
+			throw new GradleException("Unable to identify database backup")
+		}
+
+		println "Extracting LXC database backup"
+		waitForCommand("7z x ${databaseBackupFiles[0].getAbsolutePath()} -o${dumpsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+
+		validateDatabaseBackupFileExtensions(dumpsFolder)
+	}
+}
+
+tasks.register("importCloudBackupDatabase") {
+	dependsOn decryptCloudBackupDatabase
+
+	onlyIf {
+		config.services.contains("mysql")
+	}
+
+	doFirst {
+		println "Loading LXC database backup into database container"
+		waitForCommand("docker compose build database")
+
+		if (config.services.contains("mysql")) {
+			Map<String, String> oldVariables = [
+				"max_allowed_packet": String.valueOf(1L << 26),
+				"autocommit": "1",
+				"unique_checks": "1",
+				"foreign_key_checks": "1",
+				"innodb_stats_auto_recalc": "1",
+			]
+
+			Map<String, String> newVariables = [
+				"max_allowed_packet": String.valueOf(1L << 30),
+				"autocommit": "0",
+				"unique_checks": "0",
+				"foreign_key_checks": "0",
+				"innodb_stats_auto_recalc": "0",
+			]
+
+			new File(projectDir, "dumps/0.sql").withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << newVariables.collect { "SET GLOBAL ${it.key}=${it.value};" }.join("\n") << ";"
+			}
+
+			waitForContainer("database", "${config.namespace}-database")
+			executeSQLQuery(oldVariables.collect { "SET GLOBAL ${it.key}=${it.value};\n" }.join(""))
+
+			if (config.databasePartitioningEnabled) {
+				executeSQLQuery(["lportal", "dxpcloud", "cloudsqlimport"].collect {
+					"create user if not exists ${it} identified by 'lportal';\ngrant all on *.* to '${it}'@'%';\n"
+				}.join(""))
+			}
+		}
+
+		println "Loaded LXC database backup into database container"
+	}
+}

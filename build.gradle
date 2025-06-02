@@ -10,6 +10,7 @@ plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
 	id "docker-export-backup"
 	id "docker-import-backup"
+	id "docker-import-backup-lxc-data"
 }
 
 ext {
@@ -49,6 +50,11 @@ tasks.register("shareWorkspace", Zip) {
 	exclude ".gitignore"
 	exclude ".git"
 	exclude ".gradle"
+	exclude {
+		new File("lxc").exists() &&
+		it.relativePath.pathString.startsWith("dumps/")
+	}
+	exclude "lxc"
 	exclude "shared_workspaces"
 	exclude {
 		it.relativePath.pathString.startsWith("exported_data/") &&

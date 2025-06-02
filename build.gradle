@@ -12,63 +12,11 @@ plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
 }
 
-String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
-File projectDir = project.projectDir as File
-
 Config config = new Config(project)
 
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
 }
-
-boolean useLiferay = config.services.contains("liferay")
-
-boolean useClustering = useLiferay && config.clusterNodes > 0
-
-ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
-	include "**/service.*.yaml"
-
-	if (useClustering) {
-		include "**/clustering.*.yaml"
-	}
-
-	if (useLiferay) {
-		include "**/liferay.*.yaml"
-	}
-
-	if (config.databasePartitioningEnabled) {
-		if (!config.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
-			throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
-		}
-
-		include "**/database-partitioning.*.yaml"
-	}
-}
-
-List<String> serviceComposeFiles = config.services.collect {
-	String serviceName ->
-
-	FileTree matchingFileTree = dockerComposeFileTree.matching {
-		include "**/*.${serviceName}.yaml"
-	}
-
-	if (matchingFileTree.isEmpty()) {
-		List<String> possibleServices = dockerComposeFileTree.findAll{
-			it.name.startsWith("service.")
-		}.collect {
-			it.name.substring("service.".length(), it.name.indexOf(".yaml"))
-		}
-
-		throw new GradleException(
-			"The service '${serviceName}' does not have a matching service.*.yaml file. Possible services are: ${possibleServices}");
-	}
-
-	matchingFileTree.getFiles()
-}.flatten().collect {
-	projectDir.relativePath(it)
-}
-
-config.composeFiles.addAll(serviceComposeFiles)
 
 tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	containerId = "${config.namespace}-data-helper"
@@ -146,13 +94,13 @@ clean {
 }
 
 dockerDeploy {
-	if (useLiferay) {
+	if (config.useLiferay) {
 		dependsOn ":prepareHotfixes"
 	}
 }
 
 composeUp {
-	if (useLiferay) {
+	if (config.useLiferay) {
 		dependsOn ":buildDockerImage"
 	}
 
@@ -171,11 +119,11 @@ environmentMap.put "DATA_DIRECTORY", config.dataDirectory
 environmentMap.put "DATABASE_NAME", config.databaseName
 environmentMap.put "NAMESPACE", config.namespace
 
-if (useClustering) {
+if (config.useClustering) {
 	environmentMap.put "LIFERAY_CLUSTER_NODES", config.clusterNodes
 }
 
-if (useLiferay) {
+if (config.useLiferay) {
 	environmentMap.put "LIFERAY_IMAGE_NAME", config.liferayDockerImageId
 }
 

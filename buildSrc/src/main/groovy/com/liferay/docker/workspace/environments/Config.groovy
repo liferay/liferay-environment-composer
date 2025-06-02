@@ -1,6 +1,10 @@
 package com.liferay.docker.workspace.environments
 
 import org.gradle.api.Project
+import org.gradle.api.file.ConfigurableFileTree
+import org.gradle.api.file.FileTree
+import org.gradle.api.GradleException
+
 
 class Config {
 
@@ -58,6 +62,58 @@ class Config {
 		}
 
 		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
+
+		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
+		File projectDir = project.projectDir as File
+
+		this.useLiferay = this.services.contains("liferay")
+
+		this.useClustering = this.useLiferay && this.clusterNodes > 0
+
+		ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
+			include "**/service.*.yaml"
+
+			if (this.useClustering) {
+				include "**/clustering.*.yaml"
+			}
+
+			if (this.useLiferay) {
+				include "**/liferay.*.yaml"
+			}
+
+			if (this.databasePartitioningEnabled) {
+				if (!this.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
+					throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
+				}
+
+				include "**/database-partitioning.*.yaml"
+			}
+		}
+
+		List<String> serviceComposeFiles = this.services.collect {
+			String serviceName ->
+
+			FileTree matchingFileTree = dockerComposeFileTree.matching {
+				include "**/*.${serviceName}.yaml"
+			}
+
+			if (matchingFileTree.isEmpty()) {
+				List<String> possibleServices = dockerComposeFileTree.findAll{
+					it.name.startsWith("service.")
+				}.collect {
+					it.name.substring("service.".length(), it.name.indexOf(".yaml"))
+				}
+
+				throw new GradleException(
+					"The service '${serviceName}' does not have a matching service.*.yaml file. Possible services are: ${possibleServices}");
+			}
+
+			matchingFileTree.getFiles()
+		}.flatten().collect {
+			projectDir.relativePath(it)
+		}
+
+		this.composeFiles.addAll(serviceComposeFiles)
 	}
 
 	static List toList(String s) {
@@ -73,9 +129,11 @@ class Config {
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
+	public boolean useClustering = false
+	public boolean useLiferay = false
 
 	@Override
 	public String toString() {
-		return "${Config.class.declaredFields.findAll{ !it.synthetic }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
+		return "${this.class.declaredFields.findAll{ !it.synthetic }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
 	}
 }

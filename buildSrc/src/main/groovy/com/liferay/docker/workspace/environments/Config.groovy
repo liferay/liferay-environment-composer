@@ -114,6 +114,33 @@ class Config {
 		}
 
 		this.composeFiles.addAll(serviceComposeFiles)
+
+		this.environmentMap.put "DATA_DIRECTORY", this.dataDirectory
+		this.environmentMap.put "DATABASE_NAME", this.databaseName
+		this.environmentMap.put "NAMESPACE", this.namespace
+
+		if (this.useClustering) {
+			this.environmentMap.put "LIFERAY_CLUSTER_NODES", this.clusterNodes
+		}
+
+		if (this.useLiferay) {
+			this.environmentMap.put "LIFERAY_IMAGE_NAME", this.liferayDockerImageId
+		}
+
+		this.environmentMap.put("COMPOSE_FILE", this.composeFiles.join(File.pathSeparator))
+		this.environmentMap.put("COMPOSE_PROJECT_NAME", this.namespace.toLowerCase())
+
+		new File('.env').withOutputStream {
+			BufferedOutputStream envFileOutputStream ->
+
+			this.environmentMap.forEach {
+				key, value ->
+
+				envFileOutputStream << key << "=" << value << "\n"
+			}
+		}
+
+		this.environmentMap = environmentMap.asImmutable()
 	}
 
 	static List toList(String s) {
@@ -125,6 +152,7 @@ class Config {
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"

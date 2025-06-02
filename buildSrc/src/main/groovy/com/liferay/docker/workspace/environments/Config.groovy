@@ -37,6 +37,12 @@ class Config {
 			this.dataDirectory = dataDirectory
 		}
 
+		String documentLibraryFileListOnly = project.getProperty("lr.docker.environment.liferay.document.library.file.list.only")
+
+		if (documentLibraryFileListOnly != null) {
+			this.documentLibraryFileListOnly = documentLibraryFileListOnly.toBoolean()
+		}
+
 		List hotfixURLs = this.toList(project.getProperty("lr.docker.environment.hotfix.urls"))
 
 		if (!hotfixURLs.isEmpty()) {
@@ -152,6 +158,7 @@ class Config {
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public boolean documentLibraryFileListOnly = false
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""

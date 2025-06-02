@@ -15,8 +15,14 @@ tasks.register("exportContainerData") {
 
 			String backupFileName = "${volumeName.substring(prefix.length())}.tar"
 
-			println "Creating backup of volume ${volumeName} in ${exportPath}/${backupFileName}"
-			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportPath}:/target busybox:latest tar cf /target/${backupFileName} -C /source .")
+			if (volumeName.endsWith("_liferay-data-volume") && config.documentLibraryFileListOnly) {
+				backupFileName = "${backupFileName}.gz"
+				waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportPath}:/target busybox:latest sh -c 'cd /source; find . -type d | sort | sed \"s@^@/tmp/@g\" | xargs mkdir -p; find . -type f | sed \"s@^@/tmp/@g\" | xargs touch; tar c -zf /target/${backupFileName} -C /tmp .'")
+			}
+			else {
+				println "Creating backup of volume ${volumeName} in ${exportPath}/${backupFileName}"
+				waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportPath}:/target busybox:latest tar cf /target/${backupFileName} -C /source .")
+			}
 
 			println "Created backup of volume ${volumeName} in ${exportPath}/${backupFileName}"
 		}

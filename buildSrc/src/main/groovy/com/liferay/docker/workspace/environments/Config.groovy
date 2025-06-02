@@ -19,6 +19,12 @@ class Config {
 
 		this.composeFiles.addAll(this.toList(project.getProperty("lr.docker.environment.compose.files")))
 
+		String clearVolumeData = project.getProperty("lr.docker.environment.clear.volume.data")
+
+		if (clearVolumeData != null) {
+			this.clearVolumeData = clearVolumeData.toBoolean()
+		}
+
 		String databaseName = project.getProperty("lr.docker.environment.database.name")
 
 		if (databaseName != null) {
@@ -153,6 +159,7 @@ class Config {
 		return s.trim().split(",").grep()
 	}
 
+	public boolean clearVolumeData = false
 	public int clusterNodes = 0
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"

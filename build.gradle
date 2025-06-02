@@ -157,7 +157,7 @@ composeUp {
 	}
 
 	doFirst {
-		println "Using config: ${config}"
+		println "Using config:\n${config}"
 	}
 
 	onlyIf {

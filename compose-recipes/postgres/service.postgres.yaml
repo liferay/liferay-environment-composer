@@ -23,11 +23,12 @@ services:
                     memory: 1G
         volumes:
             -   read_only: true
-                source: ./dumps
+                source: database-dumps-volume
                 target: /docker-entrypoint-initdb.d
-                type: bind
+                type: volume
             -   source: database-data-volume
                 target: /var/lib/postgresql/data
                 type: volume
 volumes:
     database-data-volume:
+    database-dumps-volume:

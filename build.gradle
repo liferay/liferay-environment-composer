@@ -97,6 +97,8 @@ composeUp {
 		dependsOn ":buildDockerImage"
 	}
 
+	dependsOn importDatabaseDumps
+
 	doFirst {
 		println "Using config:\n${config}"
 	}

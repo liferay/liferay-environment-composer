@@ -1,0 +1,131 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+
+Closure<Boolean> copyLiferayLXCRepositoryConfiguration
+
+copyLiferayLXCRepositoryConfiguration = {
+	File configFolder, String sourceName, String targetName ->
+
+	File sourceFile = new File(configFolder, sourceName)
+
+	if (!sourceFile.exists()) {
+		return false
+	}
+
+	File targetFile = new File(new File(projectDir, "configs"), targetName)
+
+	if (sourceFile.isDirectory()) {
+		for (String fileName : sourceFile.list()) {
+			copyLiferayLXCRepositoryConfiguration(sourceFile, fileName, "${targetName}/${fileName}".toString())
+		}
+	}
+	else {
+		targetFile.getParentFile().mkdirs()
+
+		Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+	}
+
+	return true
+}
+
+Closure<Void> copyLiferayLXCRepositoryConfigurations = {
+	Map<String, String> defaultCompanyVirtualHost, List<String> includeAndOverride ->
+
+	String expectedHostName = defaultCompanyVirtualHost["hostname"].substring(0, defaultCompanyVirtualHost["hostname"].length() - ".localhost".length())
+
+	List<File> envConfigs = new File(projectDir, "${config.liferayLXCRepositoryPath}/liferay/configs").listFiles().findAll {
+		File portalEnvProperties = new File(it, "portal-env.properties")
+
+		if (!portalEnvProperties.exists()) {
+			return false
+		}
+
+		String portalEnvPropertiesText = portalEnvProperties.text
+
+		return portalEnvPropertiesText.contains("company.default.web.id=${defaultCompanyVirtualHost["webId"]}") &&
+			portalEnvPropertiesText.contains("company.default.virtual.host.name=${expectedHostName}")
+	}
+
+	envConfigs.each {
+		if (copyLiferayLXCRepositoryConfiguration(it, "portal-env.properties", "common/properties/lxc-portal-env-${it.getName()}.properties")) {
+			includeAndOverride.add("./properties/lxc-portal-env-${it.getName()}.properties")
+
+			println "Copied ${it.getName()}/portal-env.properties from liferay-lxc repository clone"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(it, "scripts", "docker")) {
+			println "Copied ${it.getName()}/scripts from liferay-lxc repository clone"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(it, "osgi", "common/osgi")) {
+			println "Copied ${it.getName()}/osgi from liferay-lxc repository clone"
+		}
+	}
+
+	new File(projectDir, "configs/common/properties/lxc.properties").text = """
+database.partition.enabled=true
+database.partition.thread.pool.enabled=true
+company.default.web.id=${defaultCompanyVirtualHost["webId"]}
+company.default.virtual.host.name=${defaultCompanyVirtualHost["hostname"]}
+		"""
+
+	includeAndOverride.add("./properties/lxc.properties")
+}
+
+tasks.register("updateDefaultVirtualHost") {
+	doFirst {
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		if (defaultWebId == null) {
+			return
+		}
+
+		Map<String, String> defaultCompanyVirtualHost = companyVirtualHosts.find {
+			it["webId"] == defaultWebId
+		}
+
+
+		File portalExtPropertiesFile = new File(projectDir, "configs/common/portal-ext.properties")
+
+		List<String> propertiesLines = []
+		List<String> includeAndOverride = []
+
+		portalExtPropertiesFile.eachLine {
+			String key = it.trim().split("=")[0]
+
+			if (key.equals("company.default.web.id")) {
+				return
+			}
+
+			if (key.equals("include-and-override")) {
+				String file = it.split("=")[1].trim()
+
+				if (!file.contains("/lxc")) {
+					includeAndOverride.add(file)
+				}
+			}
+			else {
+				propertiesLines.add(it)
+			}
+		}
+
+		if (config.databasePartitioningEnabled) {
+			copyLiferayLXCRepositoryConfigurations(defaultCompanyVirtualHost, includeAndOverride)
+		}
+
+		portalExtPropertiesFile.withOutputStream {
+			BufferedOutputStream outputStream ->
+
+			includeAndOverride.each {
+				outputStream << "include-and-override=" << it << "\n"
+			}
+
+			propertiesLines.each {
+				outputStream << it << "\n"
+			}
+		}
+	}
+}

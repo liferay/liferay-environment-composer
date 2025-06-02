@@ -54,6 +54,57 @@ tasks.register("decryptCloudBackupDatabase") {
 	}
 }
 
+tasks.register("decryptCloudBackupDocumentLibrary") {
+	doFirst {
+		File doclibBackupsFolder = new File(projectDir, "doclib")
+
+		if (!doclibBackupsFolder.exists()) {
+			File lxcFolder = new File(projectDir, "lxc")
+
+			if (!lxcFolder.exists()) {
+				return
+			}
+
+			List<File> doclibBackupFiles = lxcFolder.listFiles().findAll {
+				it.getName().startsWith("doclib") && it.getName().endsWith(".7z")
+			}
+
+			if (doclibBackupFiles.isEmpty()) {
+				return
+			}
+
+			if (doclibBackupFiles.size() > 1) {
+				throw new GradleException("Unable to identify document library backup")
+			}
+
+			println "Extracting LXC document library backup"
+			waitForCommand("7z x ${doclibBackupFiles[0].getAbsolutePath()} -o${doclibBackupsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+		}
+
+		File doclibFolder = doclibBackupsFolder;
+
+		while (doclibFolder.list().length == 1 && !doclibFolder.list().contains("0")) {
+			doclibFolder = doclibFolder.listFiles()[0]
+		}
+
+		if (!doclibFolder.list().contains("0")) {
+			throw new GradleException("Unable to find system folder 0 in document library backup")
+		}
+
+		if (!doclibFolder.equals(doclibBackupsFolder)) {
+			doclibFolder.listFiles().each {
+				it.renameTo(new File(doclibBackupsFolder, it.getName()).getAbsolutePath())
+			}
+
+			while (!doclibFolder.equals(doclibBackupsFolder)) {
+				doclibFolder.delete()
+
+				doclibFolder = doclibFolder.getParentFile()
+			}
+		}
+	}
+}
+
 tasks.register("importCloudBackupDatabase") {
 	dependsOn decryptCloudBackupDatabase
 
@@ -99,5 +150,18 @@ tasks.register("importCloudBackupDatabase") {
 		}
 
 		println "Loaded LXC database backup into database container"
+	}
+}
+
+tasks.register("importCloudBackupDocumentLibrary") {
+	dependsOn decryptCloudBackupDocumentLibrary
+	dependsOn dockerCreate
+
+	onlyIf {
+		config.useLiferay
+	}
+
+	doFirst {
+		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", new File(projectDir, "doclib"), config.documentLibraryFileListOnly)
 	}
 }

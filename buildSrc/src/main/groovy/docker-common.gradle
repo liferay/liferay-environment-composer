@@ -88,7 +88,7 @@ ext {
 
 			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
 		}
-		else {
+		else if (backupFile.exists()) {
 			String fileName = backupFile.getName()
 
 			if (importFileListOnly) {
@@ -103,6 +103,9 @@ ext {
 			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${fileName}")
 
 			println "Copied file ${importPath} to ${volumeName}"
+		}
+		else {
+			throw new GradleException("Unable to find file ${importPath}")
 		}
 	}
 

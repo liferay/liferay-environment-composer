@@ -20,6 +20,7 @@
 /bundles
 /containerLogs
 /data/*
+/doclib
 /dumps/*
 /exported_data
 /gradle-*.properties

@@ -1,6 +1,10 @@
+import groovy.json.JsonSlurper
+
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.regex.Pattern
+import java.util.regex.Matcher
 
 Closure<Boolean> copyLiferayLXCRepositoryConfiguration
 
@@ -24,6 +28,70 @@ copyLiferayLXCRepositoryConfiguration = {
 		targetFile.getParentFile().mkdirs()
 
 		Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+	}
+
+	return true
+}
+
+Closure<Boolean> updateGradlePropertiesWithLiferayVersion = {
+	String environmentName ->
+
+	File environmentDescriptorFile = new File(new File(projectDir, config.liferayLXCRepositoryPath), "automation/environment-descriptors/${environmentName}.json")
+
+	if (!environmentDescriptorFile.exists()) {
+		return false
+	}
+
+	JsonSlurper jsonSlurper = new JsonSlurper()
+
+	Object environmentDescriptor = jsonSlurper.parse(environmentDescriptorFile)
+
+	String liferayImage = environmentDescriptor["liferay-image"]
+	String liferayHotfix = environmentDescriptor["hotfix"]
+
+	Pattern releasePattern = ~'[0-9]+\\.q[1-4]\\.[0-9]+'
+
+	Matcher releaseMatcher = releasePattern.matcher(liferayImage)
+
+	if (!releaseMatcher.find()) {
+		println "did not match ${liferayImage}"
+		return false
+	}
+
+	String release = releaseMatcher.group()
+
+	if ((release.indexOf(".q1") != -1) && !release.startsWith("2024.")) {
+		release = release + "-lts"
+	}
+
+	String workspaceProduct = "dxp-${release}"
+	String liferayHotfixURL = "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${liferayHotfix}.zip"
+
+	File gradlePropertiesFile = new File(projectDir, "gradle.properties")
+
+	List<String> gradlePropertiesLines = []
+	
+	gradlePropertiesFile.eachLine {
+		if (it.startsWith("liferay.workspace.product=")) {
+			gradlePropertiesLines.add("liferay.workspace.product=${workspaceProduct}")
+		}
+		else if (it.startsWith("liferay.workspace.docker.image.liferay=")) {
+			gradlePropertiesLines.add("liferay.workspace.docker.image.liferay=${liferayImage}")
+		}
+		else if (it.startsWith("lr.docker.environment.hotfix.urls=")) {
+			gradlePropertiesLines.add("lr.docker.environment.hotfix.urls=${liferayHotfixURL}")
+		}
+		else {
+			gradlePropertiesLines.add(it)
+		}
+	}
+
+	gradlePropertiesFile.withOutputStream {
+		BufferedOutputStream outputStream ->
+
+		gradlePropertiesLines.each {
+			outputStream << it << "\n"
+		}
 	}
 
 	return true
@@ -60,6 +128,10 @@ Closure<Void> copyLiferayLXCRepositoryConfigurations = {
 
 		if (copyLiferayLXCRepositoryConfiguration(it, "osgi", "common/osgi")) {
 			println "Copied ${it.getName()}/osgi from liferay-lxc repository clone"
+		}
+
+		if (updateGradlePropertiesWithLiferayVersion(it.getName())) {
+			println "Updated gradle.properties with version from ${it.getName()}"
 		}
 	}
 

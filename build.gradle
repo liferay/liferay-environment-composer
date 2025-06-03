@@ -88,8 +88,6 @@ dockerDeploy {
 	if (config.useLiferay) {
 		dependsOn ":prepareHotfixes"
 	}
-
-	dependsOn updateDefaultVirtualHost
 }
 
 composeUp {

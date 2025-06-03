@@ -4,6 +4,13 @@ ext {
 	executeSQLQuery = {
 		String sql, String schema = null ->
 
+		if (config.services.contains("mysql") || config.services.contains("postgres")) {
+			waitForContainer("database", "${config.namespace}-database")
+		}
+		else {
+			throw new GradleException("Database service not detected")
+		}
+
 		if (config.services.contains("mysql")) {
 			List<String> results = []
 
@@ -23,7 +30,7 @@ ext {
 			}
 		}
 		else {
-			throw new GradleException("Database service not detected")
+			return []
 		}
 	}
 
@@ -46,30 +53,40 @@ ext {
 
 		Map<String, String> defaultCompanyVirtualHost = null
 
-		List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
+		boolean hasDatabase = config.services.contains("mysql") || config.services.contains("postgres")
 
-		if (!adminInstanceVirtualHosts.isEmpty()) {
-			config.databasePartitioningEnabled = true
-		}
+		if (hasDatabase) {
+			List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
 
-		if (config.databasePartitioningEnabled) {
-			String defaultCompanyId = adminInstanceVirtualHosts[0]["companyId"]
-
-			defaultCompanyVirtualHost = companyVirtualHosts.find {
-				it["companyId"] == defaultCompanyId
+			if (!adminInstanceVirtualHosts.isEmpty()) {
+				config.databasePartitioningEnabled = true
 			}
-		}
-		else if (companyVirtualHosts.size() == 1) {
-			defaultCompanyVirtualHost = companyVirtualHosts[0]
-		}
-		else if (propertyDefaultWebId != null) {
-			defaultCompanyVirtualHost = companyVirtualHosts.find {
-				it["webId"] == propertyDefaultWebId
+
+			if (config.databasePartitioningEnabled) {
+				String defaultCompanyId = adminInstanceVirtualHosts[0]["companyId"]
+
+				defaultCompanyVirtualHost = companyVirtualHosts.find {
+					it["companyId"] == defaultCompanyId
+				}
 			}
 		}
 		else {
-			defaultCompanyVirtualHost = companyVirtualHosts.find {
-				it["webId"] == "liferay.com"
+			config.databasePartitioningEnabled = false
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			if (companyVirtualHosts.size() == 1) {
+				defaultCompanyVirtualHost = companyVirtualHosts[0]
+			}
+			else if (propertyDefaultWebId != null) {
+				defaultCompanyVirtualHost = companyVirtualHosts.find {
+					it["webId"] == propertyDefaultWebId
+				}
+			}
+			else {
+				defaultCompanyVirtualHost = companyVirtualHosts.find {
+					it["webId"] == "liferay.com"
+				}
 			}
 		}
 

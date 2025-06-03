@@ -32,8 +32,8 @@ tasks.register("importDatabaseDumps") {
 	}
 
 	doFirst {
-		String dataVolumeName = "${project.ext.config.namespace.toLowerCase()}_database-data-volume"
-		String dumpsVolumeName = "${project.ext.config.namespace.toLowerCase()}_database-dumps-volume"
+		String dataVolumeName = "${config.namespace.toLowerCase()}_database-data-volume"
+		String dumpsVolumeName = "${config.namespace.toLowerCase()}_database-dumps-volume"
 
 		waitForCommand("docker compose create")
 		waitForCommand("docker compose build database")
@@ -93,7 +93,6 @@ tasks.register("importDatabaseDumps") {
 
 			globalVariableScript.delete()
 
-			waitForContainer("database", "${config.namespace}-database")
 			executeSQLQuery(oldVariables.collect { "SET GLOBAL ${it.key}=${it.value};\n" }.join(""))
 
 			List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
@@ -117,7 +116,7 @@ tasks.register("importContainerData") {
 	dependsOn dockerCreate
 
 	doFirst {
-		String prefix = "${project.ext.config.namespace.toLowerCase()}_"
+		String prefix = "${config.namespace.toLowerCase()}_"
 
 		List<String> existingVolumeNames = getExistingVolumeNames(prefix)
 

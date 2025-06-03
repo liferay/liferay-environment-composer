@@ -146,6 +146,10 @@ company.default.virtual.host.name=${defaultCompanyVirtualHost["hostname"]}
 }
 
 tasks.register("updateDefaultVirtualHost") {
+	onlyIf {
+		config.services.contains("mysql") || config.services.contains("postgres")
+	}
+
 	doFirst {
 		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
 

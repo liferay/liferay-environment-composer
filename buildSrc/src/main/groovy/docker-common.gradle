@@ -203,8 +203,21 @@ ext {
 	waitForContainer = {
 		String serviceName, String containerName ->
 
-		println "Starting service ${serviceName}"
-		waitForCommand("docker compose up -d ${serviceName}")
+		String serviceStatus = waitForCommand("docker compose ps ${serviceName} --format=json").trim()
+
+		if (serviceStatus.length() > 0) {
+			JsonSlurper jsonSlurper = new JsonSlurper()
+
+			String health = jsonSlurper.parseText(serviceStatus)["Health"]
+
+			if ((health != null) && health.equals("healthy")) {
+				return
+			}
+		}
+		else {
+			println "Starting service ${serviceName}"
+			waitForCommand("docker compose up -d ${serviceName}")
+		}
 
 		String status = null
 

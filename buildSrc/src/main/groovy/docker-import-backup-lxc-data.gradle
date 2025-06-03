@@ -1,6 +1,6 @@
 project.plugins.apply "docker-common"
 
-Closure<Void> validateDatabaseBackupFileExtensions = {
+Closure<Boolean> validateDatabaseBackupFileExtensions = {
 	File dumpsFolder ->
 
 	List<File> decryptedBackupFiles = dumpsFolder.listFiles().findAll {
@@ -16,6 +16,52 @@ Closure<Void> validateDatabaseBackupFileExtensions = {
 			String path = it.getAbsolutePath()
 			it.renameTo("${path.substring(0, path.length() - 3)}.sql.gz")
 		}
+	}
+
+	return true
+}
+
+Closure<File> getFirstMatchingSubFolder
+
+getFirstMatchingSubFolder = {
+	File folder, Closure<Boolean> predicate ->
+
+	if (predicate(folder)) {
+		return folder
+	}
+
+	List<File> subfolders = folder.listFiles().findAll {
+		it.isDirectory()
+	}
+
+	if (subfolders.size() != 1) {
+		return null
+	}
+
+	return getFirstMatchingSubFolder(subfolders[0], predicate)
+}
+
+Closure<Boolean> stripComponentFolders = {
+	File sourceFolder, File targetFolder ->
+
+	if (sourceFolder == null) {
+		return false
+	}
+
+	if (sourceFolder.equals(targetFolder)) {
+		return true
+	}
+
+	sourceFolder.listFiles().each {
+		it.renameTo(new File(targetFolder, it.getName()))
+	}
+
+	File nestedFolder = sourceFolder
+
+	while (!nestedFolder.equals(targetFolder)) {
+		nestedFolder.delete()
+
+		nestedFolder = nestedFolder.getParentFile()
 	}
 
 	return true
@@ -48,9 +94,11 @@ tasks.register("decryptCloudBackupDatabase") {
 		}
 
 		println "Extracting LXC database backup"
-		waitForCommand("7z x ${databaseBackupFiles[0].getAbsolutePath()} -o${dumpsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+		waitForCommand("7z x -aos ${databaseBackupFiles[0].getAbsolutePath()} -o${dumpsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
 
-		validateDatabaseBackupFileExtensions(dumpsFolder)
+		if (!stripComponentFolders(getFirstMatchingSubFolder(dumpsFolder, validateDatabaseBackupFileExtensions), dumpsFolder)) {
+			throw new GradleException("Unable to identify database backup")
+		}
 	}
 }
 
@@ -78,29 +126,11 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 			}
 
 			println "Extracting LXC document library backup"
-			waitForCommand("7z x ${doclibBackupFiles[0].getAbsolutePath()} -o${doclibBackupsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+			waitForCommand("7z x -aos ${doclibBackupFiles[0].getAbsolutePath()} -o${doclibBackupsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
 		}
 
-		File doclibFolder = doclibBackupsFolder;
-
-		while (doclibFolder.list().length == 1 && !doclibFolder.list().contains("0")) {
-			doclibFolder = doclibFolder.listFiles()[0]
-		}
-
-		if (!doclibFolder.list().contains("0")) {
+		if (!stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, { it.list().contains("0") }), doclibBackupsFolder)) {
 			throw new GradleException("Unable to find system folder 0 in document library backup")
-		}
-
-		if (!doclibFolder.equals(doclibBackupsFolder)) {
-			doclibFolder.listFiles().each {
-				it.renameTo(new File(doclibBackupsFolder, it.getName()).getAbsolutePath())
-			}
-
-			while (!doclibFolder.equals(doclibBackupsFolder)) {
-				doclibFolder.delete()
-
-				doclibFolder = doclibFolder.getParentFile()
-			}
 		}
 	}
 }

@@ -136,7 +136,7 @@ ext {
 			}
 			else {
 				println "Copying directory ${importPath} to ${volumeName}"
-				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cp --no-clobber --recursive /source/* /target/'")
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
 			}
 
 			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
@@ -150,7 +150,7 @@ ext {
 			}
 			else {
 				println "Copying file ${importPath} to ${volumeName}"
-				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source/${fileName} busybox:latest sh -c 'cp --no-clobber /source/* /target/'")
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source/${fileName} busybox:latest sh -c 'cp --update /source/* /target/'")
 			}
 
 			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${fileName}")

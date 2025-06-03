@@ -204,6 +204,6 @@ class Config {
 
 	@Override
 	public String toString() {
-		return "${this.class.declaredFields.findAll{ !it.synthetic }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
+		return "${this.class.declaredFields.findAll{ !it.synthetic && !it.name.toLowerCase().contains("password") }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
 	}
 }

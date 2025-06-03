@@ -162,7 +162,14 @@ Closure<Void> resetLiferayUserPasswords = {
 }
 
 tasks.register("updateCloudBackupDatabaseForLocalDevelopment") {
+	mustRunAfter importDatabaseDumps
+
+	onlyIf {
+		config.services.contains("mysql") || config.services.contains("postgres")
+	}
+
 	doFirst {
+		waitForContainer("database", "${project.ext.config.namespace}-database")
 		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
 
 		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)

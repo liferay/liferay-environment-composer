@@ -55,6 +55,12 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		Integer liferayLXCEnvironmentHistoryCount = project.getProperty("lr.docker.environment.liferay-lxc.environment.history.count") as Integer
+
+		if (liferayLXCEnvironmentHistoryCount != null) {
+			this.liferayLXCEnvironmentHistoryCount = Math.max(1, liferayLXCEnvironmentHistoryCount)
+		}
+
 		String liferayLXCRepositoryPath = project.getProperty("lr.docker.environment.liferay-lxc.repository.path")
 
 		if (liferayLXCRepositoryPath != null) {
@@ -194,6 +200,7 @@ class Config {
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
+	public int liferayLXCEnvironmentHistoryCount = 5
 	public String liferayLXCRepositoryPath = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = ""

@@ -33,18 +33,12 @@ copyLiferayLXCRepositoryConfiguration = {
 	return true
 }
 
-Closure<Boolean> updateGradlePropertiesWithLiferayVersion = {
-	String environmentName ->
-
-	File environmentDescriptorFile = new File(new File(projectDir, config.liferayLXCRepositoryPath), "automation/environment-descriptors/${environmentName}.json")
-
-	if (!environmentDescriptorFile.exists()) {
-		return false
-	}
+Closure<Map<String, String>> getReleaseInfo = {
+	String descriptorText ->
 
 	JsonSlurper jsonSlurper = new JsonSlurper()
 
-	Object environmentDescriptor = jsonSlurper.parse(environmentDescriptorFile)
+	Object environmentDescriptor = jsonSlurper.parseText(descriptorText)
 
 	String liferayImage = environmentDescriptor["liferay-image"]
 	String liferayHotfix = environmentDescriptor["hotfix"]
@@ -55,7 +49,7 @@ Closure<Boolean> updateGradlePropertiesWithLiferayVersion = {
 
 	if (!releaseMatcher.find()) {
 		println "did not match ${liferayImage}"
-		return false
+		return null
 	}
 
 	String release = releaseMatcher.group()
@@ -67,22 +61,65 @@ Closure<Boolean> updateGradlePropertiesWithLiferayVersion = {
 	String workspaceProduct = "dxp-${release}"
 	String liferayHotfixURL = "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${liferayHotfix}.zip"
 
+	return [
+		"liferay.workspace.product": workspaceProduct,
+		"liferay.workspace.docker.image.liferay": liferayImage,
+		"lr.docker.environment.hotfix.urls": liferayHotfixURL
+	]
+}
+
+Closure<String> updateGradlePropertiesWithLiferayVersion = {
+	String environmentName ->
+
+	File lxcRepositoryFolder = new File(projectDir, config.liferayLXCRepositoryPath)
+	String descriptorPath = "automation/environment-descriptors/${environmentName}.json"
+
+	File environmentDescriptorFile = new File(lxcRepositoryFolder, descriptorPath)
+
+	if (!environmentDescriptorFile.exists()) {
+		return null
+	}
+
+	Map<String, String> latestReleaseInfo = null
+	String latestReleaseInfoDate = null
+
+	waitForCommand("git log -${config.liferayLXCEnvironmentHistoryCount} --pretty='%H %cd' --date=format-local:'%Y-%m-%d %H:%M:%S %Z' -- ${descriptorPath}", lxcRepositoryFolder).eachLine {
+		int pos = it.indexOf(" ")
+
+		String commit = it.substring(0, pos)
+		String releaseInfoDate = it.substring(pos + 1)
+
+		println ""
+		println releaseInfoDate
+		
+		Map<String, String> releaseInfo = getReleaseInfo(waitForCommand("git show ${commit}:${descriptorPath}", lxcRepositoryFolder)).each {
+			println "${it.key}=${it.value}"
+		}
+
+		if (latestReleaseInfo == null) {
+			latestReleaseInfo = releaseInfo
+			latestReleaseInfoDate = releaseInfoDate
+		}
+	}
+
 	File gradlePropertiesFile = new File(projectDir, "gradle.properties")
 
 	List<String> gradlePropertiesLines = []
 	
 	gradlePropertiesFile.eachLine {
-		if (it.startsWith("liferay.workspace.product=")) {
-			gradlePropertiesLines.add("liferay.workspace.product=${workspaceProduct}")
+		String line ->
+
+		boolean found = false
+
+		latestReleaseInfo.each {
+			if (line.startsWith("${it.key}=")) {
+				found = true
+				gradlePropertiesLines.add("${it.key}=${it.value}")
+			}
 		}
-		else if (it.startsWith("liferay.workspace.docker.image.liferay=")) {
-			gradlePropertiesLines.add("liferay.workspace.docker.image.liferay=${liferayImage}")
-		}
-		else if (it.startsWith("lr.docker.environment.hotfix.urls=")) {
-			gradlePropertiesLines.add("lr.docker.environment.hotfix.urls=${liferayHotfixURL}")
-		}
-		else {
-			gradlePropertiesLines.add(it)
+
+		if (!found) {
+			gradlePropertiesLines.add(line)
 		}
 	}
 
@@ -94,7 +131,7 @@ Closure<Boolean> updateGradlePropertiesWithLiferayVersion = {
 		}
 	}
 
-	return true
+	return latestReleaseInfoDate
 }
 
 Closure<Void> copyLiferayLXCRepositoryConfigurations = {
@@ -130,8 +167,11 @@ Closure<Void> copyLiferayLXCRepositoryConfigurations = {
 			println "Copied ${it.getName()}/osgi from liferay-lxc repository clone"
 		}
 
-		if (updateGradlePropertiesWithLiferayVersion(it.getName())) {
-			println "Updated gradle.properties with version from ${it.getName()}"
+		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion(it.getName())
+		
+		if (latestReleaseInfoDate != null) {
+			println ""
+			println "Updated gradle.properties to ${latestReleaseInfoDate}"
 		}
 	}
 

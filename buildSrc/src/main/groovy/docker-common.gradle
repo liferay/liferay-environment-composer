@@ -180,12 +180,12 @@ ext {
 	}
 
 	waitForCommand = {
-		String command ->
+		String command, File workingDir = null ->
 
 		StringBuffer err = new StringBuffer()
 		StringBuffer out = new StringBuffer()
 
-		Process process = ['bash', '-c', command].execute()
+		Process process = ['bash', '-c', command].execute([], workingDir)
 
 		process.waitForProcessOutput(out, err)
 

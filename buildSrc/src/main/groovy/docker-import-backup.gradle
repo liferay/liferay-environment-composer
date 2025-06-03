@@ -96,6 +96,12 @@ tasks.register("importDatabaseDumps") {
 			waitForContainer("database", "${config.namespace}-database")
 			executeSQLQuery(oldVariables.collect { "SET GLOBAL ${it.key}=${it.value};\n" }.join(""))
 
+			List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
+
+			if (!adminInstanceVirtualHosts.isEmpty()) {
+				config.databasePartitioningEnabled = true
+			}
+
 			if (config.databasePartitioningEnabled) {
 				executeSQLQuery(["lportal", "dxpcloud", "cloudsqlimport"].collect {
 					"create user if not exists ${it} identified by 'lportal';\ngrant all on *.* to '${it}'@'%';\n"

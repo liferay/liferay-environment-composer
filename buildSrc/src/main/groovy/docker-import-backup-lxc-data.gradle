@@ -104,7 +104,7 @@ tasks.register("decryptCloudBackupDatabase") {
 
 tasks.register("decryptCloudBackupDocumentLibrary") {
 	doFirst {
-		File doclibBackupsFolder = new File(projectDir, "doclib")
+		File doclibBackupsFolder = new File(projectDir, "liferay_data/document_library")
 
 		if (!doclibBackupsFolder.exists()) {
 			File lxcFolder = new File(projectDir, "lxc")
@@ -207,7 +207,7 @@ tasks.register("importCloudBackupDocumentLibrary") {
 	}
 
 	doFirst {
-		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", new File(projectDir, "doclib"), config.documentLibraryFileListOnly)
+		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", new File(projectDir, "liferay_data"), config.documentLibraryFileListOnly)
 	}
 }
 

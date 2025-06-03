@@ -21,12 +21,12 @@
 /bundles
 /containerLogs
 /data/*
-/doclib
 /dumps/*
 /exported_data
 /gradle-*.properties
 /helper/data
 /helper/dumps
+/liferay_data
 /lxc
 /plugins-sdk/**/classes
 /plugins-sdk/**/ivy.xml.MD5

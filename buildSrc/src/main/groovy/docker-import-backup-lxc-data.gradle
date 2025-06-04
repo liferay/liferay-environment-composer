@@ -1,9 +1,14 @@
+import groovy.json.JsonSlurper
+
+import java.util.regex.Pattern
+import java.util.regex.Matcher
+
 project.plugins.apply "docker-common"
 
 Closure<Boolean> validateDatabaseBackupFileExtensions = {
-	File dumpsFolder ->
+	File extractedFolder ->
 
-	List<File> decryptedBackupFiles = dumpsFolder.listFiles().findAll {
+	List<File> decryptedBackupFiles = extractedFolder.listFiles().findAll {
 		it.name.endsWith(".gz") || it.name.endsWith(".sql")
 	}
 
@@ -86,7 +91,7 @@ tasks.register("decryptCloudBackupDatabase") {
 		}
 
 		List<File> databaseBackupFiles = lxcFolder.listFiles().findAll {
-			!it.name.startsWith("doclib") && it.name.endsWith(".7z")
+			!it.name.contains("doclib") && it.name.endsWith(".7z")
 		}
 
 		if (databaseBackupFiles.size() != 1) {
@@ -102,6 +107,42 @@ tasks.register("decryptCloudBackupDatabase") {
 	}
 }
 
+Closure<Boolean> containsTarFile = {
+	File extractedFolder ->
+
+	List<String> fileNames = extractedFolder.list()
+
+	if (fileNames.contains("0")) {
+		return true
+	}
+
+	return fileNames.find {
+		it.endsWith(".tar.gz") || it.endsWith(".tgz") || it.endsWith(".tar")
+	}
+}
+
+Closure<Boolean> isDocumentLibraryRoot = {
+	File extractedFolder ->
+
+	List<File> subfolders = extractedFolder.listFiles().findAll {
+		it.isDirectory()
+	}
+
+	if (subfolders.isEmpty()) {
+		return false
+	}
+
+	return subfolders.find {
+		try {
+			Long.parseLong(it.name)
+			return false
+		}
+		catch (NumberFormatException numberFormatException) {
+			return true
+		}
+	} == null
+}
+
 tasks.register("decryptCloudBackupDocumentLibrary") {
 	doFirst {
 		File doclibBackupsFolder = file("liferay_data/document_library")
@@ -114,7 +155,7 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 			}
 
 			List<File> doclibBackupFiles = lxcFolder.listFiles().findAll {
-				it.name.startsWith("doclib") && it.name.endsWith(".7z")
+				it.name.contains("doclib") && it.name.endsWith(".7z")
 			}
 
 			if (doclibBackupFiles.isEmpty()) {
@@ -129,7 +170,14 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 			waitForCommand("7z x -aos ${doclibBackupFiles[0].absolutePath} -o${doclibBackupsFolder.absolutePath} -p${config.lxcBackupPassword}")
 		}
 
-		if (!stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, { it.list().contains("0") }), doclibBackupsFolder)) {
+		while (stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, containsTarFile), doclibBackupsFolder)) {
+			doclibBackupsFolder.listFiles().each {
+				waitForCommand("7z x -aos ${it.absolutePath} -o${doclibBackupsFolder.absolutePath}")
+				it.delete()
+			}
+		}
+
+		if (!stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, isDocumentLibraryRoot), doclibBackupsFolder)) {
 			throw new GradleException("Unable to find system folder 0 in document library backup")
 		}
 	}
@@ -186,12 +234,73 @@ tasks.register("updateCloudBackupDatabaseForLocalDevelopment") {
 	finalizedBy updateDefaultVirtualHost
 }
 
+tasks.register("checkCloudBackupDatabaseType") {
+	mustRunAfter decryptCloudBackupDatabase
+
+	doFirst {
+		file("dumps").listFiles().findAll {
+			return it.name.endsWith(".sql") || it.name.endsWith(".sql.gz")
+		}.each {
+			Pattern projectPattern = ~"lxc([a-z0-9]{4})"
+			Matcher projectMatcher = projectPattern.matcher(it.name)
+
+			if (!projectMatcher.find()) {
+				return
+			}
+
+			String project = projectMatcher.group(1)
+
+			Pattern environmentPattern = ~"-(${project}[a-z0-9]+)"
+			Matcher environmentMatcher = environmentPattern.matcher(it.name)
+
+			if (!environmentMatcher.find()) {
+				return
+			}
+
+			String environment = environmentMatcher.group(1)
+
+			if (!environment.startsWith(project)) {
+				return
+			}
+
+			config.databasePartitioningEnabled = true
+
+			updateGradleLocalProperties([
+				"lr.docker.environment.database.partitioning.enabled": "true",
+			])
+
+			JsonSlurper jsonSlurper = new JsonSlurper()
+			Object lcpDescriptor = jsonSlurper.parse(new File(file(config.liferayLXCRepositoryPath), "liferay/LCP.json"))
+
+			Map<String, String> environmentEnv = lcpDescriptor["environments"].containsKey(environment) ? lcpDescriptor["environments"][environment]["env"] : [:]
+
+			if ((environmentEnv["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"] != null) && environmentEnv["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"].contains("postgres")) {
+				if (!config.services.contains("postgres")) {
+					updateGradleLocalProperties([
+						"lr.docker.environment.service.enabled[mysql]": "false",
+						"lr.docker.environment.service.enabled[postgres]": "true",
+					])
+
+					throw new GradleException("Updated gradle-local.properties to enable postgres, please re-run the task")
+				}
+			}
+			else {
+				if (!config.services.contains("mysql")) {
+					updateGradleLocalProperties([
+						"lr.docker.environment.service.enabled[mysql]": "true",
+						"lr.docker.environment.service.enabled[postgres]": "false",
+					])
+
+					throw new GradleException("Updated gradle-local.properties to enable mysql, please re-run the task")
+				}
+			}
+		}
+	}
+}
+
 tasks.register("importCloudBackupDatabase") {
 	dependsOn decryptCloudBackupDatabase
-
-	onlyIf {
-		config.services.contains("mysql")
-	}
+	dependsOn checkCloudBackupDatabaseType
 
 	finalizedBy importDatabaseDumps
 	finalizedBy updateCloudBackupDatabaseForLocalDevelopment

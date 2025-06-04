@@ -102,31 +102,24 @@ Closure<String> updateGradlePropertiesWithLiferayVersion = {
 		}
 	}
 
-	File gradlePropertiesFile = file("gradle.properties")
+	File gradleLocalPropertiesFile = file("gradle-local.properties")
 
-	List<String> gradlePropertiesLines = []
-	
-	gradlePropertiesFile.eachLine {
+	List<String> gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
 		String line ->
 
-		boolean found = false
-
-		latestReleaseInfo.each {
+		String newLine = latestReleaseInfo.find {
 			if (line.startsWith("${it.key}=")) {
-				found = true
-				gradlePropertiesLines.add("${it.key}=${it.value}")
+				return "${it.key}=${it.value}"
 			}
 		}
 
-		if (!found) {
-			gradlePropertiesLines.add(line)
-		}
+		return newLine != null ? newLine : line
 	}
 
-	gradlePropertiesFile.withOutputStream {
+	gradleLocalPropertiesFile.withOutputStream {
 		BufferedOutputStream outputStream ->
 
-		gradlePropertiesLines.each {
+		gradleLocalPropertiesLines.each {
 			outputStream << it << "\n"
 		}
 	}

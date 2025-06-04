@@ -8,7 +8,7 @@ tasks.register("exportContainerData") {
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss").withZone(ZoneId.systemDefault())
 
-		String exportPath = file("exported_data/data_${config.namespace}_${formatter.format(Instant.now())}").getAbsolutePath()
+		String exportPath = file("exported_data/data_${config.namespace}_${formatter.format(Instant.now())}").absolutePath
 
 		getExistingVolumeNames(prefix).each {
 			String volumeName ->

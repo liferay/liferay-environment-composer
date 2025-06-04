@@ -4,7 +4,7 @@ Closure<Boolean> validateDatabaseBackupFileExtensions = {
 	File dumpsFolder ->
 
 	List<File> decryptedBackupFiles = dumpsFolder.listFiles().findAll {
-		it.getName().endsWith(".gz") || it.getName().endsWith(".sql")
+		it.name.endsWith(".gz") || it.name.endsWith(".sql")
 	}
 
 	if (decryptedBackupFiles.isEmpty()) {
@@ -12,8 +12,8 @@ Closure<Boolean> validateDatabaseBackupFileExtensions = {
 	}
 
 	decryptedBackupFiles.each {
-		if (it.getName().endsWith(".gz") && !it.getName().endsWith(".sql.gz")) {
-			String path = it.getAbsolutePath()
+		if (it.name.endsWith(".gz") && !it.name.endsWith(".sql.gz")) {
+			String path = it.absolutePath
 			it.renameTo("${path.substring(0, path.length() - 3)}.sql.gz")
 		}
 	}
@@ -53,7 +53,7 @@ Closure<Boolean> stripComponentFolders = {
 	}
 
 	sourceFolder.listFiles().each {
-		it.renameTo(new File(targetFolder, it.getName()))
+		it.renameTo(new File(targetFolder, it.name))
 	}
 
 	File nestedFolder = sourceFolder
@@ -73,7 +73,7 @@ tasks.register("decryptCloudBackupDatabase") {
 
 		if (dumpsFolder.exists()) {
 			if (validateDatabaseBackupFileExtensions(dumpsFolder)) {
-				print("Found existing decrypted backups in ${dumpsFolder.getAbsolutePath()}")
+				print("Found existing decrypted backups in ${dumpsFolder.absolutePath}")
 
 				return
 			}
@@ -86,7 +86,7 @@ tasks.register("decryptCloudBackupDatabase") {
 		}
 
 		List<File> databaseBackupFiles = lxcFolder.listFiles().findAll {
-			!it.getName().startsWith("doclib") && it.getName().endsWith(".7z")
+			!it.name.startsWith("doclib") && it.name.endsWith(".7z")
 		}
 
 		if (databaseBackupFiles.size() != 1) {
@@ -94,7 +94,7 @@ tasks.register("decryptCloudBackupDatabase") {
 		}
 
 		println "Extracting LXC database backup"
-		waitForCommand("7z x -aos ${databaseBackupFiles[0].getAbsolutePath()} -o${dumpsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+		waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath} -p${config.lxcBackupPassword}")
 
 		if (!stripComponentFolders(getFirstMatchingSubFolder(dumpsFolder, validateDatabaseBackupFileExtensions), dumpsFolder)) {
 			throw new GradleException("Unable to identify database backup")
@@ -114,7 +114,7 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 			}
 
 			List<File> doclibBackupFiles = lxcFolder.listFiles().findAll {
-				it.getName().startsWith("doclib") && it.getName().endsWith(".7z")
+				it.name.startsWith("doclib") && it.name.endsWith(".7z")
 			}
 
 			if (doclibBackupFiles.isEmpty()) {
@@ -126,7 +126,7 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 			}
 
 			println "Extracting LXC document library backup"
-			waitForCommand("7z x -aos ${doclibBackupFiles[0].getAbsolutePath()} -o${doclibBackupsFolder.getAbsolutePath()} -p${config.lxcBackupPassword}")
+			waitForCommand("7z x -aos ${doclibBackupFiles[0].absolutePath} -o${doclibBackupsFolder.absolutePath} -p${config.lxcBackupPassword}")
 		}
 
 		if (!stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, { it.list().contains("0") }), doclibBackupsFolder)) {

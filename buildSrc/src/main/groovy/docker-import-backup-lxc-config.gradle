@@ -25,7 +25,7 @@ copyLiferayLXCRepositoryConfiguration = {
 		}
 	}
 	else {
-		targetFile.getParentFile().mkdirs()
+		targetFile.parentFile.mkdirs()
 
 		Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
 	}
@@ -153,21 +153,21 @@ Closure<Void> copyLiferayLXCRepositoryConfigurations = {
 	}
 
 	envConfigs.each {
-		if (copyLiferayLXCRepositoryConfiguration(it, "portal-env.properties", "common/properties/lxc-portal-env-${it.getName()}.properties")) {
-			includeAndOverride.add("./properties/lxc-portal-env-${it.getName()}.properties")
+		if (copyLiferayLXCRepositoryConfiguration(it, "portal-env.properties", "common/properties/lxc-portal-env-${it.name}.properties")) {
+			includeAndOverride.add("./properties/lxc-portal-env-${it.name}.properties")
 
-			println "Copied ${it.getName()}/portal-env.properties from liferay-lxc repository clone"
+			println "Copied ${it.name}/portal-env.properties from liferay-lxc repository clone"
 		}
 
 		if (copyLiferayLXCRepositoryConfiguration(it, "scripts", "docker")) {
-			println "Copied ${it.getName()}/scripts from liferay-lxc repository clone"
+			println "Copied ${it.name}/scripts from liferay-lxc repository clone"
 		}
 
 		if (copyLiferayLXCRepositoryConfiguration(it, "osgi", "common/osgi")) {
-			println "Copied ${it.getName()}/osgi from liferay-lxc repository clone"
+			println "Copied ${it.name}/osgi from liferay-lxc repository clone"
 		}
 
-		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion(it.getName())
+		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion(it.name)
 		
 		if (latestReleaseInfoDate != null) {
 			println ""

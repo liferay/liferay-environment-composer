@@ -7,13 +7,13 @@ Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
 		File candidate ->
 
 		List<File> tarFiles = candidate.listFiles().findAll {
-			it.getName().endsWith(".tar") || it.getName().endsWith(".tar.gz")
+			it.name.endsWith(".tar") || it.name.endsWith(".tar.gz")
 		}
 
 		Map<String, String> eligibleVolumeBackups = [:]
 
 		tarFiles.each {
-			String volumeName = prefix + it.getName().substring(0, it.getName().length() - 4)
+			String volumeName = prefix + it.name.substring(0, it.name.length() - 4)
 
 			if (existingVolumeNames.contains(volumeName)) {
 				eligibleVolumeBackups.put(it, volumeName)
@@ -53,7 +53,7 @@ tasks.register("importDatabaseDumps") {
 		}
 		else if (config.services.contains("mysql")) {
 			file("dumps").listFiles().each {
-				if (it.getName().endsWith(".sql") || it.getName().endsWith(".sql.gz")) {
+				if (it.name.endsWith(".sql") || it.name.endsWith(".sql.gz")) {
 					restoreVolume(dumpsVolumeName, it, false)
 				}
 			}

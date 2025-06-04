@@ -131,7 +131,7 @@ ext {
 	restoreVolume = {
 		String volumeName, File backupFile, boolean importFileListOnly ->
 
-		String importPath = backupFile.getAbsolutePath()
+		String importPath = backupFile.absolutePath
 
 		if (importPath.endsWith(".tar")) {
 			if (importFileListOnly) {
@@ -174,7 +174,7 @@ ext {
 			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
 		}
 		else if (backupFile.exists()) {
-			String fileName = backupFile.getName()
+			String fileName = backupFile.name
 
 			if (importFileListOnly) {
 				println "Copying file ${importPath} to ${volumeName} (file list only)"

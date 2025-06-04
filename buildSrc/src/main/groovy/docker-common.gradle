@@ -30,7 +30,30 @@ ext {
 			}
 		}
 		else {
-			return []
+			List<String> results = []
+
+			if (schema == null) {
+				results = waitForCommand("docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=public\" -it database psql --quiet --csv --username=liferay --dbname=${config.databaseName} --command=\"${sql}\"").split("\n")
+			}
+			else {
+				if (schema.equals(config.databaseName)) {
+					schema = "public"
+				}
+
+				results = waitForCommand("docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --quiet --csv --username=liferay --dbname=${config.databaseName} --command=\"${sql}\"").split("\n")
+			}
+
+			String[] columnHeaders = results[0].split(",")
+
+			return results.subList(1, results.size()).collect {
+				Map<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
+				
+				result.putAll([columnHeaders, it.split(",")].transpose().collectEntries {
+					[it[0], it[1]]
+				})
+
+				return result
+			}
 		}
 	}
 

@@ -41,7 +41,7 @@ tasks.register("importDatabaseDumps") {
 		int currentDataVolumeSize = waitForCommand("docker run --rm -v ${dataVolumeName}:/target busybox:latest du -s /target/").split("\\s+")[0] as Integer
 
 		if (currentDataVolumeSize > 4) {
-			println "database-data-volume already contains files, assuming no further action is required"
+			println "database-data-volume already contains ${currentDataVolumeSize} KB of files, assuming no further action is required"
 
 			return
 		}
@@ -49,7 +49,7 @@ tasks.register("importDatabaseDumps") {
 		int currentDumpsVolumeSize = waitForCommand("docker run --rm -v ${dumpsVolumeName}:/target busybox:latest du -s /target/").split("\\s+")[0] as Integer
 
 		if (currentDumpsVolumeSize > 4) {
-			println "database-dumps-volume already contains files, assuming backups have been copied"
+			println "database-dumps-volume already contains ${currentDumpsVolumeSize} KB of files, assuming backups have been copied"
 		}
 		else if (config.services.contains("mysql")) {
 			file("dumps").listFiles().each {

@@ -194,6 +194,41 @@ ext {
 		}
 	}
 
+	updateGradleLocalProperties = {
+		Map<String, String> newProperties ->
+
+		File gradleLocalPropertiesFile = file("gradle-local.properties")
+
+		List<String> seenProperties = []
+
+		List<String> gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
+			String line ->
+
+			String newLine = newProperties.find {
+				if (line.startsWith("${it.key}=")) {
+					seenProperties.add(it.key)
+					return "${it.key}=${it.value}"
+				}
+			}
+
+			return newLine != null ? newLine : line
+		}
+
+		gradleLocalPropertiesFile.withOutputStream {
+			BufferedOutputStream outputStream ->
+
+			gradleLocalPropertiesLines.each {
+				outputStream << it << "\n"
+			}
+
+			newProperties.each {
+				if (!seenProperties.contains(it.key)) {
+					outputStream << it.key << "=" << it.value << "\n"
+				}
+			}
+		}
+	}
+
 	waitForCommand = {
 		String command, File workingDir = null ->
 

@@ -59,7 +59,7 @@ Closure<Map<String, String>> getReleaseInfo = {
 	}
 
 	String workspaceProduct = "dxp-${release}"
-	String liferayHotfixURL = "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${liferayHotfix}.zip"
+	String liferayHotfixURL = liferayHotfix != null && liferayHotfix.length() > 0 ? "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${liferayHotfix}.zip" : ""
 
 	return [
 		"liferay.workspace.product": workspaceProduct,
@@ -102,26 +102,8 @@ Closure<String> updateGradlePropertiesWithLiferayVersion = {
 		}
 	}
 
-	File gradleLocalPropertiesFile = file("gradle-local.properties")
-
-	List<String> gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
-		String line ->
-
-		String newLine = latestReleaseInfo.find {
-			if (line.startsWith("${it.key}=")) {
-				return "${it.key}=${it.value}"
-			}
-		}
-
-		return newLine != null ? newLine : line
-	}
-
-	gradleLocalPropertiesFile.withOutputStream {
-		BufferedOutputStream outputStream ->
-
-		gradleLocalPropertiesLines.each {
-			outputStream << it << "\n"
-		}
+	if (latestReleaseInfo != null) {
+		updateGradleLocalProperties(latestReleaseInfo)
 	}
 
 	return latestReleaseInfoDate

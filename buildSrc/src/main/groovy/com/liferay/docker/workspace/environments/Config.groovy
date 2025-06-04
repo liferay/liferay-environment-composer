@@ -172,18 +172,6 @@ class Config {
 
 		this.environmentMap.put("COMPOSE_FILE", this.composeFiles.join(File.pathSeparator))
 		this.environmentMap.put("COMPOSE_PROJECT_NAME", this.namespace.toLowerCase())
-
-		project.file('.env').withOutputStream {
-			BufferedOutputStream envFileOutputStream ->
-
-			this.environmentMap.forEach {
-				key, value ->
-
-				envFileOutputStream << key << "=" << value << "\n"
-			}
-		}
-
-		this.environmentMap = environmentMap.asImmutable()
 	}
 
 	static List toList(String s) {

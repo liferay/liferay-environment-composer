@@ -18,6 +18,16 @@ ext {
 	config = new Config(project)
 }
 
+file('.env').withOutputStream {
+	BufferedOutputStream envFileOutputStream ->
+
+	config.environmentMap.forEach {
+		key, value ->
+
+		envFileOutputStream << key << "=" << value << "\n"
+	}
+}
+
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
 }

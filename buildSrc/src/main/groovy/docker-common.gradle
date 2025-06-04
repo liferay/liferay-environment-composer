@@ -62,7 +62,7 @@ ext {
 			String key = it.trim().split("=")[0]
 
 			if (key.equals("company.default.web.id")) {
-				defaultWebId = it.split("=")[1].trim()
+				propertyDefaultWebId = it.split("=")[1].trim()
 			}
 		}
 

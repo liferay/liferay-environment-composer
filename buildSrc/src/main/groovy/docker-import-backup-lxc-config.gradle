@@ -17,7 +17,7 @@ copyLiferayLXCRepositoryConfiguration = {
 		return false
 	}
 
-	File targetFile = new File(new File(projectDir, "configs"), targetName)
+	File targetFile = file("configs/${targetName}")
 
 	if (sourceFile.isDirectory()) {
 		for (String fileName : sourceFile.list()) {
@@ -71,7 +71,7 @@ Closure<Map<String, String>> getReleaseInfo = {
 Closure<String> updateGradlePropertiesWithLiferayVersion = {
 	String environmentName ->
 
-	File lxcRepositoryFolder = new File(projectDir, config.liferayLXCRepositoryPath)
+	File lxcRepositoryFolder = file(config.liferayLXCRepositoryPath)
 	String descriptorPath = "automation/environment-descriptors/${environmentName}.json"
 
 	File environmentDescriptorFile = new File(lxcRepositoryFolder, descriptorPath)
@@ -102,7 +102,7 @@ Closure<String> updateGradlePropertiesWithLiferayVersion = {
 		}
 	}
 
-	File gradlePropertiesFile = new File(projectDir, "gradle.properties")
+	File gradlePropertiesFile = file("gradle.properties")
 
 	List<String> gradlePropertiesLines = []
 	
@@ -139,7 +139,7 @@ Closure<Void> copyLiferayLXCRepositoryConfigurations = {
 
 	String expectedHostName = defaultCompanyVirtualHost["hostname"].substring(0, defaultCompanyVirtualHost["hostname"].length() - ".localhost".length())
 
-	List<File> envConfigs = new File(projectDir, "${config.liferayLXCRepositoryPath}/liferay/configs").listFiles().findAll {
+	List<File> envConfigs = file("${config.liferayLXCRepositoryPath}/liferay/configs").listFiles().findAll {
 		File portalEnvProperties = new File(it, "portal-env.properties")
 
 		if (!portalEnvProperties.exists()) {
@@ -175,7 +175,7 @@ Closure<Void> copyLiferayLXCRepositoryConfigurations = {
 		}
 	}
 
-	new File(projectDir, "configs/common/properties/lxc.properties").text = """
+	file("configs/common/properties/lxc.properties").text = """
 database.partition.enabled=true
 database.partition.thread.pool.enabled=true
 company.default.web.id=${defaultCompanyVirtualHost["webId"]}
@@ -204,7 +204,7 @@ tasks.register("updateDefaultVirtualHost") {
 		}
 
 
-		File portalExtPropertiesFile = new File(projectDir, "configs/common/portal-ext.properties")
+		File portalExtPropertiesFile = file("configs/common/portal-ext.properties")
 
 		List<String> propertiesLines = []
 		List<String> includeAndOverride = []

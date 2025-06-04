@@ -52,7 +52,7 @@ ext {
 	getDefaultVirtualHost = {
 		List<Map<String, String>> companyVirtualHosts ->
 
-		File portalExtPropertiesFile = new File(projectDir, "configs/common/portal-ext.properties")
+		File portalExtPropertiesFile = file("configs/common/portal-ext.properties")
 
 		String propertyDefaultWebId = null
 

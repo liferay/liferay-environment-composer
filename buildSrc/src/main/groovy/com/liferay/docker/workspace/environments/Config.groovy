@@ -173,7 +173,7 @@ class Config {
 		this.environmentMap.put("COMPOSE_FILE", this.composeFiles.join(File.pathSeparator))
 		this.environmentMap.put("COMPOSE_PROJECT_NAME", this.namespace.toLowerCase())
 
-		new File('.env').withOutputStream {
+		project.file('.env').withOutputStream {
 			BufferedOutputStream envFileOutputStream ->
 
 			this.environmentMap.forEach {

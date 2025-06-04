@@ -69,7 +69,7 @@ Closure<Boolean> stripComponentFolders = {
 
 tasks.register("decryptCloudBackupDatabase") {
 	doFirst {
-		File dumpsFolder = new File(projectDir, "dumps")
+		File dumpsFolder = file("dumps")
 
 		if (dumpsFolder.exists()) {
 			if (validateDatabaseBackupFileExtensions(dumpsFolder)) {
@@ -79,7 +79,7 @@ tasks.register("decryptCloudBackupDatabase") {
 			}
 		}
 
-		File lxcFolder = new File(projectDir, "lxc")
+		File lxcFolder = file("lxc")
 
 		if (!lxcFolder.exists()) {
 			throw new GradleException("Unable to identify database backup")
@@ -104,10 +104,10 @@ tasks.register("decryptCloudBackupDatabase") {
 
 tasks.register("decryptCloudBackupDocumentLibrary") {
 	doFirst {
-		File doclibBackupsFolder = new File(projectDir, "liferay_data/document_library")
+		File doclibBackupsFolder = file("liferay_data/document_library")
 
 		if (!doclibBackupsFolder.exists()) {
-			File lxcFolder = new File(projectDir, "lxc")
+			File lxcFolder = file("lxc")
 
 			if (!lxcFolder.exists()) {
 				return
@@ -206,7 +206,7 @@ tasks.register("importCloudBackupDocumentLibrary") {
 	}
 
 	doFirst {
-		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", new File(projectDir, "liferay_data"), config.documentLibraryFileListOnly)
+		restoreVolume("${config.namespace.toLowerCase()}_liferay-data-volume", file("liferay_data"), config.documentLibraryFileListOnly)
 	}
 }
 

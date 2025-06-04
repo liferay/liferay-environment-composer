@@ -52,14 +52,14 @@ tasks.register("importDatabaseDumps") {
 			println "database-dumps-volume already contains files, assuming backups have been copied"
 		}
 		else if (config.services.contains("mysql")) {
-			new File(projectDir, "dumps").listFiles().each {
+			file("dumps").listFiles().each {
 				if (it.getName().endsWith(".sql") || it.getName().endsWith(".sql.gz")) {
 					restoreVolume(dumpsVolumeName, it, false)
 				}
 			}
 		}
 		else {
-			restoreVolume(dumpsVolumeName, new File(projectDir, "dumps"), false)
+			restoreVolume(dumpsVolumeName, file("dumps"), false)
 		}
 
 		if (config.services.contains("mysql")) {
@@ -81,7 +81,7 @@ tasks.register("importDatabaseDumps") {
 				"innodb_stats_auto_recalc": "0",
 			]
 
-			File globalVariableScript = new File(projectDir, "0.sql")
+			File globalVariableScript = file("0.sql")
 
 			globalVariableScript.withOutputStream {
 				BufferedOutputStream initSQLOutputStream ->
@@ -123,7 +123,7 @@ tasks.register("importContainerData") {
 		List<Map<File, String>> volumeBackups = []
 
 		if (config.dataDirectory.length() > 0) {
-			File dataFolder = new File(projectDir, config.dataDirectory)
+			File dataFolder = file(config.dataDirectory)
 
 			if (dataFolder.exists() && dataFolder.isDirectory()) {
 				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, [dataFolder] as File[])
@@ -135,7 +135,7 @@ tasks.register("importContainerData") {
 		}
 
 		if (volumeBackups.isEmpty()) {
-			File exportedDataFolder = new File(projectDir, "exported_data")
+			File exportedDataFolder = file("exported_data")
 
 			if (exportedDataFolder.exists() && exportedDataFolder.isDirectory()) {
 				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, exportedDataFolder.listFiles())

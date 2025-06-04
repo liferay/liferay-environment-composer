@@ -52,7 +52,7 @@ tasks.register("shareWorkspace", Zip) {
 	exclude ".git"
 	exclude ".gradle"
 	exclude {
-		new File("lxc").exists() &&
+		file("lxc").exists() &&
 		(it.relativePath.pathString.startsWith("dumps/") || it.relativePath.pathString.startsWith("liferay_data/"))
 	}
 	exclude "lxc"

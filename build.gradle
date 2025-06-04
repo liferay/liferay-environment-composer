@@ -104,6 +104,8 @@ composeUp {
 	onlyIf {
 		!config.composeFiles.isEmpty()
 	}
+
+	finalizedBy listAdminUsers
 }
 
 dockerCompose {

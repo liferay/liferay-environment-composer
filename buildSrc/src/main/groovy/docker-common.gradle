@@ -34,6 +34,21 @@ ext {
 		}
 	}
 
+	forEachCompanyId = {
+		Closure<Void> action ->
+
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				action(it["companyId"], it["hostname"], it["webId"], config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName)
+			}
+			catch (Exception e) {
+			}
+		}
+	}
+
 	getDefaultVirtualHost = {
 		List<Map<String, String>> companyVirtualHosts ->
 

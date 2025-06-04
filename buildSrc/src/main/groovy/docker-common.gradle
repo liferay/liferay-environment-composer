@@ -98,9 +98,7 @@ ext {
 
 			if (!adminInstanceVirtualHosts.isEmpty()) {
 				config.databasePartitioningEnabled = true
-			}
 
-			if (config.databasePartitioningEnabled) {
 				String defaultCompanyId = adminInstanceVirtualHosts[0]["companyId"]
 
 				defaultCompanyVirtualHost = companyVirtualHosts.find {

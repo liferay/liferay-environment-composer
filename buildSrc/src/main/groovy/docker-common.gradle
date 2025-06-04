@@ -221,18 +221,21 @@ ext {
 		File gradleLocalPropertiesFile = file("gradle-local.properties")
 
 		List<String> seenProperties = []
+		List<String> gradleLocalPropertiesLines = []
 
-		List<String> gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
-			String line ->
+		if (gradleLocalPropertiesFile.exists()) {
+			gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
+				String line ->
 
-			String newLine = newProperties.find {
-				if (line.startsWith("${it.key}=")) {
-					seenProperties.add(it.key)
-					return "${it.key}=${it.value}"
+				String newLine = newProperties.find {
+					if (line.startsWith("${it.key}=")) {
+						seenProperties.add(it.key)
+						return "${it.key}=${it.value}"
+					}
 				}
-			}
 
-			return newLine != null ? newLine : line
+				return newLine != null ? newLine : line
+			}
 		}
 
 		gradleLocalPropertiesFile.withOutputStream {

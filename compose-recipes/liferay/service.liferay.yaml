@@ -3,6 +3,9 @@ services:
         container_name: ${NAMESPACE}-liferay
         environment:
             - LIFERAY_JPDA_ENABLED=true
+            - LIFERAY_DISABLE_TRIAL_LICENSE=true
+            - LIFERAY_CAPTCHA_PERIOD_ENFORCE_PERIOD_DISABLED=true
+            - LIFERAY_CONFIGURATION_PERIOD_OVERRIDE_PERIOD_COM_PERIOD_LIFERAY_PERIOD_CAPTCHA_PERIOD_CONFIGURATION_PERIOD__UPPERCASEC_APTCHA_UPPERCASEC_ONFIGURATION_UNDERLINE_MAX_UPPERCASEC_HALLENGES=I"-1"
         healthcheck:
             interval: 5s
             start_period: 5m

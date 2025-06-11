@@ -184,8 +184,6 @@ tasks.register("decryptCloudBackupDocumentLibrary") {
 }
 
 tasks.register("listAdminUsers") {
-	mustRunAfter updateDefaultVirtualHost
-
 	onlyIf {
 		config.services.contains("mysql") || config.services.contains("postgres")
 	}
@@ -220,6 +218,18 @@ tasks.register("updateCloudBackupDatabaseForLocalDevelopment") {
 	}
 
 	doFirst {
+		LOCAL_DEV_OSGI_CONFIGS_TO_DELETE.each {
+			executeSQLQuery("delete from Configuration_ where configurationId like '%${it}%'", config.databaseName)
+		}
+
+		forEachCompanyId {
+			String companyId, String hostname, String webId, String schema ->
+
+			executeSQLQuery("update SamlSpIdpConnection set enabled = false where companyId = ${companyId}", schema)
+		}
+
+		println "Deleted known problematic configuration entries from the database"
+
 		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
 
 		forEachCompanyId {
@@ -230,8 +240,6 @@ tasks.register("updateCloudBackupDatabaseForLocalDevelopment") {
 
 		println "Reset all user passwords to '${config.liferayUserPassword}'"
 	}
-
-	finalizedBy updateDefaultVirtualHost
 }
 
 tasks.register("checkCloudBackupDatabaseType") {
@@ -298,12 +306,15 @@ tasks.register("checkCloudBackupDatabaseType") {
 	}
 }
 
+importDatabaseDumps.mustRunAfter checkCloudBackupDatabaseType
+updateCloudBackupConfigsForLocalDevelopment.mustRunAfter updateCloudBackupDatabaseForLocalDevelopment
+
 tasks.register("importCloudBackupDatabase") {
 	dependsOn decryptCloudBackupDatabase
 	dependsOn checkCloudBackupDatabaseType
-
-	finalizedBy importDatabaseDumps
-	finalizedBy updateCloudBackupDatabaseForLocalDevelopment
+	dependsOn importDatabaseDumps
+	dependsOn updateCloudBackupDatabaseForLocalDevelopment
+	dependsOn updateCloudBackupConfigsForLocalDevelopment
 }
 
 tasks.register("importCloudBackupDocumentLibrary") {

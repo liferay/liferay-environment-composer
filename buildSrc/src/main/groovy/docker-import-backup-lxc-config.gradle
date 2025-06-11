@@ -160,7 +160,7 @@ company.default.virtual.host.name=${defaultCompanyVirtualHost["hostname"]}
 	includeAndOverride.add("./properties/lxc.properties")
 }
 
-tasks.register("updateDefaultVirtualHost") {
+tasks.register("updatePortalExtPropertiesWithDefaultVirtualHost") {
 	onlyIf {
 		config.services.contains("mysql") || config.services.contains("postgres")
 	}
@@ -217,6 +217,27 @@ tasks.register("updateDefaultVirtualHost") {
 			propertiesLines.each {
 				outputStream << it << "\n"
 			}
+		}
+	}
+}
+
+tasks.register("updateCloudBackupConfigsForLocalDevelopment") {
+	dependsOn updatePortalExtPropertiesWithDefaultVirtualHost
+
+	doFirst {
+		project.file("configs").listFiles().collect {
+			List<File> configFiles = new File(it, "osgi/configs").listFiles()
+
+			return configFiles == null ? [] : configFiles
+		}.flatten().findAll {
+			File configFile ->
+
+			LOCAL_DEV_OSGI_CONFIGS_TO_DELETE.find {
+				configFile.name.contains(it)
+			} != null
+		}.each {
+			println "Deleting ${it.absolutePath} because it may cause problems in local environments"
+			it.delete()
 		}
 	}
 }

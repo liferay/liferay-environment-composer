@@ -1,6 +1,8 @@
 import groovy.json.JsonSlurper
 
 ext {
+	LOCAL_DEV_OSGI_CONFIGS_TO_DELETE = [".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s.", ".ldap.", ".saml.", ".openid.connect."]
+
 	executeSQLQuery = {
 		String sql, String schema = null ->
 

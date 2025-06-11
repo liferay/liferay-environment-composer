@@ -100,9 +100,30 @@ dockerDeploy {
 	}
 }
 
+tasks.register("checkForLiferayLicense") {
+	doFirst {
+		List<File> licenseXmlFiles = project.file("configs").listFiles().collect {
+			new File(it, "osgi/modules")
+		}.findAll {
+			it.exists()
+		}.collect {
+			File modulesFolder ->
+
+			return modulesFolder.listFiles().findAll {
+				it.name.endsWith(".xml") && it.text.contains("<license>")
+			}
+		}.flatten()
+
+		if (licenseXmlFiles.isEmpty()) {
+			throw new GradleException("Please add a license to configs/local/osgi/modules/")
+		}
+	}
+}
+
 composeUp {
 	if (config.useLiferay) {
 		dependsOn ":buildDockerImage"
+		dependsOn checkForLiferayLicense
 	}
 
 	dependsOn importDatabaseDumps

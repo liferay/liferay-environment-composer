@@ -34,14 +34,10 @@ ext {
 		else {
 			List<String> results = []
 
-			if (schema == null) {
+			if (schema == null || schema.equals(config.databaseName)) {
 				results = waitForCommand("docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=public\" -it database psql --quiet --csv --username=liferay --dbname=${config.databaseName} --command=\"${sql}\"").split("\n")
 			}
 			else {
-				if (schema.equals(config.databaseName)) {
-					schema = "public"
-				}
-
 				results = waitForCommand("docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --quiet --csv --username=liferay --dbname=${config.databaseName} --command=\"${sql}\"").split("\n")
 			}
 
@@ -149,6 +145,27 @@ ext {
 		}
 
 		return volumeNames
+	}
+
+	printDatabaseAccessCommand = {
+		String schema ->
+
+		if (config.services.contains("mysql")) {
+			if (schema == null) {
+				println "docker compose exec -it database mysql --user root"
+			}
+			else {
+				println "docker compose exec -it database mysql --user root --database=${schema}"
+			}
+		}
+		else {
+			if (schema == null || schema.equals(config.databaseName)) {
+				println "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=public\" -it database psql --username=liferay --dbname=${config.databaseName}"
+			}
+			else {
+				println "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
+			}
+		}
 	}
 
 	restoreVolume = {

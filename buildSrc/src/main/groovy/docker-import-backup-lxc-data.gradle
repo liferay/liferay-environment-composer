@@ -13,6 +13,12 @@ Closure<Boolean> validateDatabaseBackupFileExtensions = {
 	}
 
 	if (decryptedBackupFiles.isEmpty()) {
+		decryptedBackupFiles = extractedFolder.listFiles().findAll {
+			!it.isDirectory() && !it.name.contains(".")
+		}
+	}
+
+	if (decryptedBackupFiles.isEmpty()) {
 		return false
 	}
 
@@ -20,6 +26,9 @@ Closure<Boolean> validateDatabaseBackupFileExtensions = {
 		if (it.name.endsWith(".gz") && !it.name.endsWith(".sql.gz")) {
 			String path = it.absolutePath
 			it.renameTo("${path.substring(0, path.length() - 3)}.sql.gz")
+		}
+		else if (!it.name.contains(".")) {
+			it.renameTo("${it.absolutePath}.sql")
 		}
 	}
 
@@ -94,12 +103,24 @@ tasks.register("decryptCloudBackupDatabase") {
 			!it.name.contains("doclib") && it.name.endsWith(".7z")
 		}
 
+		if (databaseBackupFiles.isEmpty()) {
+			databaseBackupFiles = lxcFolder.listFiles().findAll {
+				!it.name.contains("doclib") && it.name.endsWith(".zip")
+			}
+		}
+
 		if (databaseBackupFiles.size() != 1) {
 			throw new GradleException("Unable to identify database backup")
 		}
 
 		println "Extracting LXC database backup"
-		waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath} -p${config.lxcBackupPassword}")
+
+		if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
+			waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath} -p${config.lxcBackupPassword}")
+		}
+		else {
+			waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath}")
+		}
 
 		if (!stripComponentFolders(getFirstMatchingSubFolder(dumpsFolder, validateDatabaseBackupFileExtensions), dumpsFolder)) {
 			throw new GradleException("Unable to identify database backup")

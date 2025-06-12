@@ -66,15 +66,15 @@ tasks.register("importDatabaseDumps") {
 
 		File globalVariableScript = file("0.sql")
 
-		if (config.services.contains("mysql")) {
-			Map<String, String> oldVariables = [
-				"max_allowed_packet": String.valueOf(1L << 26),
-				"autocommit": "1",
-				"unique_checks": "1",
-				"foreign_key_checks": "1",
-				"innodb_stats_auto_recalc": "1",
-			]
+		Map<String, String> oldVariables = [
+			"max_allowed_packet": String.valueOf(1L << 26),
+			"autocommit": "1",
+			"unique_checks": "1",
+			"foreign_key_checks": "1",
+			"innodb_stats_auto_recalc": "1",
+		]
 
+		if (config.services.contains("mysql")) {
 			Map<String, String> newVariables = [
 				"max_allowed_packet": String.valueOf(1L << 30),
 				"autocommit": "0",

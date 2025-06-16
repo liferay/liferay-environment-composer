@@ -1,7 +1,7 @@
 services:
     database:
         build: ./compose-recipes/mysql
-        container_name: "${NAMESPACE}-database-mysql"
+        container_name: "${NAMESPACE}-database"
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=1
             - MYSQL_DATABASE=${DATABASE_NAME}
@@ -19,13 +19,12 @@ services:
             nproc: 65535
         volumes:
             - read_only: true
-              source: data-volume
+              source: mysql-dumps-volume
               target: /docker-entrypoint-initdb.d
               type: volume
-              volume:
-                  subpath: dumps
-            - source: data-volume
+            - source: mysql-data-volume
               target: /var/lib/mysql
               type: volume
-              volume:
-                  subpath: container-data/database
+volumes:
+    mysql-data-volume:
+    mysql-dumps-volume:

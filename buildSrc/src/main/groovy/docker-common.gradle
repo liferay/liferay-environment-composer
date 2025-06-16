@@ -1,0 +1,317 @@
+import groovy.json.JsonSlurper
+
+ext {
+	executeSQLQuery = {
+		String sql, String schema = null ->
+
+		if (!config.useDatabase) {
+			throw new GradleException("Database service not detected")
+		}
+
+		waitForContainer("database", "${config.namespace}-database")
+
+		if (config.useDatabaseMySQL) {
+			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
+
+			String[] columnHeaders = results[0].split("\t")
+			
+			return results.subList(1, results.size()).collect {
+				[columnHeaders, it.split("\t")].transpose().collectEntries {
+					[it[0], it[1]]
+				}
+			}
+		}
+
+		if (config.useDatabasePostgreSQL) {
+			if (schema == null || schema.equals(config.databaseName)) {
+				schema = "public"
+			}
+
+			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --quiet --csv --command=\"${sql}\"").split("\n")
+
+			String[] columnHeaders = results[0].split(",")
+
+			return results.subList(1, results.size()).collect {
+				Map<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
+				
+				result.putAll([columnHeaders, it.split(",")].transpose().collectEntries {
+					[it[0], it[1]]
+				})
+
+				return result
+			}
+		}
+
+		throw new GradleException("Unrecognized database type")
+	}
+
+	forEachCompanyId = {
+		Closure<Void> action ->
+
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				action(it["companyId"], it["hostname"], it["webId"], config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName)
+			}
+			catch (Exception e) {
+			}
+		}
+	}
+
+	getDatabaseAccessCommand = {
+		String schema ->
+
+		if (config.useDatabaseMySQL) {
+			String command = "docker compose exec -it database mysql --user root"
+
+			if (schema != null) {
+				command += " --database=${schema}"
+			}
+
+			return command
+		}
+		
+		if (config.useDatabasePostgreSQL) {
+			if (schema == null || schema.equals(config.databaseName)) {
+				schema = "public"
+			}
+
+			return "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
+		}
+	}
+
+	getDefaultVirtualHost = {
+		List<Map<String, String>> companyVirtualHosts ->
+
+		Map<String, String> defaultCompanyVirtualHost = null
+
+		if (config.useDatabase) {
+			List<Map<String, String>> adminInstanceVirtualHosts = executeSQLQuery("select companyId from Company where webId like 'admin-%.lxc.liferay.com'", config.databaseName)
+
+			if (!adminInstanceVirtualHosts.isEmpty()) {
+				config.databasePartitioningEnabled = true
+
+				String defaultCompanyId = adminInstanceVirtualHosts[0]["companyId"]
+
+				defaultCompanyVirtualHost = companyVirtualHosts.find {
+					it["companyId"] == defaultCompanyId
+				}
+			}
+		}
+		else {
+			config.databasePartitioningEnabled = false
+		}
+
+		if ((defaultCompanyVirtualHost == null) && (companyVirtualHosts.size() == 1)) {
+			defaultCompanyVirtualHost = companyVirtualHosts[0]
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			file("configs/common/portal-ext.properties").eachLine {
+				String line = it.trim()
+
+				if (line.startsWith("company.default.web.id=")) {
+					String webId = line.split("=")[1]
+
+					defaultCompanyVirtualHost = companyVirtualHosts.find {
+						it["webId"] == webId
+					}
+				}
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				it["webId"] == "liferay.com"
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			throw new GradleException("Unable to auto-detect company.default.web.id, please set it in configs/common/portal-ext.properties")
+		}
+
+		return defaultCompanyVirtualHost["webId"]
+	}
+
+	getExistingVolumeNames = {
+		String prefix ->
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		return waitForCommand("docker volume ls --filter name=^${prefix} --format json").split("\n").collect {
+			jsonSlurper.parseText(it)["Name"]
+		}
+	}
+
+	restoreVolume = {
+		String volumeName, File backupFile, boolean importFileListOnly ->
+
+		String importPath = backupFile.absolutePath
+
+		if (importPath.endsWith(".tar")) {
+			if (importFileListOnly) {
+				println "Restoring ${volumeName} from ${importPath} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar busybox:latest sh -c 'cd target; tar t -f /source.tar | grep \"/\$\" | sort | xargs mkdir -p; tar t -f /source.tar | grep -v \"/\$\" | xargs touch'")
+			}
+			else {
+				println "Restoring volume ${volumeName} from ${importPath}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar busybox:latest tar x -f /source.tar -C /target/")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+
+			println "Restored volume ${volumeName} from ${importPath}"
+		}
+		else if (importPath.endsWith(".tar.gz")) {
+			if (importFileListOnly) {
+				println "Restoring ${volumeName} from ${importPath} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar.gz busybox:latest sh -c 'cd target; tar t -zf /source.tar.gz | grep \"/\$\" | sort | xargs mkdir -p; tar t -zf /source.tar.gz | grep -v \"/\$\" | xargs touch'")
+			}
+			else {
+				println "Restoring volume ${volumeName} from ${importPath}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source.tar.gz busybox:latest tar x -zf /source.tar.gz -C /target/")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+
+			println "Restored volume ${volumeName} from ${importPath}"
+		}
+		else if (backupFile.isDirectory()) {
+			if (importFileListOnly) {
+				println "Copying directory ${importPath} to ${volumeName} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cd /source; find . -type d | sort | sed \"s@^@/target/@g\" | xargs mkdir -p; find . -type f | sed \"s@^@/target/@g\" | xargs touch'")
+			}
+			else {
+				println "Copying directory ${importPath} to ${volumeName}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/")
+		}
+		else if (backupFile.exists()) {
+			String fileName = backupFile.name
+
+			if (importFileListOnly) {
+				println "Copying file ${importPath} to ${volumeName} (file list only)"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v busybox:latest touch /target/${fileName}")
+			}
+			else {
+				println "Copying file ${importPath} to ${volumeName}"
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${importPath}:/source/${fileName} busybox:latest sh -c 'cp --update /source/* /target/'")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${fileName}")
+
+			println "Copied file ${importPath} to ${volumeName}"
+		}
+		else {
+			throw new GradleException("Unable to find file ${importPath}")
+		}
+	}
+
+	updateGradleLocalProperties = {
+		Map<String, String> newProperties ->
+
+		File gradleLocalPropertiesFile = file("gradle-local.properties")
+
+		List<String> seenProperties = []
+		List<String> gradleLocalPropertiesLines = []
+
+		if (gradleLocalPropertiesFile.exists()) {
+			gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
+				String line ->
+
+				String newLine = newProperties.find {
+					if (line.startsWith("${it.key}=")) {
+						seenProperties.add(it.key)
+						return "${it.key}=${it.value}"
+					}
+				}
+
+				return newLine != null ? newLine : line
+			}
+		}
+
+		gradleLocalPropertiesFile.withOutputStream {
+			BufferedOutputStream outputStream ->
+
+			gradleLocalPropertiesLines.each {
+				outputStream << it << "\n"
+			}
+
+			newProperties.each {
+				if (!seenProperties.contains(it.key)) {
+					outputStream << it.key << "=" << it.value << "\n"
+				}
+			}
+		}
+	}
+
+	waitForCommand = {
+		String command, File workingDir = null ->
+
+		StringBuffer err = new StringBuffer()
+		StringBuffer out = new StringBuffer()
+
+		Process process = ['bash', '-c', command].execute([], workingDir)
+
+		process.waitForProcessOutput(out, err)
+
+		if (process.exitValue() != 0) {
+			throw new GradleException("Process exit code ${process.exitValue()}: ${err.toString()}")
+		}
+
+		if (err.length() > 0) {
+			System.err.println err.toString()
+		}
+
+		return out.toString()
+	}
+
+	waitForContainer = {
+		String serviceName, String containerName ->
+
+		String serviceStatus = waitForCommand("docker compose ps ${serviceName} --format=json").trim()
+
+		if (serviceStatus.length() > 0) {
+			JsonSlurper jsonSlurper = new JsonSlurper()
+
+			String health = jsonSlurper.parseText(serviceStatus)["Health"]
+
+			if ((health != null) && health.equals("healthy")) {
+				return
+			}
+		}
+		else {
+			println "Starting service ${serviceName}"
+			waitForCommand("docker compose up -d ${serviceName}")
+		}
+
+		String status = ""
+
+		while (!status.equals("\"healthy\"")) {
+			if (status != null) {
+				Thread.sleep(10000)
+			}
+
+			println "Waiting for service ${serviceName}"
+
+			String logs = waitForCommand("docker compose logs ${serviceName} --since=10s")
+
+			if (logs.length() > 0) {
+				println logs
+			}
+
+			status = waitForCommand("docker inspect --format='{{json .State.Health.Status}}' ${containerName}").trim()
+		}
+	}
+}
+
+tasks.register("dockerCreate") {
+	doFirst {
+		waitForCommand("docker compose create")
+	}
+}

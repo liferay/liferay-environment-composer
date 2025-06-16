@@ -24,6 +24,12 @@ class Config {
 
 		this.composeFiles.addAll(this.toList(project.getProperty("lr.docker.environment.compose.files")))
 
+		String clearVolumeData = project.getProperty("lr.docker.environment.clear.volume.data")
+
+		if (clearVolumeData != null) {
+			this.clearVolumeData = clearVolumeData.toBoolean()
+		}
+
 		String databaseName = project.getProperty("lr.docker.environment.database.name")
 
 		if (databaseName != null) {
@@ -40,6 +46,12 @@ class Config {
 
 		if (dataDirectory != null && dataDirectory.length() > 0) {
 			this.dataDirectory = dataDirectory
+		}
+
+		String documentLibraryFileListOnly = project.getProperty("lr.docker.environment.liferay.document.library.file.list.only")
+
+		if (documentLibraryFileListOnly != null) {
+			this.documentLibraryFileListOnly = documentLibraryFileListOnly.toBoolean()
 		}
 
 		List hotfixURLs = this.toList(project.getProperty("lr.docker.environment.hotfix.urls"))
@@ -66,6 +78,15 @@ class Config {
 			this.services = services
 		}
 
+		String workspaceProduct = project.getProperty("liferay.workspace.product")
+		String workspaceDockerImageId = project.getProperty("liferay.workspace.docker.image.liferay")
+
+		if (((workspaceProduct != null) && workspaceProduct.startsWith("dxp-")) ||
+			((workspaceDockerImageId != null) && workspaceProduct.startsWith("liferay/dxp:"))) {
+
+			this.liferayDXPImage = true
+		}
+
 		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
 
 		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
@@ -74,6 +95,11 @@ class Config {
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
+
+		this.useDatabaseMySQL = this.services.contains("mysql")
+		this.useDatabasePostgreSQL = this.services.contains("postgres")
+
+		this.useDatabase = this.useDatabaseMySQL || this.useDatabasePostgreSQL
 
 		ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 			include "**/service.*.yaml"
@@ -142,18 +168,24 @@ class Config {
 
 	public Project project
 
+	public boolean clearVolumeData = false
 	public int clusterNodes = 0
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public boolean documentLibraryFileListOnly = false
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
+	public boolean liferayDXPImage = false
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useLiferay = false
+	public boolean useDatabase = false
+	public boolean useDatabaseMySQL = false
+	public boolean useDatabasePostgreSQL = false
 
 	@Override
 	public String toString() {

@@ -1,7 +1,7 @@
 services:
     database:
         build: ./compose-recipes/postgres
-        container_name: "${NAMESPACE}-database-postgres"
+        container_name: "${NAMESPACE}-database"
         shm_size: 128mb
         environment:
             - POSTGRES_DB=${DATABASE_NAME}
@@ -23,13 +23,12 @@ services:
                     memory: 1G
         volumes:
             -   read_only: true
-                source: data-volume
+                source: postgres-dumps-volume
                 target: /docker-entrypoint-initdb.d
                 type: volume
-                volume:
-                    subpath: dumps
-            -   source: data-volume
+            -   source: postgres-data-volume
                 target: /var/lib/postgresql/data
                 type: volume
-                volume:
-                    subpath: container-data/database
+volumes:
+    postgres-data-volume:
+    postgres-dumps-volume:

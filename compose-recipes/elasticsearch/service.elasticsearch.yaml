@@ -23,8 +23,8 @@ services:
             - 9200:9200
             - 9300:9300
         volumes:
-            - source: data-volume
+            - source: elasticsearch-data-volume
               target: /usr/share/elasticsearch/data/
               type: volume
-              volume:
-                  subpath: container-data/elasticsearch
+volumes:
+    elasticsearch-data-volume:

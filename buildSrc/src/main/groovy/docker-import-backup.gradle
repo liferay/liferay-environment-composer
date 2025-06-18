@@ -28,20 +28,9 @@ Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
 }
 
 tasks.register("importDatabaseDumps") {
-	onlyIf {
-		if (!config.useDatabase) {
-			return false
-		}
-		
-		FileTree dumpsFileTree = project.fileTree("dumps") {
-			exclude ".gitkeep"
-		}
-
-		if (dumpsFileTree.isEmpty()) {
-			return false
-		}
-
-		return true
+	onlyIf("using an external database") { config.useDatabase }
+	onlyIf("there is a database dump file") {
+		!project.fileTree("dumps") { exclude ".gitkeep" }.isEmpty()
 	}
 
 	doFirst {

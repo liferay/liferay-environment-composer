@@ -2,9 +2,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 tasks.register("checkForLiferayLicense") {
-	onlyIf {
-		config.useLiferay && config.liferayDXPImage
-	}
+	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("running Liferay DXP") { config.liferayDXPImage }
 
 	doFirst {
 		FileCollection licenseXmlFileCollection = project.fileTree("configs") {
@@ -20,9 +19,7 @@ tasks.register("checkForLiferayLicense") {
 }
 
 tasks.register("listAdminUsers") {
-	onlyIf {
-		config.useDatabase
-	}
+	onlyIf("using an external database") { config.useDatabase }
 
 	doFirst {
 		forEachCompanyId {

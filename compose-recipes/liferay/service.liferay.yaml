@@ -2,6 +2,7 @@ services:
     liferay:
         container_name: ${NAMESPACE}-liferay
         environment:
+            - JPDA_SUSPEND=n
             - LIFERAY_JPDA_ENABLED=true
             - LIFERAY_DISABLE_TRIAL_LICENSE=true
         healthcheck:

@@ -1,14 +1,17 @@
 #!/bin/bash
 
 function _log() {
-	echo "[$(date "+%Y.%m.%d %H:%M:%S")] $1" >> health-check.log
+	echo "[$(date "+%Y.%m.%d %H:%M:%S")] $1" | tee -a health-check.log
 }
 
-_log "Checking for license registration..."
-if ! grep -i -E "Processing trial-dxp-license|License registered" logs/liferay.*.log
+if ! grep -i -E "ga" .liferay-version
 then
-	_log "License not registered"
-	exit 1
+	_log "Checking for license registration..."
+	if ! grep -i -E "license validation passed" logs/liferay.*.log
+	then
+		_log "License not registered"
+		exit 1
+	fi
 fi
 
 _log "Waiting for the server to be reachable..."

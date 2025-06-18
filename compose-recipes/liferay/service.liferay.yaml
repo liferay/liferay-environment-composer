@@ -3,6 +3,7 @@ services:
         container_name: ${NAMESPACE}-liferay
         environment:
             - LIFERAY_JPDA_ENABLED=true
+            - LIFERAY_DISABLE_TRIAL_LICENSE=true
         healthcheck:
             interval: 5s
             start_period: 5m

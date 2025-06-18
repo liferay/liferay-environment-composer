@@ -7,13 +7,13 @@ tasks.register("checkForLiferayLicense") {
 	}
 
 	doFirst {
-		List<File> licenseXmlFiles = project.fileTree("configs") {
+		FileCollection licenseXmlFileCollection = project.fileTree("configs") {
 			include "**/osgi/modules/*.xml"
-		}.filter{
+		}.filter {
 			it.text.contains("<license>")
 		}
 
-		if (licenseXmlFiles.isEmpty()) {
+		if (licenseXmlFileCollection.isEmpty()) {
 			throw new GradleException("Please add a license to configs/common/osgi/modules/")
 		}
 	}

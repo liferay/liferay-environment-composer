@@ -60,6 +60,12 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		String liferayUserPassword = project.getProperty("lr.docker.environment.liferay.user.password")
+
+		if (liferayUserPassword != null) {
+			this.liferayUserPassword = liferayUserPassword
+		}
+
 		String namespace = project.getProperty("lr.docker.environment.namespace")
 
 		if (namespace != null) {
@@ -104,10 +110,17 @@ class Config {
 
 		this.useWebserver = this.services.contains("webserver")
 
-		this.useDatabaseMySQL = this.services.contains("mysql")
-		this.useDatabasePostgreSQL = this.services.contains("postgres")
+		if (this.services.contains("mysql")) {
+			this.databaseType = "mysql"
+			this.useDatabase = true
+			this.useDatabaseMySQL = true
+		}
 
-		this.useDatabase = this.useDatabaseMySQL || this.useDatabasePostgreSQL
+		if (this.services.contains("postgres")) {
+			this.databaseType = "postgres"
+			this.useDatabase = true
+			this.useDatabasePostgreSQL = true
+		}
 
 		ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 			include "**/service.*.yaml"
@@ -181,12 +194,14 @@ class Config {
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
+	public String databaseType = null
 	public String dataDirectory = "data"
 	public boolean documentLibraryFileListOnly = false
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean liferayDXPImage = false
 	public String liferayDockerImageId = ""
+	public String liferayUserPassword = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false

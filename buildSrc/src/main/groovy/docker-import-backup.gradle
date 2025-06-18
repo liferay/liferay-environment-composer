@@ -1,4 +1,5 @@
 project.plugins.apply "docker-common"
+project.plugins.apply "docker-import-backup-localdev"
 
 Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
 	String prefix, List<String> existingVolumeNames, File[] candidates ->
@@ -26,24 +27,31 @@ Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
 	}
 }
 
-
 tasks.register("importDatabaseDumps") {
 	onlyIf {
-		config.useDatabase
+		if (!config.useDatabase) {
+			return false
+		}
+		
+		FileTree dumpsFileTree = project.fileTree("dumps") {
+			exclude ".gitkeep"
+		}
+
+		if (dumpsFileTree.isEmpty()) {
+			return false
+		}
+
+		return true
 	}
 
 	doFirst {
-		String database = config.useDatabaseMySQL ? "mysql" : config.useDatabasePostgreSQL ? "postgres" : null
+		waitForCommand("docker compose create")
+		waitForCommand("docker compose build database")
 
-		if (database == null) {
-			throw new GradleException("Unrecognized database type")
-		}
+		String database = config.databaseType
 
 		String dataVolumeName = "${config.namespace.toLowerCase()}_${database}-data-volume"
 		String dumpsVolumeName = "${config.namespace.toLowerCase()}_${database}-dumps-volume"
-
-		waitForCommand("docker compose create")
-		waitForCommand("docker compose build database")
 
 		int currentDataVolumeSize = waitForCommand("docker run --rm -v ${dataVolumeName}:/target busybox:latest du -s /target/").split("\\s+")[0] as Integer
 
@@ -94,6 +102,23 @@ tasks.register("importDatabaseDumps") {
 				BufferedOutputStream initSQLOutputStream ->
 
 				initSQLOutputStream << newVariables.collect { "SET GLOBAL ${it.key}=${it.value};" }.join("\n") << ";"
+
+				if (config.databasePartitioningEnabled) {
+					initSQLOutputStream << ["lportal", "dxpcloud", "cloudsqlimport"].collect {
+						"create user if not exists ${it} identified by 'lportal';\ngrant all on *.* to '${it}'@'%';\n"
+					}.join("\n")
+				}
+			}
+		}
+		else if (config.useDatabasePostgreSQL) {
+			if (config.databasePartitioningEnabled) {
+				globalVariableScript.withOutputStream {
+					BufferedOutputStream initSQLOutputStream ->
+
+					if (config.databasePartitioningEnabled) {
+						initSQLOutputStream << "create role cloudsqlsuperuser with login superuser password 'lportal';"
+					}
+				}
 			}
 		}
 
@@ -108,6 +133,8 @@ tasks.register("importDatabaseDumps") {
 		}
 
 		println "Loaded database backup into database container"
+
+		updateDatabaseForLocalDevelopment()
 	}
 }
 

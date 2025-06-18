@@ -11,6 +11,7 @@ plugins {
 	id "docker-common"
 	id "docker-export-backup"
 	id "docker-import-backup"
+	id "docker-liferay-bundle"
 }
 
 ext {
@@ -124,6 +125,7 @@ composeUp {
 		dependsOn ":buildDockerImage"
 	}
 
+	dependsOn checkForLiferayLicense
 	dependsOn importDatabaseDumps
 
 	doFirst {
@@ -133,6 +135,8 @@ composeUp {
 	onlyIf {
 		!config.composeFiles.isEmpty()
 	}
+
+	finalizedBy listAdminUsers
 }
 
 dockerCompose {

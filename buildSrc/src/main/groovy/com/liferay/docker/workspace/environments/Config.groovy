@@ -66,6 +66,15 @@ class Config {
 			this.services = services
 		}
 
+		this.product = project.getProperty("liferay.workspace.product")
+		this.dockerImageLiferay = project.gradle.liferayWorkspace.dockerImageLiferay
+
+		if (((this.product != null) && this.product.startsWith("dxp-")) ||
+			((this.dockerImageLiferay != null) && this.dockerImageLiferay.startsWith("liferay/dxp:"))) {
+
+			this.dockerImageLiferayDXP = true
+		}
+
 		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
 
 		def webserverHostnames = project.getProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
@@ -140,9 +149,12 @@ class Config {
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public String dockerImageLiferay = null
+	public boolean dockerImageLiferayDXP = false
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
+	public String product = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useLiferay = false

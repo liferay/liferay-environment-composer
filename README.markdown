@@ -141,6 +141,8 @@ Document library files for method #1:
 
 Add a license files to `./configs/common/deploy`.
 
+*Note:* The Gradle command to start the server will fail if there are no license files and you are trying to start up a Liferay DXP image.
+
 #### Enable clustering
 
 Clustering can be enabled by setting the `lr.docker.environment.cluster.nodes` property in `gradle.properties`. Setting it to 0 means no clustering is enabled. Setting it to 1 or more will add that many cluster nodes in addition to the main Liferay instance.

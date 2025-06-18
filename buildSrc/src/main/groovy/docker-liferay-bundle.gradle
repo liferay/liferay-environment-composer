@@ -1,0 +1,19 @@
+import java.nio.file.Path
+import java.nio.file.Paths
+
+tasks.register("checkForLiferayLicense") {
+	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("running Liferay DXP") { config.dockerImageLiferayDXP }
+
+	doFirst {
+		FileCollection licenseXmlFileCollection = project.fileTree("configs") {
+			include "**/osgi/modules/*.xml"
+		}.filter {
+			it.text.contains("<license>")
+		}
+
+		if (licenseXmlFileCollection.isEmpty()) {
+			throw new GradleException("Please add a license to configs/common/osgi/modules/")
+		}
+	}
+}

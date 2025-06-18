@@ -53,7 +53,7 @@ tasks.register("prepareWebserverConfig", Copy) {
 tasks.register("prepareHotfixes", Download) {
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 
-	onlyIf {
+	onlyIf("there are hotfix URLs defined") {
 		!config.hotfixURLs.isEmpty()
 	}
 
@@ -132,7 +132,7 @@ composeUp {
 		println "Using config:\n${config}"
 	}
 
-	onlyIf {
+	onlyIf("there are compose files") {
 		!config.composeFiles.isEmpty()
 	}
 

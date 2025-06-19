@@ -1,7 +1,3 @@
-import com.liferay.docker.workspace.environments.Config
-
-import de.undercouch.gradle.tasks.download.Download
-
 import groovy.json.JsonSlurper
 
 import java.time.format.DateTimeFormatter
@@ -13,13 +9,6 @@ plugins {
 	id "docker-import-backup"
 	id "docker-liferay-bundle"
 }
-
-ext {
-	config = new Config(project)
-}
-
-String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
-File projectDir = project.projectDir as File
 
 file('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->
@@ -50,16 +39,6 @@ tasks.register("prepareWebserverConfig", Copy) {
 	into 'compose-recipes/webserver/build/config'
 }
 
-tasks.register("prepareHotfixes", Download) {
-	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
-
-	onlyIf("there are hotfix URLs defined") {
-		!config.hotfixURLs.isEmpty()
-	}
-
-	src config.hotfixURLs
-}
-
 tasks.register("shareWorkspace", Zip) {
 	archiveFileName = provider {
 		DateTimeFormatter formatter = DateTimeFormatter.
@@ -82,6 +61,7 @@ tasks.register("shareWorkspace", Zip) {
 	exclude "build"
 	exclude "buildSrc/.gradle"
 	exclude "buildSrc/build"
+	exclude "lxc"
 	exclude "shared_workspaces"
 	exclude "tmp"
 

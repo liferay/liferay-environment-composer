@@ -2,6 +2,10 @@ plugins {
 	id 'groovy-gradle-plugin'
 }
 
+dependencies {
+	compileOnly group: "de.undercouch", name: "gradle-download-task", version: "5.6.0"
+}
+
 repositories {
 	gradlePluginPortal()
 }

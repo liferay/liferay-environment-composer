@@ -5,6 +5,9 @@ project.plugins.apply "docker-import-backup-lxc-data"
 
 tasks.register("importDatabaseDumps") {
 	dependsOn dockerCreate
+	dependsOn decryptCloudBackupDatabase
+	dependsOn checkCloudBackupDatabaseType
+
 	onlyIf("using an external database") { config.useDatabase }
 	onlyIf("there is a database dump file") {
 		!project.fileTree("dumps") { exclude ".gitkeep" }.isEmpty()
@@ -100,10 +103,12 @@ tasks.register("importDatabaseDumps") {
 		println "Loaded database backup into database container"
 
 		updateDatabaseForLocalDevelopment()
+		updatePortalExtPropertiesWithDefaultVirtualHost()
 	}
 }
 
 tasks.register("importDocumentLibrary") {
+	dependsOn decryptCloudBackupDocumentLibrary
 	dependsOn dockerCreate
 
 	onlyIf {

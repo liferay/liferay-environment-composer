@@ -1,0 +1,227 @@
+import groovy.json.JsonSlurper
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import java.util.regex.Pattern
+import java.util.regex.Matcher
+
+ext {
+	copyLiferayLXCRepositoryConfiguration = {
+		File configFolder, String sourceName, String targetName ->
+
+		File sourceFile = new File(configFolder, sourceName)
+
+		if (!sourceFile.exists()) {
+			return false
+		}
+
+		File targetFile = file("configs/${targetName}")
+
+		if (sourceFile.isDirectory()) {
+			for (String fileName : sourceFile.list()) {
+				copyLiferayLXCRepositoryConfiguration(sourceFile, fileName, "${targetName}/${fileName}".toString())
+			}
+		}
+		else {
+			targetFile.parentFile.mkdirs()
+
+			Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+		}
+
+		return true
+	}
+
+	getReleaseInfo = {
+		String descriptorText ->
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		Object environmentDescriptor = jsonSlurper.parseText(descriptorText)
+
+		String liferayImage = environmentDescriptor["liferay-image"]
+		String liferayHotfix = environmentDescriptor["hotfix"]
+
+		Pattern releasePattern = ~'[0-9]+\\.q[1-4]\\.[0-9]+'
+
+		Matcher releaseMatcher = releasePattern.matcher(liferayImage)
+
+		if (!releaseMatcher.find()) {
+			println "did not match ${liferayImage}"
+			return null
+		}
+
+		String release = releaseMatcher.group()
+
+		if ((release.indexOf(".q1") != -1) && !release.startsWith("2024.")) {
+			release = release + "-lts"
+		}
+
+		String workspaceProduct = "dxp-${release}"
+		String liferayHotfixURL = liferayHotfix != null && liferayHotfix.length() > 0 ? "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${liferayHotfix}.zip" : ""
+
+		return [
+			"liferay.workspace.product": workspaceProduct,
+			"liferay.workspace.docker.image.liferay": liferayImage,
+			"lr.docker.environment.hotfix.urls": liferayHotfixURL
+		]
+	}
+
+	updateGradlePropertiesWithLiferayVersion = {
+		String environmentName ->
+
+		File lxcRepositoryFolder = new File(config.liferayLXCRepositoryPath)
+		String descriptorPath = "automation/environment-descriptors/${environmentName}.json"
+
+		File environmentDescriptorFile = new File(lxcRepositoryFolder, descriptorPath)
+
+		if (!environmentDescriptorFile.exists()) {
+			return null
+		}
+
+		Map<String, String> latestReleaseInfo = null
+		String latestReleaseInfoDate = null
+
+		waitForCommand("git log -${config.liferayLXCEnvironmentHistoryCount} --pretty='%H %cd' --date=format-local:'%Y-%m-%d %H:%M:%S %Z' -- ${descriptorPath}", lxcRepositoryFolder).eachLine {
+			int pos = it.indexOf(" ")
+
+			String commit = it.substring(0, pos)
+			String releaseInfoDate = it.substring(pos + 1)
+
+			println ""
+			println releaseInfoDate
+			
+			Map<String, String> releaseInfo = getReleaseInfo(waitForCommand("git show ${commit}:${descriptorPath}", lxcRepositoryFolder)).each {
+				println "${it.key}=${it.value}"
+			}
+
+			if (latestReleaseInfo == null) {
+				latestReleaseInfo = releaseInfo
+				latestReleaseInfoDate = releaseInfoDate
+			}
+		}
+
+		if (latestReleaseInfo != null) {
+			updateGradleLocalProperties(latestReleaseInfo)
+		}
+
+		return latestReleaseInfoDate
+	}
+
+	copyLiferayLXCRepositoryEnvConfigurations = {
+		String environment, List<String> includeAndOverride ->
+
+		File environmentFolder = file("${config.liferayLXCRepositoryPath}/liferay/configs/${environment}")
+
+		if (!environmentFolder.exists()) {
+			return
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "portal-env.properties", "common/properties/lxc-portal-env-${environment}.properties")) {
+			includeAndOverride.add("./properties/lxc-portal-env-${environment}.properties")
+
+			println "Copied ${environment}/portal-env.properties from liferay-lxc repository clone"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "scripts", "docker")) {
+			println "Copied ${environment}/scripts from liferay-lxc repository clone"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "osgi", "common/osgi")) {
+			println "Copied ${environment}/osgi from liferay-lxc repository clone"
+		}
+
+		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion(environment)
+		
+		if (latestReleaseInfoDate != null) {
+			println ""
+			println "Updated gradle-local.properties to environment dated ${latestReleaseInfoDate}"
+		}
+	}
+
+	copyLiferayLXCRepositoryConfigurations = {
+		Map<String, String> defaultCompanyVirtualHost, List<String> includeAndOverride ->
+
+		String expectedWebId = defaultCompanyVirtualHost["webId"]
+		String expectedHostName = defaultCompanyVirtualHost["hostname"].substring(0, defaultCompanyVirtualHost["hostname"].length() - ".localhost".length())
+
+		fileTree("${config.liferayLXCRepositoryPath}/liferay/configs") {
+			"**/portal-env.properties"
+		}.filter {
+			it.text.contains("company.default.web.id=${expectedWebId}") &&
+				it.text.contains("company.default.virtual.host.name=${expectedHostName}")
+		}.collect {
+			it.parentFile
+		}.each {
+			copyLiferayLXCRepositoryEnvConfigurations(it.name, includeAndOverride)
+		}
+
+		includeAndOverride.add("./properties/lxc.properties")
+	}
+
+	updatePortalExtPropertiesWithDefaultVirtualHost = {
+		if (!config.useDatabase) {
+			return
+		}
+	
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		if (defaultWebId == null) {
+			return
+
+		}
+
+		Map<String, String> defaultCompanyVirtualHost = companyVirtualHosts.find {
+			it["webId"] == defaultWebId
+		}
+
+		File portalExtPropertiesFile = file("configs/common/portal-ext.properties")
+
+		List<String> propertiesLines = []
+		List<String> includeAndOverride = []
+
+		portalExtPropertiesFile.eachLine {
+			String key = it.trim().split("=")[0]
+
+			if (key.equals("company.default.web.id")) {
+				return
+			}
+
+			if (key.equals("include-and-override")) {
+				String file = it.split("=")[1].trim()
+
+				if (!file.contains("/lxc")) {
+					includeAndOverride.add(file)
+				}
+			}
+			else {
+				propertiesLines.add(it)
+			}
+		}
+
+		if (config.databasePartitioningEnabled) {
+			copyLiferayLXCRepositoryConfigurations(defaultCompanyVirtualHost, includeAndOverride)
+		}
+
+		file("configs/common/properties/lxc.properties").text = """
+database.partition.enabled=true
+database.partition.thread.pool.enabled=true
+company.default.web.id=${defaultCompanyVirtualHost["webId"]}
+company.default.virtual.host.name=${defaultCompanyVirtualHost["hostname"]}
+		"""
+
+		portalExtPropertiesFile.withOutputStream {
+			BufferedOutputStream outputStream ->
+
+			includeAndOverride.each {
+				outputStream << "include-and-override=" << it << "\n"
+			}
+
+			propertiesLines.each {
+				outputStream << it << "\n"
+			}
+		}
+	}
+}

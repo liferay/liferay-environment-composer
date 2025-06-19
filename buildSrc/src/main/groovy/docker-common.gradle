@@ -1,6 +1,10 @@
+import com.liferay.docker.workspace.environments.Config
+
 import groovy.json.JsonSlurper
 
 ext {
+	config = new Config(project)
+
 	executeSQLQuery = {
 		String sql, String schema = null ->
 

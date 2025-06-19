@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 project.plugins.apply "docker-common"
 project.plugins.apply "docker-import-backup-localdev"
 
@@ -42,28 +44,32 @@ tasks.register("importDatabaseDumps") {
 		String dataVolumeName = "${config.namespace.toLowerCase()}_${database}-data-volume"
 		String dumpsVolumeName = "${config.namespace.toLowerCase()}_${database}-dumps-volume"
 
-		int currentDataVolumeSize = waitForCommand("docker run --rm -v ${dataVolumeName}:/target busybox:latest du -s /target/").split("\\s+")[0] as Integer
+		JsonSlurper jsonSlurper = new JsonSlurper()
 
-		if (currentDataVolumeSize > 4) {
-			println "${database}-data-volume already contains ${currentDataVolumeSize} KB of files, assuming no further action is required"
+		Map<String, String> diskUsageMetadata = jsonSlurper.parseText(waitForCommand("docker system df --verbose --format json"))["Volumes"].collectEntries {
+			[it["Name"], it["Size"]]
+		}
+
+		if (diskUsageMetadata.containsKey(dataVolumeName) && !diskUsageMetadata[dataVolumeName].toUpperCase().equals("0B")) {
+			println "${database}-data-volume already contains ${diskUsageMetadata[dataVolumeName]} of files, assuming no further action is required"
 
 			return
 		}
 
-		int currentDumpsVolumeSize = waitForCommand("docker run --rm -v ${dumpsVolumeName}:/target busybox:latest du -s /target/").split("\\s+")[0] as Integer
-
-		if (currentDumpsVolumeSize > 4) {
-			println "${database}-dumps-volume already contains ${currentDumpsVolumeSize} KB of files, assuming backups have been copied"
+		if (diskUsageMetadata.containsKey(dumpsVolumeName) && !diskUsageMetadata[dumpsVolumeName].toUpperCase().equals("0B")) {
+			println "${database}-dumps-volume already contains ${currentDumpsVolumeSize} of files, assuming backups have been copied"
 		}
-		else if (config.useDatabaseMySQL) {
-			file("dumps").listFiles().each {
-				if (it.name.endsWith(".sql") || it.name.endsWith(".sql.gz")) {
-					restoreVolume(dumpsVolumeName, it, false)
+		else {
+			if (config.useDatabaseMySQL) {
+				file("dumps").listFiles().each {
+					if (it.name.endsWith(".sql") || it.name.endsWith(".sql.gz")) {
+						restoreVolume(dumpsVolumeName, it, false)
+					}
 				}
 			}
-		}
-		else if (config.useDatabasePostgreSQL) {
-			restoreVolume(dumpsVolumeName, file("dumps"), false)
+			else if (config.useDatabasePostgreSQL) {
+				restoreVolume(dumpsVolumeName, file("dumps"), false)
+			}
 		}
 
 		println "Loading database backup into database container"
@@ -111,9 +117,11 @@ tasks.register("importDatabaseDumps") {
 			}
 		}
 
-		restoreVolume(dumpsVolumeName, globalVariableScript, false)
+		if (globalVariableScript.exists()) {
+			restoreVolume(dumpsVolumeName, globalVariableScript, false)
 
-		globalVariableScript.delete()
+			globalVariableScript.delete()
+		}
 
 		waitForContainer("database", "${config.namespace}-database")
 

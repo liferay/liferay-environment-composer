@@ -1,5 +1,9 @@
+import de.undercouch.gradle.tasks.download.Download
+
 import java.nio.file.Path
 import java.nio.file.Paths
+
+project.plugins.apply "docker-common"
 
 tasks.register("checkForLiferayLicense") {
 	onlyIf("using the Liferay service") { config.useLiferay }
@@ -16,6 +20,51 @@ tasks.register("checkForLiferayLicense") {
 			throw new GradleException("Please add a license to configs/common/osgi/modules/")
 		}
 	}
+}
+
+tasks.register("ignorePreviousHotfixes") {
+	doLast {
+		Set<String> includeNames = config.hotfixURLs.collect {
+			Path path = Paths.get(new URI(it).path)
+			return path.getName(path.nameCount - 1).toString()
+		}.toSet()
+
+		FileCollection patchFiles = project.fileTree(projectDir) {
+			include "configs/**/liferay-hotfix-*.zip"
+			include "configs/**/liferay-hotfix-*.zip.ignore"
+			include "build/docker/configs/**/liferay-*.zip"
+			include "build/docker/configs/**/liferay-*.zip.ignore"
+		}
+
+		patchFiles.each {
+			String patchName = it.name.endsWith(".ignore") ? it.name.substring(0, it.name.length() - 7) : it.name
+
+			if (includeNames.contains(patchName)) {
+				if (it.name.endsWith(".ignore")) {
+					it.renameTo(new File(it.absolutePath.substring(0, it.absolutePath.length() - 7)))
+				}
+			}
+			else {
+				if (!it.name.endsWith(".ignore")) {
+					it.renameTo(new File(it.absolutePath + ".ignore"))
+				}
+			}
+		}
+	}
+}
+
+tasks.register("prepareHotfixes", Download) {
+	dependsOn ignorePreviousHotfixes
+
+	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
+
+	onlyIf("there are hotfix URLs defined") {
+		!config.hotfixURLs.isEmpty()
+	}
+
+	src config.hotfixURLs
+
+	overwrite false
 }
 
 tasks.register("listAdminUsers") {

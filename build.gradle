@@ -1,7 +1,3 @@
-import com.liferay.docker.workspace.environments.Config
-
-import de.undercouch.gradle.tasks.download.Download
-
 import groovy.json.JsonSlurper
 
 import java.time.format.DateTimeFormatter
@@ -12,10 +8,6 @@ plugins {
 	id "docker-export-backup"
 	id "docker-import-backup"
 	id "docker-liferay-bundle"
-}
-
-ext {
-	config = new Config(project)
 }
 
 file('.env').withOutputStream {
@@ -30,16 +22,6 @@ file('.env').withOutputStream {
 
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
-}
-
-tasks.register("prepareHotfixes", Download) {
-	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
-
-	onlyIf("there are hotfix URLs defined") {
-		!config.hotfixURLs.isEmpty()
-	}
-
-	src config.hotfixURLs
 }
 
 tasks.register("shareWorkspace", Zip) {
@@ -64,6 +46,7 @@ tasks.register("shareWorkspace", Zip) {
 	exclude "build"
 	exclude "buildSrc/.gradle"
 	exclude "buildSrc/build"
+	exclude "lxc"
 	exclude "shared_workspaces"
 	exclude "tmp"
 

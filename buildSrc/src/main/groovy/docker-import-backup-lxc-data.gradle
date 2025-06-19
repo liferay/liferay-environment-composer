@@ -1,0 +1,259 @@
+import groovy.json.JsonSlurper
+
+project.plugins.apply "docker-common"
+
+Closure<Boolean> validateDatabaseBackupFileExtensions = {
+	File extractedFolder ->
+
+	List<File> decryptedBackupFiles = extractedFolder.listFiles().findAll {
+		it.name.endsWith(".gz") || it.name.endsWith(".sql")
+	}
+
+	if (decryptedBackupFiles.isEmpty()) {
+		decryptedBackupFiles = extractedFolder.listFiles().findAll {
+			!it.isDirectory() && !it.name.contains(".")
+		}
+	}
+
+	if (decryptedBackupFiles.isEmpty()) {
+		return false
+	}
+
+	decryptedBackupFiles.each {
+		if (it.name.endsWith(".gz") && !it.name.endsWith(".sql.gz")) {
+			String path = it.absolutePath
+			it.renameTo("${path.substring(0, path.length() - 3)}.sql.gz")
+		}
+		else if (!it.name.contains(".")) {
+			it.renameTo("${it.absolutePath}.sql")
+		}
+	}
+
+	return true
+}
+
+Closure<File> getFirstMatchingSubFolder
+
+getFirstMatchingSubFolder = {
+	File folder, Closure<Boolean> predicate ->
+
+	if (predicate(folder)) {
+		return folder
+	}
+
+	List<File> subfolders = folder.listFiles().findAll {
+		it.isDirectory()
+	}
+
+	if (subfolders.size() != 1) {
+		return null
+	}
+
+	return getFirstMatchingSubFolder(subfolders[0], predicate)
+}
+
+Closure<Boolean> stripComponentFolders = {
+	File sourceFolder, File targetFolder ->
+
+	if (sourceFolder == null) {
+		return false
+	}
+
+	if (sourceFolder.equals(targetFolder)) {
+		return true
+	}
+
+	sourceFolder.listFiles().each {
+		it.renameTo(new File(targetFolder, it.name))
+	}
+
+	File nestedFolder = sourceFolder
+
+	while (!nestedFolder.equals(targetFolder)) {
+		nestedFolder.delete()
+
+		nestedFolder = nestedFolder.getParentFile()
+	}
+
+	return true
+}
+
+tasks.register("decryptCloudBackupDatabase") {
+	onlyIf {
+		file("lxc").exists()
+	}
+
+	doFirst {
+		File dumpsFolder = file("dumps")
+
+		if (dumpsFolder.exists()) {
+			if (validateDatabaseBackupFileExtensions(dumpsFolder)) {
+				print("Found existing decrypted backups in ${dumpsFolder.absolutePath}")
+
+				return
+			}
+		}
+
+		File lxcFolder = file("lxc")
+
+		List<File> databaseBackupFiles = lxcFolder.listFiles().findAll {
+			!it.name.contains("doclib") && it.name.endsWith(".7z")
+		}
+
+		if (databaseBackupFiles.isEmpty()) {
+			databaseBackupFiles = lxcFolder.listFiles().findAll {
+				!it.name.contains("doclib") && it.name.endsWith(".zip")
+			}
+		}
+
+		if (databaseBackupFiles.size() != 1) {
+			throw new GradleException("Unable to identify database backup")
+		}
+
+		println "Extracting LXC database backup"
+
+		if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
+			waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath} -p${config.lxcBackupPassword}")
+		}
+		else {
+			waitForCommand("7z x -aos ${databaseBackupFiles[0].absolutePath} -o${dumpsFolder.absolutePath}")
+		}
+
+		if (!stripComponentFolders(getFirstMatchingSubFolder(dumpsFolder, validateDatabaseBackupFileExtensions), dumpsFolder)) {
+			throw new GradleException("Unable to identify database backup")
+		}
+	}
+}
+
+tasks.register("checkCloudBackupDatabaseType") {
+	mustRunAfter decryptCloudBackupDatabase
+
+	onlyIf {
+		config.lxcEnvironmentName != null && config.lxcEnvironmentName.length() > 0
+	}
+
+	doFirst {
+		fileTree("dumps") {
+			include "*.sql"
+			include "*.sql.gz"
+		}.each {
+			String environment = config.lxcEnvironmentName
+
+			config.databasePartitioningEnabled = true
+
+			updateGradleLocalProperties([
+				"lr.docker.environment.database.partitioning.enabled": "true",
+			])
+
+			JsonSlurper jsonSlurper = new JsonSlurper()
+
+			Object lcpDescriptor = jsonSlurper.parse(new File(file(config.liferayLXCRepositoryPath), "liferay/LCP.json"))
+
+			Map<String, String> environmentEnv = lcpDescriptor["environments"].containsKey(environment) ? lcpDescriptor["environments"][environment]["env"] : [:]
+
+			if ((environmentEnv["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"] != null) && environmentEnv["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"].contains("postgres")) {
+				if (!config.useDatabasePostgreSQL) {
+					updateGradleLocalProperties([
+						"lr.docker.environment.service.enabled[mysql]": "false",
+						"lr.docker.environment.service.enabled[postgres]": "true",
+					])
+
+					throw new GradleException("Updated gradle-local.properties to enable postgres instead of ${config.databaseType}, please re-run the task")
+				}
+			}
+			else {
+				if (!config.useDatabaseMySQL) {
+					updateGradleLocalProperties([
+						"lr.docker.environment.service.enabled[mysql]": "true",
+						"lr.docker.environment.service.enabled[postgres]": "false",
+					])
+
+					throw new GradleException("Updated gradle-local.properties to enable mysql instead of ${config.databaseType}, please re-run the task")
+				}
+			}
+		}
+	}
+}
+
+Closure<Boolean> containsTarFile = {
+	File extractedFolder ->
+
+	List<String> fileNames = extractedFolder.list()
+
+	if (fileNames.contains("0")) {
+		return true
+	}
+
+	return fileNames.find {
+		it.endsWith(".tar.gz") || it.endsWith(".tgz") || it.endsWith(".tar")
+	}
+}
+
+Closure<Boolean> isDocumentLibraryRoot = {
+	File extractedFolder ->
+
+	List<File> subfolders = extractedFolder.listFiles().findAll {
+		it.isDirectory()
+	}
+
+	if (subfolders.isEmpty()) {
+		return false
+	}
+
+	return subfolders.find {
+		try {
+			Long.parseLong(it.name)
+			return false
+		}
+		catch (NumberFormatException numberFormatException) {
+			return true
+		}
+	} == null
+}
+
+tasks.register("decryptCloudBackupDocumentLibrary") {
+	doFirst {
+		File doclibBackupsFolder = file("liferay_data/document_library")
+
+		if (!doclibBackupsFolder.exists()) {
+			File lxcFolder = file("lxc")
+
+			if (!lxcFolder.exists()) {
+				return
+			}
+
+			List<File> doclibBackupFiles = lxcFolder.listFiles().findAll {
+				it.name.contains("doclib") && it.name.endsWith(".7z")
+			}
+
+			if (doclibBackupFiles.isEmpty()) {
+				return
+			}
+
+			if (doclibBackupFiles.size() > 1) {
+				throw new GradleException("Unable to identify document library backup")
+			}
+
+			println "Extracting LXC document library backup"
+
+			String command = "7z x -aos ${doclibBackupFiles[0].absolutePath} -o${doclibBackupsFolder.absolutePath}"
+
+			if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
+				command += " -p${config.lxcBackupPassword}"
+			}
+
+			waitForCommand(command)
+		}
+
+		while (stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, containsTarFile), doclibBackupsFolder)) {
+			doclibBackupsFolder.listFiles().each {
+				waitForCommand("7z x -aos ${it.absolutePath} -o${doclibBackupsFolder.absolutePath}")
+				it.delete()
+			}
+		}
+
+		if (!stripComponentFolders(getFirstMatchingSubFolder(doclibBackupsFolder, isDocumentLibraryRoot), doclibBackupsFolder)) {
+			throw new GradleException("Unable to find system folder 0 in document library backup")
+		}
+	}
+}

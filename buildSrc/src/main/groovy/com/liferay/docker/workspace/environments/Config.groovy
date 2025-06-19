@@ -54,6 +54,24 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		Integer liferayLXCEnvironmentHistoryCount = project.getProperty("lr.docker.environment.liferay-lxc.environment.history.count") as Integer
+
+		if (liferayLXCEnvironmentHistoryCount != null) {
+			this.liferayLXCEnvironmentHistoryCount = Math.max(1, liferayLXCEnvironmentHistoryCount)
+		}
+
+		String lxcBackupPassword = project.getProperty("lr.docker.environment.lxc.backup.password")
+
+		if (lxcBackupPassword != null) {
+			this.lxcBackupPassword = lxcBackupPassword
+		}
+
+		String liferayLXCRepositoryPath = project.getProperty("lr.docker.environment.liferay-lxc.repository.path")
+
+		if (liferayLXCRepositoryPath != null) {
+			this.liferayLXCRepositoryPath = liferayLXCRepositoryPath
+		}
+
 		String liferayUserPassword = project.getProperty("lr.docker.environment.liferay.user.password")
 
 		if (liferayUserPassword != null) {
@@ -198,6 +216,43 @@ class Config {
 		return project.relativePath(potentialBackupFolders.iterator().next().getAbsolutePath())
 	}
 
+	public String getLxcEnvironmentName() {
+		String lxcEnvironmentName = project.getProperty("lr.docker.environment.lxc.environment.name")
+
+		if (lxcEnvironmentName != null && lxcEnvironmentName.length() > 0) {
+			return lxcEnvironmentName
+		}
+
+		return project.file("dumps").listFiles().findAll {
+			return it.name.endsWith(".sql") || it.name.endsWith(".sql.gz")
+		}.collect {
+			Pattern projectPattern = ~"lxc([a-z0-9]{4})"
+			Matcher projectMatcher = projectPattern.matcher(it.name)
+
+			if (!projectMatcher.find()) {
+				return null
+			}
+
+			String projectName = projectMatcher.group(1)
+
+			Pattern environmentPattern = ~"-(${projectName}[a-z0-9]+)"
+			Matcher environmentMatcher = environmentPattern.matcher(it.name)
+
+			if (!environmentMatcher.find()) {
+				return null
+			}
+			String environmentName = environmentMatcher.group(1)
+
+			if (!environmentName.startsWith(projectName)) {
+				return null
+			}
+
+			return environmentName
+		}.find {
+			it != null
+		}
+	}
+
 	static List toList(String s) {
 		return s.trim().split(",").grep()
 	}
@@ -215,7 +270,10 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean liferayDXPImage = false
 	public String liferayDockerImageId = ""
-	public String liferayUserPassword = ""
+	public int liferayLXCEnvironmentHistoryCount = 5
+	public String liferayLXCRepositoryPath = ""
+	public String liferayUserPassword = "test"
+	public String lxcBackupPassword = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false

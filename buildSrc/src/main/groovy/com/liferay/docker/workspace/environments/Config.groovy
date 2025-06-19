@@ -42,12 +42,6 @@ class Config {
 			this.databasePartitioningEnabled = databasePartitioningEnabled.toBoolean()
 		}
 
-		String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
-
-		if (dataDirectory != null && dataDirectory.length() > 0) {
-			this.dataDirectory = dataDirectory
-		}
-
 		String documentLibraryFileListOnly = project.getProperty("lr.docker.environment.liferay.document.library.file.list.only")
 
 		if (documentLibraryFileListOnly != null) {
@@ -167,7 +161,6 @@ class Config {
 
 		this.composeFiles.addAll(serviceComposeFiles)
 
-		this.environmentMap.put "DATA_DIRECTORY", this.dataDirectory
 		this.environmentMap.put "DATABASE_NAME", this.databaseName
 		this.environmentMap.put "NAMESPACE", this.namespace
 
@@ -183,6 +176,36 @@ class Config {
 		this.environmentMap.put("COMPOSE_PROJECT_NAME", this.namespace.toLowerCase())
 	}
 
+	public String getDataDirectory() {
+		String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
+
+		if (dataDirectory == null || dataDirectory.length() == 0) {
+			return null
+		}
+
+		Set<File> potentialBackupFolders = project.fileTree(dataDirectory) {
+			include "**/*.tar"
+			include "**/*.tar.gz"
+		}.collect {
+			it.parentFile
+		}.toSet()
+			
+		if (potentialBackupFolders.isEmpty() && dataDirectory.equals("data")) {
+			potentialBackupFolders = project.fileTree("exported_data") {
+				include "**/*.tar"
+				include "**/*.tar.gz"
+			}.collect {
+				it.parentFile
+			}.toSet()
+		}
+
+		if (potentialBackupFolders.isEmpty() || potentialBackupFolders.size() > 1) {
+			return null
+		}
+
+		return project.relativePath(potentialBackupFolders.iterator().next().getAbsolutePath())
+	}
+
 	static List toList(String s) {
 		return s.trim().split(",").grep()
 	}
@@ -195,7 +218,6 @@ class Config {
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String databaseType = null
-	public String dataDirectory = "data"
 	public boolean documentLibraryFileListOnly = false
 	public Map<String, String> environmentMap = [:]
 	public List<String> hotfixURLs = new ArrayList<String>()

@@ -79,15 +79,21 @@ tasks.register("shareWorkspace", Zip) {
 	exclude ".gitignore"
 	exclude ".git"
 	exclude ".gradle"
+	exclude "build"
+	exclude "buildSrc/.gradle"
+	exclude "buildSrc/build"
 	exclude "shared_workspaces"
-	exclude {
-		it.relativePath.pathString.startsWith("exported_data/") &&
-		!it.relativePath.pathString.startsWith(config.dataDirectory)
+	exclude "tmp"
+
+	if (config.dataDirectory != null) {
+		exclude {
+			return (it.relativePath.pathString.startsWith("data/") || it.relativePath.pathString.startsWith("exported_data/")) &&
+				!it.relativePath.pathString.startsWith(config.dataDirectory)
+		}
 	}
 
 	from '.'
 
-	include "${config.dataDirectory}/**"
 	include "**/*"
 
 	outputs.upToDateWhen {
@@ -127,6 +133,7 @@ composeUp {
 
 	dependsOn checkForLiferayLicense
 	dependsOn importDatabaseDumps
+	dependsOn importDocumentLibrary
 
 	doFirst {
 		println "Using config:\n${config}"

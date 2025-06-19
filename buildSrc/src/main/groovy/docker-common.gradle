@@ -136,13 +136,11 @@ ext {
 		return defaultCompanyVirtualHost["webId"]
 	}
 
-	getExistingVolumeNames = {
-		String prefix ->
-
+	getExistingVolumeDiskUsage = {
 		JsonSlurper jsonSlurper = new JsonSlurper()
 
-		return waitForCommand("docker volume ls --filter name=^${prefix} --format json").split("\n").collect {
-			jsonSlurper.parseText(it)["Name"]
+		return jsonSlurper.parseText(waitForCommand("docker system df --verbose --format json"))["Volumes"].collectEntries {
+			it["Name"].startsWith("${config.namespace.toLowerCase()}_") ? [it["Name"], it["Size"]] : [:]
 		}
 	}
 
@@ -312,6 +310,17 @@ ext {
 
 tasks.register("dockerCreate") {
 	doFirst {
+		String dataVolumeName = "${config.namespace.toLowerCase()}_liferay-data-volume"
+
+		boolean cleanDataVolume = !getExistingVolumeDiskUsage().containsKey(dataVolumeName)
+
 		waitForCommand("docker compose create")
+
+		if (config.useLiferay && config.useDatabase && cleanDataVolume) {
+			println "The Liferay base image contains a pre-populated /opt/liferay/data/ folder from a bundle startup used to populate /opt/liferay/osgi/state/"
+			println "As all of this data is tied to the Hypersonic database from that bundle startup, it often causes issues, so it will be automatically cleared out"
+
+			waitForCommand("docker run --rm -v ${dataVolumeName}:/target busybox:latest sh -c 'rm -rf /target/*'")
+		}
 	}
 }

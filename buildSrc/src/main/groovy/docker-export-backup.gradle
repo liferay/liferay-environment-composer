@@ -10,7 +10,7 @@ tasks.register("exportContainerData") {
 
 		String exportPath = file("exported_data/data_${config.namespace}_${formatter.format(Instant.now())}").absolutePath
 
-		getExistingVolumeNames(prefix).each {
+		getExistingVolumeDiskUsage().keySet().each {
 			String volumeName ->
 
 			String backupFileName = "${volumeName.substring(prefix.length())}.tar"

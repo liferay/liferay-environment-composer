@@ -1,63 +1,31 @@
-import groovy.json.JsonSlurper
-
 project.plugins.apply "docker-common"
 project.plugins.apply "docker-import-backup-localdev"
-
-Closure<List<Map<File, String>>> getEligibleVolumeBackups = {
-	String prefix, List<String> existingVolumeNames, File[] candidates ->
-
-	return candidates.collect {
-		File candidate ->
-
-		List<File> tarFiles = candidate.listFiles().findAll {
-			it.name.endsWith(".tar") || it.name.endsWith(".tar.gz")
-		}
-
-		Map<String, String> eligibleVolumeBackups = [:]
-
-		tarFiles.each {
-			String volumeName = prefix + it.name.substring(0, it.name.length() - 4)
-
-			if (existingVolumeNames.contains(volumeName)) {
-				eligibleVolumeBackups.put(it, volumeName)
-			}
-		}
-
-		return eligibleVolumeBackups
-	}.findAll {
-		!it.isEmpty()
-	}
-}
+project.plugins.apply "docker-import-backup-lxc-config"
+project.plugins.apply "docker-import-backup-lxc-data"
 
 tasks.register("importDatabaseDumps") {
+	dependsOn dockerCreate
 	onlyIf("using an external database") { config.useDatabase }
 	onlyIf("there is a database dump file") {
 		!project.fileTree("dumps") { exclude ".gitkeep" }.isEmpty()
 	}
 
 	doFirst {
-		waitForCommand("docker compose create")
 		waitForCommand("docker compose build database")
 
-		String database = config.databaseType
+		String dataVolumeName = "${config.namespace.toLowerCase()}_${config.databaseType}-data-volume"
+		String dumpsVolumeName = "${config.namespace.toLowerCase()}_${config.databaseType}-dumps-volume"
 
-		String dataVolumeName = "${config.namespace.toLowerCase()}_${database}-data-volume"
-		String dumpsVolumeName = "${config.namespace.toLowerCase()}_${database}-dumps-volume"
-
-		JsonSlurper jsonSlurper = new JsonSlurper()
-
-		Map<String, String> diskUsageMetadata = jsonSlurper.parseText(waitForCommand("docker system df --verbose --format json"))["Volumes"].collectEntries {
-			[it["Name"], it["Size"]]
-		}
+		Map<String, String> diskUsageMetadata = getExistingVolumeDiskUsage()
 
 		if (diskUsageMetadata.containsKey(dataVolumeName) && !diskUsageMetadata[dataVolumeName].toUpperCase().equals("0B")) {
-			println "${database}-data-volume already contains ${diskUsageMetadata[dataVolumeName]} of files, assuming no further action is required"
+			println "${dataVolumeName} already contains ${diskUsageMetadata[dataVolumeName]} of files, assuming no further action is required"
 
 			return
 		}
 
 		if (diskUsageMetadata.containsKey(dumpsVolumeName) && !diskUsageMetadata[dumpsVolumeName].toUpperCase().equals("0B")) {
-			println "${database}-dumps-volume already contains ${currentDumpsVolumeSize} of files, assuming backups have been copied"
+			println "${dumpsVolumeName} already contains ${currentDumpsVolumeSize} of files, assuming backups have been copied"
 		}
 		else {
 			if (config.useDatabaseMySQL) {
@@ -135,45 +103,53 @@ tasks.register("importDatabaseDumps") {
 	}
 }
 
+tasks.register("importDocumentLibrary") {
+	dependsOn dockerCreate
+
+	onlyIf {
+		config.useLiferay
+	}
+
+	doFirst {
+		String dataVolumeName = "${config.namespace.toLowerCase()}_liferay-data-volume"
+
+		Map<String, String> diskUsageMetadata = getExistingVolumeDiskUsage()
+
+		if (diskUsageMetadata.containsKey(dataVolumeName) && !diskUsageMetadata[dataVolumeName].toUpperCase().equals("0B")) {
+			println "${dataVolumeName} already contains ${diskUsageMetadata[dataVolumeName]} of files, assuming no further action is required"
+
+			return
+		}
+
+		restoreVolume(dataVolumeName, file("liferay_data"), config.documentLibraryFileListOnly)
+	}
+}
+
 tasks.register("importContainerData") {
 	dependsOn dockerCreate
 
 	doFirst {
-		String prefix = "${config.namespace.toLowerCase()}_"
+		Collection<String> existingVolumeNames = getExistingVolumeDiskUsage().keySet()
 
-		List<String> existingVolumeNames = getExistingVolumeNames(prefix)
+		println existingVolumeNames
 
-		List<Map<File, String>> volumeBackups = []
+		String dataDirectory = config.dataDirectory
 
-		if (config.dataDirectory.length() > 0) {
-			File dataFolder = file(config.dataDirectory)
-
-			if (dataFolder.exists() && dataFolder.isDirectory()) {
-				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, [dataFolder] as File[])
-
-				if (volumeBackups.isEmpty()) {
-					volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, dataFolder.listFiles())
-				}
-			}
-		}
-
-		if (volumeBackups.isEmpty()) {
-			File exportedDataFolder = file("exported_data")
-
-			if (exportedDataFolder.exists() && exportedDataFolder.isDirectory()) {
-				volumeBackups = getEligibleVolumeBackups(prefix, existingVolumeNames, exportedDataFolder.listFiles())
-			}
-		}
-
-		if (volumeBackups.isEmpty()) {
+		if (dataDirectory == null) {
 			throw new GradleException("Please set lr.docker.environment.data.directory in gradle.properties to a folder that contains backups")
 		}
-		else if (volumeBackups.size() > 1) {
-			throw new GradleException("Multiple exported container data folders found, please set lr.docker.environment.data.directory in gradle.properties")
-		}
 
-		volumeBackups[0].each {
-			File backupFile, String volumeName ->
+		fileTree(config.dataDirectory) {
+			include "*.tar"
+			include "*.tar.gz"
+		}.each {
+			File backupFile ->
+
+			String volumeName = "${config.namespace.toLowerCase()}_" + backupFile.name.substring(0, backupFile.name.lastIndexOf("."))
+
+			if (!existingVolumeNames.contains(volumeName)) {
+				throw new GradleException("Backup file ${it} could not be imported because ${volumeName} is not set in the current workspace")
+			}
 
 			restoreVolume(volumeName, backupFile, false)
 		}

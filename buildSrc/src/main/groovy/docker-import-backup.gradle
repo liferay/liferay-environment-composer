@@ -126,7 +126,11 @@ tasks.register("importDocumentLibrary") {
 			return
 		}
 
-		restoreVolume(dataVolumeName, file("liferay_data"), config.documentLibraryFileListOnly)
+		File documentLibraryBackupFolder = file("liferay_data")
+
+		if (documentLibraryBackupFolder.exists()) {
+			restoreVolume(dataVolumeName, file("liferay_data"), config.documentLibraryFileListOnly)
+		}
 	}
 }
 

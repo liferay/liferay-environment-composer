@@ -17,7 +17,7 @@ tasks.register("checkForLiferayLicense") {
 		}
 
 		if (licenseXmlFileCollection.isEmpty()) {
-			throw new GradleException("Please add a license to configs/common/osgi/modules/")
+			logger.warn("Please add a license to configs/common/osgi/modules/")
 		}
 	}
 }

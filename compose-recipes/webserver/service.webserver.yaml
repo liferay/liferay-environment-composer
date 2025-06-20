@@ -1,0 +1,15 @@
+services:
+    webserver:
+        build: ./compose-recipes/webserver
+        container_name: ${NAMESPACE}-webserver
+        ports:
+            - "80:80"
+        volumes:
+            - source: data-volume
+              target: /etc/nginx/conf.d
+              type: volume
+              volume:
+                  subpath: container-data/webserver
+        depends_on:
+            liferay:
+                condition: service_healthy

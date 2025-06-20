@@ -116,6 +116,8 @@ boolean useLiferay = config.services.contains("liferay")
 
 boolean useClustering = useLiferay && config.clusterNodes > 0
 
+boolean useWebserver = config.services.contains("webserver")
+
 ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
 	include "**/service.*.yaml"
 
@@ -281,6 +283,17 @@ new File('.env').withOutputStream {
 
 		envFileOutputStream << key << "=" << value << "\n"
 	}
+}
+
+File webserverConfigDir = "compose-recipes/webserver/config" as File
+File webserverDefaultConfig = "$webserverConfigDir/default.conf" as File
+
+if(useClustering && useWebserver) {
+	File webserverClusterConfig = "$webserverConfigDir/default-cluster.conf" as File
+	webserverDefaultConfig.text = webserverClusterConfig.text
+} else if(!useClustering && useWebserver) {
+	File webserverSingleConfig = "$webserverConfigDir/default-single.conf" as File
+	webserverDefaultConfig.text = webserverSingleConfig.text
 }
 
 dockerCompose {

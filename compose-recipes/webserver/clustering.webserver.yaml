@@ -1,0 +1,5 @@
+services:
+    webserver:
+        depends_on:
+            liferay-cluster-node:
+                condition: service_healthy

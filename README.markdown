@@ -37,6 +37,12 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable standalone Elasticsearch](#enable-standalone-elasticsearch)
 - Supports Liferay clustering OOTB
 
+### Webserver features overview
+
+- [Enable NGINX](#enable-nginx)
+- [Use custom hostnames](#use-custom-hostnames)
+- Supports Liferay clustering OOTB
+
 ### Data features overview
 
 - [Export container data to a timestamped directory](#export-container-data-to-a-timestamped-directory)
@@ -196,6 +202,27 @@ Set the `lr.docker.environment.service.enabled[elasticsearch]` property to `true
 
 ```properties
 lr.docker.environment.service.enabled[elasticsearch]=true
+```
+
+### Webserver Features
+
+#### Enable NGINX
+
+Set the `lr.docker.environment.service.enabled[webserver]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[webserver]=true
+```
+
+#### Use custom hostnames
+
+Specify the hostnames through which you want to access Liferay using the `lr.docker.environment.web.server.hostnames` property.
+You can provide multiple hostnames, separated by commas.
+
+```properties
+lr.docker.environment.web.server.hostnames=my.example.com
 ```
 
 ### Data Features

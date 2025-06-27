@@ -90,7 +90,7 @@ class Config {
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
-	public String webserverHostnames = "my.example.com"
+	public String webserverHostnames = "localhost"
 
 	@Override
 	public String toString() {
@@ -189,6 +189,21 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/data/container-data"
 }
 
+tasks.register("prepareWebserverConfig", Copy) {
+	outputs.upToDateWhen { false }
+
+	String clusterHttpUpstreamConfig = useClustering ? "server liferay-cluster-node:8080;" : ""
+
+	from 'templates/webserver/config'
+
+	include 'default.conf.template'
+	rename 'default.conf.template', 'default.conf'
+
+	expand (webserverHostnames: config.webserverHostnames, clusterHttpUpstreamConfig: clusterHttpUpstreamConfig)
+
+	into 'compose-recipes/webserver/build/config'
+}
+
 tasks.register("prepareHotfixes", Download) {
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 
@@ -244,11 +259,18 @@ tasks.register("stop") {
 
 clean {
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":cleanPrepareWebserverConfig"
 }
 
 dockerDeploy {
 	if (useLiferay) {
 		dependsOn ":prepareHotfixes"
+	}
+}
+
+composeBuild {
+	if (useWebserver) {
+		dependsOn ":prepareWebserverConfig"
 	}
 }
 
@@ -283,55 +305,6 @@ if (useLiferay) {
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
 environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace.toLowerCase())
 
-if(useWebserver) {
-	File webserverConfigDir = "compose-recipes/webserver/config" as File
-	File webserverDefaultConfig = "$webserverConfigDir/default.conf" as File
-
-	String webserverConfigUpstreamBlock = useClustering ? """upstream appserver-http {
-	ip_hash;
-	server liferay:8080;
-	server liferay-cluster-node:8080;
-}
-""" : """upstream appserver-http {
-	ip_hash;
-	server liferay:8080;
-}
-"""
-
-	String webserverConfig = """proxy_cache_path  /tmp/cache levels=1:2 keys_zone=STATIC:10m inactive=24h max_size=1g;
-
-server {
-	listen 80;
-
-	server_name ${config.webserverHostnames};
-
-	location / {
-		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;
-		proxy_set_header X-Forwarded-Port \$http_x_forwarded_port;
-		proxy_set_header Host \$host;
-		proxy_set_header X-Real-IP \$http_x_forwarded_for;
-		proxy_set_header Upgrade \$http_upgrade;
-		proxy_set_header Connection \$http_connection;
-		proxy_buffering on;
-		proxy_cache STATIC;
-		proxy_cache_valid 200 1d;
-		proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
-		proxy_pass http://appserver-\$scheme;
-	}
-
-	location /nginx_status {
-		stub_status on;
-		allow all;
-	}
-}
-
-${webserverConfigUpstreamBlock}
-"""
-
-	webserverDefaultConfig.text = webserverConfig
-}
-
 new File('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->
 
@@ -360,5 +333,5 @@ dockerCompose {
 	useComposeFiles = config.composeFiles
 
 	// DEBUG: Set to true if container startup is failing
-	retainContainersOnStartupFailure = true
+	retainContainersOnStartupFailure = false
 }

@@ -222,7 +222,7 @@ Specify the hostnames through which you want to access Liferay using the `lr.doc
 You can provide multiple hostnames, separated by commas.
 
 ```properties
-lr.docker.environment.web.server.hostnames=my.example.com
+lr.docker.environment.web.server.hostnames=localhost
 ```
 
 ### Data Features

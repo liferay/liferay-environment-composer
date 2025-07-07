@@ -317,7 +317,7 @@ new File('.env').withOutputStream {
 
 dockerCompose {
 	// DEBUG: Set to true to print container startup output to the console
-	captureContainersOutput = false
+	captureContainersOutput = true
 
 	// DEBUG: Uncomment to dump the container logs to a directory for inspection
 	// captureContainersOutputToFiles = project.file('containerLogs')

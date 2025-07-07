@@ -15,6 +15,7 @@
 **/node_modules_cache
 **/test-coverage
 **/tmp
+.env
 .gradle
 .idea
 /bundles

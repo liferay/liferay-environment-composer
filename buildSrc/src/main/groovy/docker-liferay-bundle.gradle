@@ -5,6 +5,22 @@ import java.nio.file.Paths
 
 project.plugins.apply "docker-common"
 
+tasks.register("fixWorkspaceProduct") {
+	doFirst {
+		if (config.product == null || !config.product.contains(".q1.") || config.product.endsWith("-lts") || config.product.startsWith("2024.")) {
+			return
+		}
+
+		project.updateGradleLocalProperties([
+			"liferay.workspace.product": config.product + "-lts"
+		])
+
+		throw new GradleException("Changed liferay.workspace.product to ${config.product}-lts, please re-run the Gradle task")
+	}
+}
+
+verifyProduct.dependsOn fixWorkspaceProduct
+
 tasks.register("checkForLiferayLicense") {
 	onlyIf("using the Liferay service") { config.useLiferay }
 	onlyIf("running Liferay DXP") { config.liferayDXPImage }

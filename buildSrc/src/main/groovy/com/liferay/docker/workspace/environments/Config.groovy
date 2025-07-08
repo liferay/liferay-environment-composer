@@ -78,10 +78,13 @@ class Config {
 			this.liferayUserPassword = liferayUserPassword
 		}
 
-		String namespace = project.getProperty("lr.docker.environment.namespace")
+		String namespace = project.findProperty("lr.docker.environment.namespace")
 
 		if (namespace != null) {
 			this.namespace = namespace
+		}
+		else {
+			this.namespace = this.project.name
 		}
 
 		List services = project.properties.findAll {
@@ -282,7 +285,7 @@ class Config {
 	public String liferayLXCRepositoryPath = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = ""
-	public String namespace = "lrswde"
+	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false

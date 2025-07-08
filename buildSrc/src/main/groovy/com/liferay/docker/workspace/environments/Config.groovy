@@ -96,7 +96,7 @@ class Config {
 			this.services = services
 		}
 
-		String workspaceProduct = project.getProperty("liferay.workspace.product")
+		this.product = project.getProperty("liferay.workspace.product")
 		String workspaceDockerImageId = project.getProperty("liferay.workspace.docker.image.liferay")
 
 		if (((this.product != null) && this.product.startsWith("dxp-")) ||
@@ -283,6 +283,7 @@ class Config {
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = ""
 	public String namespace = "lrswde"
+	public String product = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useDatabase = false

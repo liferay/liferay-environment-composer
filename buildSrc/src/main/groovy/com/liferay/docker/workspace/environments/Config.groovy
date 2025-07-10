@@ -73,6 +73,60 @@ class Config {
 		if (webserverHostnames != null) {
 			this.webserverHostnames = webserverHostnames.join(' ')
 		}
+
+		this.useLiferay = this.services.contains("liferay")
+
+		this.useClustering = this.useLiferay && this.clusterNodes > 0
+
+		this.useWebserver = this.services.contains("webserver")
+
+		File projectDir = project.projectDir as File
+		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
+
+		ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
+			include "**/service.*.yaml"
+
+			if (useClustering) {
+				include "**/clustering.*.yaml"
+			}
+
+			if (useLiferay) {
+				include "**/liferay.*.yaml"
+			}
+
+			if (this.databasePartitioningEnabled) {
+				if (!this.services.any {databasePartitioningCompatibleServiceNames.contains(it)}) {
+					throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
+				}
+
+				include "**/database-partitioning.*.yaml"
+			}
+		}
+
+		List<String> serviceComposeFiles = this.services.collect {
+			String serviceName ->
+
+			FileTree matchingFileTree = dockerComposeFileTree.matching {
+				include "**/*.${serviceName}.yaml"
+			}
+
+			if (matchingFileTree.isEmpty()) {
+				List<String> possibleServices = dockerComposeFileTree.findAll{
+					it.name.startsWith("service.")
+				}.collect {
+					it.name.substring("service.".length(), it.name.indexOf(".yaml"))
+				}
+
+				throw new GradleException(
+					"The service '${serviceName}' does not have a matching service.*.yaml file. Possible services are: ${possibleServices}");
+			}
+
+			matchingFileTree.getFiles()
+		}.flatten().collect {
+			projectDir.relativePath(it)
+		}
+
+		this.composeFiles.addAll(serviceComposeFiles)
 	}
 
 	static List toList(String s) {
@@ -90,6 +144,9 @@ class Config {
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public List<String> services = new ArrayList<String>()
+	public boolean useClustering = false
+	public boolean useLiferay = false
+	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"
 
 	@Override

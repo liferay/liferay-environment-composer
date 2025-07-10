@@ -282,6 +282,12 @@ The shared workspace should be immediately usable by simply unzipping the archiv
 ./gradlew stop
 ```
 
+#### Restart environment
+
+```
+./gradlew restart
+```
+
 #### Export container data
 
 ```

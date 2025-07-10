@@ -94,22 +94,6 @@ class Config {
 
 	@Override
 	public String toString() {
-
-		return """
-
-Config:
-------------------------
-clusterNodes: ${clusterNodes}
-composeFiles: ${composeFiles}
-databaseName: ${databaseName}
-databasePartitioningEnabled: ${databasePartitioningEnabled}
-dataDirectory: ${dataDirectory}
-hotfixURLs: ${hotfixURLs}
-liferayDockerImageId: ${liferayDockerImageId}
-namespace: ${namespace}
-services: ${services}
-webserverHostnames: ${webserverHostnames}
-
-"""
+		return "${this.class.declaredFields.findAll{ !it.synthetic && !it.name.toLowerCase().contains("password") }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
 	}
 }

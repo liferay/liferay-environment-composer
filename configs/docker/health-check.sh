@@ -15,7 +15,7 @@ then
 fi
 
 _log "Waiting for the server to be reachable..."
-if ! curl localhost:8080
+if ! curl -s localhost:8080 -o /dev/null --write-out "%{http_code}"
 then
 	_log "Server not reachable"
 	exit 1

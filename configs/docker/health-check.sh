@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function _log() {
-	echo "[$(date "+%Y.%m.%d %H:%M:%S")] $1" >> health-check.log
+	echo "[$(date "+%Y.%m.%d %H:%M:%S")] $1" | tee -a health-check.log
 }
 
 if ! grep -i -E "ga" .liferay-version

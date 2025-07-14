@@ -66,7 +66,7 @@ class Config {
 			this.services = services
 		}
 
-		this.product = project.getProperty("liferay.workspace.product")
+		this.product = project.gradle.liferayWorkspace.product
 		this.dockerImageLiferay = project.gradle.liferayWorkspace.dockerImageLiferay
 
 		if (((this.product != null) && this.product.startsWith("dxp-")) ||

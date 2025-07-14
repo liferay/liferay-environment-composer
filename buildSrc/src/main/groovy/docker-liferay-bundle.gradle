@@ -22,12 +22,68 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
+tasks.register("validateHotfixURLs") {
+	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("specifying a workspace product version for Liferay 7.4 or later") {
+		config.product != null && config.product.startsWith("dxp-") &&
+			(config.product.startsWith("dxp-7.4-") || config.product.contains(".q"))
+	}
+
+	doFirst {
+		String liferayVersion = config.product.substring(4)
+
+		if (liferayVersion.startsWith("7.4-")) {
+			liferayVersion = "7.4.13-${liferayVersion.substring(4)}"
+		}
+
+		String mismatchedHotfixURL = config.hotfixURLs.find {
+			!it.contains("/${liferayVersion}/")
+		}
+
+		if (mismatchedHotfixURL != null) {
+			throw new GradleException("Hotfix ${mismatchedHotfixURL} does not match Liferay workspace product version ${config.product}")
+		}
+	}
+}
+
+tasks.register("deleteStaleHotfixes") {
+	doFirst {
+		Set<String> hotfixNames = config.hotfixURLs.collect {
+			Path path = Paths.get(new URI(it).path)
+			return path.getName(path.nameCount - 1).toString()
+		}.toSet()
+
+		if (hotfixNames.isEmpty()) {
+			hotfixNames = project.fileTree("configs") {
+				include "**/patching/liferay*hotfix*.zip"
+			}.collect {
+				it.name
+			}.toSet()
+		}
+
+		project.fileTree(".") {
+			include "build/docker/configs/**/patching/liferay*hotfix*.zip"
+			include "configs/**/patching/liferay*hotfix*.zip"
+		}.filter {
+			!hotfixNames.contains(it.name)
+		}.each {
+			println "Deleting stale hotfix ${it.absolutePath}"
+			it.delete()
+		}
+	}
+}
+
 tasks.register("prepareHotfixes", Download) {
+	dependsOn validateHotfixURLs
+	finalizedBy deleteStaleHotfixes
+
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 
 	onlyIf {
 		!config.hotfixURLs.isEmpty()
 	}
+
+	overwrite false
 
 	src config.hotfixURLs
 }

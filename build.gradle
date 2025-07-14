@@ -33,6 +33,8 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 }
 
 tasks.register("prepareWebserverConfig", Copy) {
+	onlyIf("using a webserver") { config.useWebserver }
+
 	outputs.upToDateWhen { false }
 
 	String clusterHttpUpstreamConfig = config.useClustering ? "server liferay-cluster-node:8080;" : ""
@@ -111,9 +113,7 @@ dockerDeploy {
 }
 
 composeBuild {
-	if (config.useWebserver) {
-		dependsOn ":prepareWebserverConfig"
-	}
+	dependsOn ":prepareWebserverConfig"
 }
 
 composeUp {

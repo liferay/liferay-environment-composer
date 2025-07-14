@@ -1,20 +1,13 @@
 import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
 
-import com.liferay.docker.workspace.environments.Config
-
-import de.undercouch.gradle.tasks.download.Download
-
 import groovy.json.JsonSlurper
 
 import java.time.format.DateTimeFormatter
 
 plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
+	id "docker-common"
 	id "docker-liferay-bundle"
-}
-
-ext {
-	config = new Config(project)
 }
 
 gradle.liferayWorkspace {
@@ -52,16 +45,6 @@ tasks.register("prepareWebserverConfig", Copy) {
 	expand (webserverHostnames: config.webserverHostnames, clusterHttpUpstreamConfig: clusterHttpUpstreamConfig)
 
 	into 'compose-recipes/webserver/build/config'
-}
-
-tasks.register("prepareHotfixes", Download) {
-	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
-
-	onlyIf {
-		!config.hotfixURLs.isEmpty()
-	}
-
-	src config.hotfixURLs
 }
 
 tasks.register("shareWorkspace", Zip) {

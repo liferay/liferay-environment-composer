@@ -1,5 +1,9 @@
+import de.undercouch.gradle.tasks.download.Download
+
 import java.nio.file.Path
 import java.nio.file.Paths
+
+project.plugins.apply "docker-common"
 
 tasks.register("checkForLiferayLicense") {
 	onlyIf("using the Liferay service") { config.useLiferay }
@@ -16,4 +20,14 @@ tasks.register("checkForLiferayLicense") {
 			throw new GradleException("Please add a license to configs/common/osgi/modules/")
 		}
 	}
+}
+
+tasks.register("prepareHotfixes", Download) {
+	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
+
+	onlyIf {
+		!config.hotfixURLs.isEmpty()
+	}
+
+	src config.hotfixURLs
 }

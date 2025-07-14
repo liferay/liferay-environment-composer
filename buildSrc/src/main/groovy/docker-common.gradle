@@ -1,0 +1,5 @@
+import com.liferay.docker.workspace.environments.Config
+
+ext {
+	config = new Config(project)
+}

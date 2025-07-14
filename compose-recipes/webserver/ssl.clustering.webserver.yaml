@@ -1,0 +1,4 @@
+services:
+    liferay-cluster-node:
+        environment:
+            - LIFERAY_WEB_PERIOD_SERVER_PERIOD_PROTOCOL=https

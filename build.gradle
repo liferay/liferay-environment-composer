@@ -32,6 +32,47 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/data/container-data"
 }
 
+tasks.register("prepareSelfSignedCert", Copy) {
+	outputs.upToDateWhen { false }
+
+	onlyIf { config.useWebserver && config.webserverUseSSL }
+
+	List<String> hostnames = config.webserverHostnames
+			.split(" ")
+			.toList()
+
+	File certDir = "compose-recipes/webserver/build/ssl" as File
+	File opensslConfigFile = "$certDir/openssl.cnf" as File
+	File certFile = "$certDir/server.crt" as File
+	File keyFile = "$certDir/server.key" as File
+
+	String sanEntries = hostnames
+			.withIndex()
+			.collect() { host, i -> "DNS.${i + 1} = ${host}" }
+			.join('\n')
+
+	from 'templates/webserver/ssl'
+
+	include 'openssl.cnf.template'
+	rename 'openssl.cnf.template', 'openssl.cnf'
+
+	expand (hostname: hostnames[0], sanEntries: sanEntries)
+
+	into certDir
+
+	doLast {
+		exec {
+			commandLine 'openssl', 'req', '-x509',
+					'-nodes',
+					'-days', '365',
+					'-newkey', 'rsa:2048',
+					'-keyout', keyFile,
+					'-out', certFile,
+					'-config', opensslConfigFile
+		}
+	}
+}
+
 tasks.register("prepareWebserverConfig", Copy) {
 	onlyIf("using a webserver") {
 		config.useWebserver
@@ -45,7 +86,7 @@ tasks.register("prepareWebserverConfig", Copy) {
 
 	String upstreamHttpsConf = ""
 	if(config.webserverUseSSL) {
-		if(useClustering) {
+		if(config.useClustering) {
 			upstreamHttpsConf = file("$webserverConfigTemplatesDir/upstream-https.cluster.conf.template").text
 		} else {
 			upstreamHttpsConf = file("$webserverConfigTemplatesDir/upstream-https.conf.template").text
@@ -59,7 +100,7 @@ tasks.register("prepareWebserverConfig", Copy) {
 	expand(
 			webserverSSLConfig: config.webserverUseSSL ? file("$webserverConfigTemplatesDir/ssl.conf.template").text : "",
 	        webserverHostnames: config.webserverHostnames,
-			upstreamHttpConf: useClustering ? file("$webserverConfigTemplatesDir/upstream-http.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-http.conf.template").text,
+			upstreamHttpConf: config.useClustering ? file("$webserverConfigTemplatesDir/upstream-http.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-http.conf.template").text,
 			upstreamHttpsConf: upstreamHttpsConf
 	)
 
@@ -123,6 +164,7 @@ buildDockerImage {
 
 clean {
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 }
 
@@ -131,7 +173,13 @@ dockerDeploy {
 }
 
 composeBuild {
-	dependsOn ":prepareWebserverConfig"
+	if (config.useWebserver) {
+		dependsOn ":prepareWebserverConfig"
+
+		if (config.webserverUseSSL) {
+			dependsOn ":prepareSelfSignedCert"
+		}
+	}
 }
 
 composeUp {

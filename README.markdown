@@ -4,7 +4,7 @@ A collection of docker-compose configurations for re-creating different Liferay 
 
 ## Quick start
 
-This Liferay Workspace is set up so you can immediately spin up an environment with Liferay, a database, and Elasticsearch set up. Different features and services can be included or omitted as needed.
+This Liferay Workspace is set up so you can immediately spin up an environment with Liferay, a database, Elasticsearch and an NGINX webserver set up. Different features and services can be included or omitted as needed.
 
 To start up the environment, run `./gradlew start`.
 
@@ -41,6 +41,7 @@ To shut down the environment, run `./gradlew stop`.
 
 - [Enable NGINX](#enable-nginx)
 - [Use custom hostnames](#use-custom-hostnames)
+- [Use SSL](#use-ssl)
 - Supports Liferay clustering OOTB
 
 ### Data features overview
@@ -216,6 +217,16 @@ Set the `lr.docker.environment.service.enabled[webserver]` property to `true` or
 
 ```properties
 lr.docker.environment.service.enabled[webserver]=true
+```
+
+#### Use SSL
+
+Set the `lr.docker.environment.web.server.use.ssl` property to `true` to enable SSL. 
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.web.server.use.ssl=true
 ```
 
 #### Use custom hostnames

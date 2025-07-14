@@ -83,6 +83,12 @@ class Config {
 			this.webserverHostnames = webserverHostnames.join(' ')
 		}
 
+		boolean webserverUseSSL = project.getProperty("lr.docker.environment.web.server.use.ssl").toBoolean()
+
+		if(webserverUseSSL != null) {
+			this.webserverUseSSL = webserverUseSSL
+		}
+
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
@@ -119,6 +125,13 @@ class Config {
 				}
 
 				include "**/database-partitioning.*.yaml"
+			}
+
+			if (this.webserverUseSSL) {
+				include "**/ssl.webserver.yaml"
+				if(useClustering) {
+					include "**/ssl.clustering.webserver.yaml"
+				}
 			}
 		}
 
@@ -173,6 +186,7 @@ class Config {
 	public boolean useLiferay = false
 	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"
+	public boolean webserverUseSSL = false
 
 	@Override
 	public String toString() {

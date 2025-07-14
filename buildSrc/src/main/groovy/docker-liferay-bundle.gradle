@@ -74,14 +74,13 @@ tasks.register("deleteStaleHotfixes") {
 }
 
 tasks.register("prepareHotfixes", Download) {
+	onlyIf("there are hotfix URLs") { !config.hotfixURLs.isEmpty() }
+	onlyIf("using the Liferay service") { config.useLiferay }
+
 	dependsOn validateHotfixURLs
 	finalizedBy deleteStaleHotfixes
 
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
-
-	onlyIf {
-		!config.hotfixURLs.isEmpty()
-	}
 
 	overwrite false
 

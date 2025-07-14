@@ -107,9 +107,7 @@ clean {
 }
 
 dockerDeploy {
-	if (config.useLiferay) {
-		dependsOn ":prepareHotfixes"
-	}
+	dependsOn ":prepareHotfixes"
 }
 
 composeBuild {

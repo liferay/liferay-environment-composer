@@ -85,7 +85,8 @@ tasks.register("shareWorkspace", Zip) {
 }
 
 tasks.register("restart") {
-	dependsOn ":stop", ":start"
+	dependsOn ":start"
+	dependsOn ":stop"
 }
 
 tasks.register("start") {

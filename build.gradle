@@ -95,6 +95,10 @@ tasks.register("stop") {
 	dependsOn ":composeDown"
 }
 
+buildDockerImage {
+	onlyIf("using the Liferay service") { config.useLiferay }
+}
+
 clean {
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareWebserverConfig"
@@ -113,16 +117,13 @@ composeBuild {
 }
 
 composeUp {
-	if (config.useLiferay) {
-		dependsOn ":buildDockerImage", ":checkForLiferayLicense"
-	}
+	onlyIf("there are Compose files") { !config.composeFiles.isEmpty() }
+
+	dependsOn ":buildDockerImage"
+	dependsOn ":checkForLiferayLicense"
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"
-	}
-
-	onlyIf {
-		!config.composeFiles.isEmpty()
 	}
 }
 

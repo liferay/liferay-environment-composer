@@ -87,3 +87,39 @@ tasks.register("prepareHotfixes", Download) {
 
 	src config.hotfixURLs
 }
+
+tasks.register("fixWorkspaceProduct") {
+	doFirst {
+		if (config.product == null) {
+			return
+		}
+
+		if (config.product.contains(".q1.")) {
+			if (config.product.startsWith("dxp-2024.")) {
+				if (config.product.endsWith("-lts")) {
+					config.product = config.product.substring(0, config.product.length() - 4)
+				}
+			}
+			else {
+				if (!config.product.endsWith("-lts")) {
+					config.product = config.product + "-lts"
+				}
+			}
+		}
+		else if (config.product.contains(".q")) {
+			if (config.product.endsWith("-lts")) {
+				config.product = config.product.substring(0, config.product.length() - 4)
+			}
+		}
+
+		if (!config.product.equals(project.gradle.liferayWorkspace.product)) {
+			project.updateGradleLocalProperties([
+				"liferay.workspace.product": config.product
+			])
+
+			project.gradle.liferayWorkspace.product = config.product
+		}
+	}
+}
+
+verifyProduct.dependsOn fixWorkspaceProduct

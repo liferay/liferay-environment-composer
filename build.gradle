@@ -41,14 +41,27 @@ tasks.register("prepareWebserverConfig", Copy) {
 		false
 	}
 
-	String clusterHttpUpstreamConfig = config.useClustering ? "server liferay-cluster-node:8080;" : ""
+	File webserverConfigTemplatesDir = "templates/webserver/config" as File
+
+	String upstreamHttpsConf = ""
+	if(config.webserverUseSSL) {
+		if(useClustering) {
+			upstreamHttpsConf = file("$webserverConfigTemplatesDir/upstream-https.cluster.conf.template").text
+		} else {
+			upstreamHttpsConf = file("$webserverConfigTemplatesDir/upstream-https.conf.template").text
+		}
+	}
 
 	from 'templates/webserver/config'
 
-	include 'default.conf.template'
-	rename 'default.conf.template', 'default.conf'
-
-	expand (webserverHostnames: config.webserverHostnames, clusterHttpUpstreamConfig: clusterHttpUpstreamConfig)
+	include 'base.conf.template'
+	rename 'base.conf.template', 'default.conf'
+	expand(
+			webserverSSLConfig: config.webserverUseSSL ? file("$webserverConfigTemplatesDir/ssl.conf.template").text : "",
+	        webserverHostnames: config.webserverHostnames,
+			upstreamHttpConf: useClustering ? file("$webserverConfigTemplatesDir/upstream-http.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-http.conf.template").text,
+			upstreamHttpsConf: upstreamHttpsConf
+	)
 
 	into 'compose-recipes/webserver/build/config'
 }

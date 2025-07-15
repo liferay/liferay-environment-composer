@@ -106,3 +106,22 @@ tasks.register("fixWorkspaceProduct") {
 }
 
 verifyProduct.dependsOn fixWorkspaceProduct
+
+tasks.register("listAdminUsers") {
+	onlyIf("using an external database") { config.useDatabase }
+
+	doFirst {
+		List results = executeSQLQuery("select screenName, emailAddress from User_ where userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", config.databaseName)
+
+		if (results.isEmpty()) {
+			println "Unable to detect users explicitly granted the Administrator role"
+		}
+		else {
+			println "Detected the following users explicitly granted the Administrator role"
+
+			results.each {
+				println " - ${it["screenName"]} (${it["emailAddress"]})"
+			}
+		}
+	}
+}

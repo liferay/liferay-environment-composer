@@ -89,6 +89,16 @@ class Config {
 
 		this.useWebserver = this.services.contains("webserver")
 
+		if (this.services.contains("mysql")) {
+			this.useDatabase = true
+			this.useDatabaseMySQL = true
+		}
+
+		if (this.services.contains("postgres")) {
+			this.useDatabase = true
+			this.useDatabasePostgreSQL = true
+		}
+
 		File projectDir = project.projectDir as File
 		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
 
@@ -157,6 +167,9 @@ class Config {
 	public String product = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
+	public boolean useDatabase = false
+	public boolean useDatabaseMySQL = false
+	public boolean useDatabasePostgreSQL = false
 	public boolean useLiferay = false
 	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"

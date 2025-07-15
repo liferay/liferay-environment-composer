@@ -124,6 +124,8 @@ composeUp {
 	doFirst {
 		println "Using config:\n\n${config}\n\n"
 	}
+
+	finalizedBy ":listAdminUsers"
 }
 
 Map<String, String> environmentMap = [:]

@@ -1,6 +1,8 @@
 import com.liferay.docker.workspace.environments.Config
 import com.liferay.docker.workspace.environments.Util
 
+import groovy.json.JsonSlurper
+
 ext {
 	config = new Config(project)
 
@@ -45,6 +47,65 @@ ext {
 					outputStream << it.key << "=" << it.value << "\n"
 				}
 			}
+		}
+	}
+
+	waitForCommand = {
+		String command, File workingDir = null ->
+
+		StringBuffer err = new StringBuffer()
+		StringBuffer out = new StringBuffer()
+
+		Process process = ['bash', '-c', command].execute([], workingDir)
+
+		process.waitForProcessOutput(out, err)
+
+		if (process.exitValue() != 0) {
+			throw new GradleException("Process exit code ${process.exitValue()}: ${err.toString()}")
+		}
+
+		if (err.length() > 0) {
+			System.err.println err.toString()
+		}
+
+		return out.toString()
+	}
+
+	waitForContainer = {
+		String serviceName, String containerName ->
+
+		String serviceStatus = waitForCommand("docker compose ps ${serviceName} --format=json").trim()
+
+		if (serviceStatus.length() > 0) {
+			JsonSlurper jsonSlurper = new JsonSlurper()
+
+			String health = jsonSlurper.parseText(serviceStatus)["Health"]
+
+			if ((health != null) && health.equals("healthy")) {
+				return
+			}
+		}
+		else {
+			println "Starting service ${serviceName}"
+			waitForCommand("docker compose up -d ${serviceName}")
+		}
+
+		String status = ""
+
+		while (!status.equals("\"healthy\"")) {
+			if (status != null) {
+				Thread.sleep(10000)
+			}
+
+			println "Waiting for service ${serviceName}"
+
+			String logs = waitForCommand("docker compose logs ${serviceName} --since=10s")
+
+			if (logs.length() > 0) {
+				println logs
+			}
+
+			status = waitForCommand("docker inspect --format='{{json .State.Health.Status}}' ${containerName}").trim()
 		}
 	}
 }

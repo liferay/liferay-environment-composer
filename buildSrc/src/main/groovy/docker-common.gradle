@@ -1,7 +1,14 @@
 import com.liferay.docker.workspace.environments.Config
+import com.liferay.docker.workspace.environments.Util
 
 ext {
 	config = new Config(project)
+
+	fixProductVersion = {
+		String productVersion ->
+
+		return Util.fixReleaseKey(productVersion)
+	}
 
 	updateGradleLocalProperties = {
 		Map<String, String> newProperties ->
@@ -40,4 +47,28 @@ ext {
 			}
 		}
 	}
+}
+
+tasks.register("testFixProductVersion") {
+	doLast {
+		[
+			["dxp-7.4.u36", "dxp-7.4.u36"],
+			["dxp-7.4.u36-lts", "dxp-7.4.u36"],
+			["dxp-2024.q1.1", "dxp-2024.q1.1"],
+			["dxp-2024.q1.1-lts", "dxp-2024.q1.1"],
+			["dxp-2025.q1.1", "dxp-2025.q1.1-lts"],
+			["dxp-2025.q1.1-lts", "dxp-2025.q1.1-lts"],
+			["dxp-2025.q2.1", "dxp-2025.q2.1"],
+			["dxp-2025.q2.1-lts", "dxp-2025.q2.1"],
+		].each {
+			String input = it[0]
+			String expected = it[1]
+
+			assert expected == Util.fixReleaseKey(input)
+		}
+	}
+}
+
+tasks.register("runUtilTests") {
+	dependsOn ":testFixProductVersion"
 }

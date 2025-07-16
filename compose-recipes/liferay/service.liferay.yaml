@@ -2,21 +2,21 @@ services:
     liferay:
         container_name: ${NAMESPACE}-liferay
         environment:
-            - LIFERAY_JPDA_ENABLED=true
-            - LIFERAY_DISABLE_TRIAL_LICENSE=true
+            -   LIFERAY_JPDA_ENABLED=true
+            -   LIFERAY_DISABLE_TRIAL_LICENSE=true
         healthcheck:
             interval: 5s
             start_period: 5m
-            test: "/opt/liferay/health-check.sh"
+            test: /opt/liferay/health-check.sh
             timeout: 5m
-        image: "${LIFERAY_IMAGE_NAME}"
+        image: ${LIFERAY_IMAGE_NAME}
         ports:
-            - "8080:8080"
-            - "11311:11311"
-            - "8000:8000"
+            -   "8080:8080"
+            -   "11311:11311"
+            -   "8000:8000"
         volumes:
-            - source: data-volume
-              target: /opt/liferay/data
-              type: volume
-              volume:
-                  subpath: container-data/liferay
+            -   source: data-volume
+                target: /opt/liferay/data
+                type: volume
+                volume:
+                    subpath: container-data/liferay

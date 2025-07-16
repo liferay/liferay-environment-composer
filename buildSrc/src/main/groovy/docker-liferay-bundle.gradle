@@ -8,8 +8,12 @@ import java.nio.file.Paths
 project.plugins.apply "docker-common"
 
 tasks.register("checkForLiferayLicense") {
-	onlyIf("using the Liferay service") { config.useLiferay }
-	onlyIf("running Liferay DXP") { config.dockerImageLiferayDXP }
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("running Liferay DXP") {
+		config.dockerImageLiferayDXP
+	}
 
 	doFirst {
 		FileCollection licenseXmlFileCollection = project.fileTree("configs") {
@@ -25,10 +29,12 @@ tasks.register("checkForLiferayLicense") {
 }
 
 tasks.register("validateHotfixURLs") {
-	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
 	onlyIf("specifying a workspace product version for Liferay 7.4 or later") {
 		config.product != null && config.product.startsWith("dxp-") &&
-			(config.product.startsWith("dxp-7.4-") || config.product.contains(".q"))
+		(config.product.startsWith("dxp-7.4-") || config.product.contains(".q"))
 	}
 
 	doFirst {
@@ -76,8 +82,12 @@ tasks.register("deleteStaleHotfixes") {
 }
 
 tasks.register("prepareHotfixes", Download) {
-	onlyIf("there are hotfix URLs") { !config.hotfixURLs.isEmpty() }
-	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("there are hotfix URLs") {
+		!config.hotfixURLs.isEmpty()
+	}
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
 
 	dependsOn validateHotfixURLs
 	finalizedBy deleteStaleHotfixes
@@ -90,7 +100,9 @@ tasks.register("prepareHotfixes", Download) {
 }
 
 tasks.register("fixWorkspaceProduct") {
-	onlyIf("product is set") { config.product != null }
+	onlyIf("product is set") {
+		config.product != null
+	}
 
 	doLast {
 		config.product = Util.fixReleaseKey(config.product)
@@ -108,7 +120,9 @@ tasks.register("fixWorkspaceProduct") {
 verifyProduct.dependsOn fixWorkspaceProduct
 
 tasks.register("listAdminUsers") {
-	onlyIf("using an external database") { config.useDatabase }
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
 
 	doFirst {
 		List results = executeSQLQuery("select screenName, emailAddress from User_ where userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", config.databaseName)

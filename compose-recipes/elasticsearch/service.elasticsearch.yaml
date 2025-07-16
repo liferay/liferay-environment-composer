@@ -1,18 +1,18 @@
 services:
     elasticsearch:
         build: ./compose-recipes/elasticsearch
-        container_name: "${NAMESPACE}-elasticsearch"
+        container_name: ${NAMESPACE}-elasticsearch
         environment:
-            - ES_JAVA_OPTS=-Xms1g -Xmx1g
-            - cluster.name=LiferayElasticsearchCluster
-            - discovery.type=single-node
-            - http.port=9200
-            - transport.port=9300
-            - xpack.ml.enabled=false
-            - xpack.monitoring.enabled=false
-            - xpack.security.enabled=false
-            - xpack.sql.enabled=false
-            - xpack.watcher.enabled=false
+            -   ES_JAVA_OPTS=-Xms1g -Xmx1g
+            -   cluster.name=LiferayElasticsearchCluster
+            -   discovery.type=single-node
+            -   http.port=9200
+            -   transport.port=9300
+            -   xpack.ml.enabled=false
+            -   xpack.monitoring.enabled=false
+            -   xpack.security.enabled=false
+            -   xpack.sql.enabled=false
+            -   xpack.watcher.enabled=false
         healthcheck:
             interval: 10s
             retries: 10
@@ -20,11 +20,11 @@ services:
             timeout: 5s
         mem_limit: 4g
         ports:
-            - 9200:9200
-            - 9300:9300
+            -   9200:9200
+            -   9300:9300
         volumes:
-            - source: data-volume
-              target: /usr/share/elasticsearch/data/
-              type: volume
-              volume:
-                  subpath: container-data/elasticsearch
+            -   source: data-volume
+                target: /usr/share/elasticsearch/data/
+                type: volume
+                volume:
+                    subpath: container-data/elasticsearch

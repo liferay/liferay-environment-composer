@@ -1,8 +1,13 @@
 services:
     database:
         build: ./compose-recipes/postgres
-        container_name: "${NAMESPACE}-database-postgres"
-        shm_size: 128mb
+        container_name: ${NAMESPACE}-database-postgres
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                reservations:
+                    memory: 1G
         environment:
             - POSTGRES_DB=${DATABASE_NAME}
             - POSTGRES_USER=liferay
@@ -11,16 +16,11 @@ services:
             interval: 5s
             retries: 50
             start_period: 30s
-            test: "pg_isready -U liferay -d ${DATABASE_NAME} && grep 'STARTING_UP' /startup_log.txt"
+            test: pg_isready -U liferay -d ${DATABASE_NAME} && grep 'STARTING_UP' /startup_log.txt
             timeout: 5s
         ports:
             - "5433:5432"
-        deploy:
-            resources:
-                limits:
-                    memory: 1G
-                reservations:
-                    memory: 1G
+        shm_size: 128mb
         volumes:
             -   read_only: true
                 source: data-volume

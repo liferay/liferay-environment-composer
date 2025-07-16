@@ -33,9 +33,13 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 }
 
 tasks.register("prepareWebserverConfig", Copy) {
-	onlyIf("using a webserver") { config.useWebserver }
+	onlyIf("using a webserver") {
+		config.useWebserver
+	}
 
-	outputs.upToDateWhen { false }
+	outputs.upToDateWhen {
+		false
+	}
 
 	String clusterHttpUpstreamConfig = config.useClustering ? "server liferay-cluster-node:8080;" : ""
 
@@ -99,7 +103,9 @@ tasks.register("stop") {
 }
 
 buildDockerImage {
-	onlyIf("using the Liferay service") { config.useLiferay }
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
 }
 
 clean {
@@ -116,7 +122,9 @@ composeBuild {
 }
 
 composeUp {
-	onlyIf("there are Compose files") { !config.composeFiles.isEmpty() }
+	onlyIf("there are Compose files") {
+		!config.composeFiles.isEmpty()
+	}
 
 	dependsOn ":buildDockerImage"
 	dependsOn ":checkForLiferayLicense"

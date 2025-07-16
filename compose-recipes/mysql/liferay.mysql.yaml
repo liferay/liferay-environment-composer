@@ -4,7 +4,7 @@ services:
             database:
                 condition: service_healthy
         environment:
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=com.mysql.cj.jdbc.Driver
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:mysql://database:3306/${DATABASE_NAME}?useUnicode=true&characterEncoding=UTF-8
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=root
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=com.mysql.cj.jdbc.Driver
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:mysql://database:3306/${DATABASE_NAME}?useUnicode=true&characterEncoding=UTF-8
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=root

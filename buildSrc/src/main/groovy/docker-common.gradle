@@ -19,7 +19,7 @@ ext {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
 
 			String[] columnHeaders = results[0].split("\t")
-			
+
 			return results.subList(1, results.size()).collect {
 				[columnHeaders, it.split("\t")].transpose().collectEntries {
 					[it[0], it[1]]
@@ -38,10 +38,10 @@ ext {
 
 			return results.subList(1, results.size()).collect {
 				Map<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
-				
+
 				result.putAll([columnHeaders, it.split(",")].transpose().collectEntries {
-					[it[0], it[1]]
-				})
+						[it[0], it[1]]
+					})
 
 				return result
 			}
@@ -68,7 +68,7 @@ ext {
 
 			return command
 		}
-		
+
 		if (config.useDatabasePostgreSQL) {
 			if (schema == null || schema.equals(config.databaseName)) {
 				schema = "public"

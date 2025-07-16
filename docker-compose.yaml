@@ -1,4 +1,4 @@
-name: "${NAMESPACE}"
+name: ${NAMESPACE}
 services:
     data-helper:
         build:
@@ -8,6 +8,6 @@ services:
             dockerfile: Dockerfile.helper
         container_name: ${NAMESPACE}-data-helper
         volumes:
-            - data-volume:/data
+            -   data-volume:/data
 volumes:
     data-volume:

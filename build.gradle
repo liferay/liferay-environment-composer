@@ -10,6 +10,12 @@ plugins {
 	id "docker-liferay-bundle"
 }
 
+if (Boolean.getBoolean("env.mode.ci")) {
+	formatSource {
+		failOnAutoFix = true
+	}
+}
+
 gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
 }

@@ -1,5 +1,5 @@
 jobs:
-    run-source-formatter:
+    check-source-formatting:
         runs-on: ubuntu-latest
         steps:
             -   uses: actions/checkout@v4
@@ -8,5 +8,5 @@ jobs:
                     distribution: zulu
                     java-version: "21"
             -   run: ./gradlew formatSource -Denv.mode.ci=true
-name: source-formatter
+name: Check Source Formatting
 on: [pull_request]

@@ -78,6 +78,55 @@ ext {
 		}
 	}
 
+	getDefaultVirtualHost = {
+		List<Map<String, String>> companyVirtualHosts ->
+
+		Map<String, String> defaultCompanyVirtualHost = null
+
+		file("configs/common/portal-ext.properties").eachLine {
+			String line = it.trim()
+
+			if (line.startsWith("company.default.web.id=")) {
+				String webId = line.split("=")[1]
+
+				defaultCompanyVirtualHost = companyVirtualHosts.find {
+					it["webId"] == webId
+				}
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				it["webId"] == "liferay.com"
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
+			throw new GradleException("Unable to auto-detect company.default.web.id, please set it in configs/common/portal-ext.properties")
+		}
+
+		return defaultCompanyVirtualHost["webId"]
+	}
+
+	forEachCompanyId = {
+		Closure<Void> action ->
+
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				String schema = config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName
+
+				action(it["companyId"], it["hostname"], it["webId"], schema)
+			}
+			catch (Exception e) {
+				e.printStackTrace()
+			}
+		}
+	}
+
 	updateGradleLocalProperties = {
 		Map<String, String> newProperties ->
 

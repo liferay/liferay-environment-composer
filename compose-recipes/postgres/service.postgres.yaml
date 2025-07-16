@@ -9,9 +9,9 @@ services:
                 reservations:
                     memory: 1G
         environment:
-            - POSTGRES_DB=${DATABASE_NAME}
-            - POSTGRES_USER=liferay
-            - POSTGRES_PASSWORD=password
+            -   POSTGRES_DB=${DATABASE_NAME}
+            -   POSTGRES_USER=liferay
+            -   POSTGRES_PASSWORD=password
         healthcheck:
             interval: 5s
             retries: 50
@@ -19,7 +19,7 @@ services:
             test: pg_isready -U liferay -d ${DATABASE_NAME} && grep 'STARTING_UP' /startup_log.txt
             timeout: 5s
         ports:
-            - "5433:5432"
+            -   "5433:5432"
         shm_size: 128mb
         volumes:
             -   read_only: true

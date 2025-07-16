@@ -4,7 +4,7 @@ services:
             database:
                 condition: service_healthy
         environment:
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=org.postgresql.Driver
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=password
-            - LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:postgresql://database:5432/${DATABASE_NAME}
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=org.postgresql.Driver
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=password
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:postgresql://database:5432/${DATABASE_NAME}
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=liferay

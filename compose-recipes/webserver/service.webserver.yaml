@@ -6,10 +6,10 @@ services:
             liferay:
                 condition: service_healthy
         ports:
-            - "80:80"
+            -   "80:80"
         volumes:
-            - source: data-volume
-              target: /etc/nginx/conf.d
-              type: volume
-              volume:
-                  subpath: container-data/webserver
+            -   source: data-volume
+                target: /etc/nginx/conf.d
+                type: volume
+                volume:
+                    subpath: container-data/webserver

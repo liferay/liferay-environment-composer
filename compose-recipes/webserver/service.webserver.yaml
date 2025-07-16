@@ -9,7 +9,7 @@ services:
             - "80:80"
         volumes:
             - source: data-volume
-                target: /etc/nginx/conf.d
-                type: volume
-                volume:
-                    subpath: container-data/webserver
+              target: /etc/nginx/conf.d
+              type: volume
+              volume:
+                  subpath: container-data/webserver

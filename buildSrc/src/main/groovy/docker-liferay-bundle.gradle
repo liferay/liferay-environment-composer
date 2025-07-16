@@ -124,8 +124,14 @@ tasks.register("listAdminUsers") {
 		config.useDatabase
 	}
 
-	doFirst {
-		List results = executeSQLQuery("select screenName, emailAddress from User_ where userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", config.databaseName)
+	Closure<Void> listAdminUsersForCompany = {
+		String companyId, String hostname, String webId, String schema ->
+
+		List results = executeSQLQuery("select screenName, emailAddress from User_ where companyId = ${companyId} and userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", schema)
+
+		println "\nhttp://${hostname}:8080/c/portal/login"
+		println "http://${hostname}:8080/?p_p_id=com_liferay_login_web_portlet_LoginPortlet&p_p_lifecycle=0&p_p_state=exclusive&p_p_mode=view&_com_liferay_login_web_portlet_LoginPortlet_mvcRenderCommandName=%2Flogin%2Flogin&saveLastPath=false"
+		println getDatabaseAccessCommand(schema)
 
 		if (results.isEmpty()) {
 			println "Unable to detect users explicitly granted the Administrator role"
@@ -137,5 +143,9 @@ tasks.register("listAdminUsers") {
 				println " - ${it["screenName"]} (${it["emailAddress"]})"
 			}
 		}
+	}
+
+	doFirst {
+		forEachCompanyId listAdminUsersForCompany
 	}
 }

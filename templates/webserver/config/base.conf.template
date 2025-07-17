@@ -1,7 +1,7 @@
 proxy_cache_path  /tmp/cache levels=1:2 keys_zone=STATIC:10m inactive=24h max_size=1g;
 
 server {
-	listen 80;
+	${webserverConfig}
 
 	server_name ${webserverHostnames};
 
@@ -26,8 +26,4 @@ server {
 	}
 }
 
-upstream appserver-http {
-	ip_hash;
-	server liferay:8080;
-	${clusterHttpUpstreamConfig}
-}
+${upstreamConf}

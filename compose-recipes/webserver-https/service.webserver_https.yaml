@@ -1,0 +1,15 @@
+services:
+    webserver:
+        build: ./compose-recipes/webserver-https
+        container_name: ${NAMESPACE}-webserver-https
+        depends_on:
+            liferay:
+                condition: service_healthy
+        ports:
+            -   "443:443"
+        volumes:
+            -   source: data-volume
+                target: /etc/nginx/conf.d
+                type: volume
+                volume:
+                    subpath: container-data/webserver

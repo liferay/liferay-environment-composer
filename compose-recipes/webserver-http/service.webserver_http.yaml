@@ -1,7 +1,7 @@
 services:
     webserver:
-        build: ./compose-recipes/webserver
-        container_name: ${NAMESPACE}-webserver
+        build: ./compose-recipes/webserver-http
+        container_name: ${NAMESPACE}-webserver-http
         depends_on:
             liferay:
                 condition: service_healthy

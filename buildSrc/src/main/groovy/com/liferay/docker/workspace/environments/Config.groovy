@@ -87,8 +87,6 @@ class Config {
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
-		this.useWebserver = this.services.contains("webserver")
-
 		if (this.services.contains("mysql")) {
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
@@ -98,6 +96,14 @@ class Config {
 			this.useDatabase = true
 			this.useDatabasePostgreSQL = true
 		}
+
+		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
+			throw new GradleException("Both HTTP and HTTPS are enabled for the webserver service. Only one protocol can be active at a time.")
+		}
+
+		this.useWebserverHttp = this.services.contains("webserver_http")
+
+		this.useWebserverHttps = this.services.contains("webserver_https")
 
 		File projectDir = project.projectDir as File
 		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
@@ -171,7 +177,8 @@ class Config {
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
 	public boolean useLiferay = false
-	public boolean useWebserver = false
+	public boolean useWebserverHttp = false
+	public boolean useWebserverHttps = false
 	public String webserverHostnames = "localhost"
 
 	@Override

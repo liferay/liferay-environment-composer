@@ -1,0 +1,4 @@
+upstream appserver-https {
+    ip_hash;
+	server liferay:8080;
+}

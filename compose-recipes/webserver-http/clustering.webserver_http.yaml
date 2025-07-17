@@ -1,8 +1,13 @@
 services:
-    liferay-cluster-node:
+    liferay:
         environment:
             -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE=true
+    liferay-cluster-node:
+        environment:
+            -   LIFERAY_VIRTUAL_PERIOD_HOSTS_PERIOD_VALID_PERIOD_HOSTS=*
+            -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_DISPLAY_PERIOD_NODE=true
             -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_HTTP_PERIOD_PORT=80
+            -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_PROTOCOL=http
     webserver:
         depends_on:
             liferay-cluster-node:

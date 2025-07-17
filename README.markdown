@@ -4,7 +4,7 @@ A collection of docker-compose configurations for re-creating different Liferay 
 
 ## Quick start
 
-This Liferay Workspace is set up so you can immediately spin up an environment with Liferay, a database, and Elasticsearch set up. Different features and services can be included or omitted as needed.
+This Liferay Workspace is set up so you can immediately spin up an environment with Liferay, a database, Elasticsearch and an NGINX webserver set up. Different features and services can be included or omitted as needed.
 
 To start up the environment, run `./gradlew start`.
 
@@ -39,7 +39,8 @@ To shut down the environment, run `./gradlew stop`.
 
 ### Webserver features overview
 
-- [Enable NGINX](#enable-nginx)
+- [Enable NGINX (HTTP)](#enable-nginx-http)
+- [Enable NGINX (HTTPS)](#enable-nginx-https)
 - [Use custom hostnames](#use-custom-hostnames)
 - Supports Liferay clustering OOTB
 
@@ -208,14 +209,24 @@ lr.docker.environment.service.enabled[elasticsearch]=true
 
 ### Webserver Features
 
-#### Enable NGINX
+#### Enable NGINX (HTTP)
 
-Set the `lr.docker.environment.service.enabled[webserver]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[webserver_http]` property to `true` or `1` in `gradle.properties`.
 
 `gradle.properties`:
 
 ```properties
-lr.docker.environment.service.enabled[webserver]=true
+lr.docker.environment.service.enabled[webserver_http]=true
+```
+
+#### Enable NGINX (HTTPS)
+
+Set the `lr.docker.environment.service.enabled[webserver_https]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[webserver_https]=true
 ```
 
 #### Use custom hostnames

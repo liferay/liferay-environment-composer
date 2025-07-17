@@ -38,25 +38,86 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/data/container-data"
 }
 
+tasks.register("prepareSelfSignedCert", Copy) {
+	outputs.upToDateWhen {
+		false
+	}
+
+	onlyIf {
+		config.useWebserverHttps
+	}
+
+	List<String> hostnames = config.webserverHostnames
+	.split(" ")
+	.toList()
+
+	File certDir = "compose-recipes/webserver-https/build/ssl" as File
+	File opensslConfigFile = "$certDir/openssl.cnf" as File
+	File certFile = "$certDir/server.crt" as File
+	File keyFile = "$certDir/server.key" as File
+
+	String sanEntries = hostnames
+	.withIndex()
+	.collect() {
+		host, i -> "DNS.${i + 1} = ${host}"
+	}
+	.join('\n')
+
+	from 'templates/webserver/ssl'
+
+	include 'openssl.cnf.template'
+	rename 'openssl.cnf.template', 'openssl.cnf'
+
+	expand (hostname: hostnames[0], sanEntries: sanEntries)
+
+	into certDir
+
+	doLast {
+		exec {
+			commandLine 'openssl', 'req', '-x509',
+			'-nodes',
+			'-days', '365',
+			'-newkey', 'rsa:2048',
+			'-keyout', keyFile,
+			'-out', certFile,
+			'-config', opensslConfigFile
+		}
+	}
+}
+
 tasks.register("prepareWebserverConfig", Copy) {
 	onlyIf("using a webserver") {
-		config.useWebserver
+		config.useWebserverHttp || config.useWebserverHttps
 	}
 
 	outputs.upToDateWhen {
 		false
 	}
 
-	String clusterHttpUpstreamConfig = config.useClustering ? "server liferay-cluster-node:8080;" : ""
+	File webserverConfigTemplatesDir = "templates/webserver/config" as File
+
+	String upstreamConf = ""
+	if (config.useWebserverHttp) {
+		upstreamConf = config.useClustering ? file("$webserverConfigTemplatesDir/upstream-http.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-http.conf.template").text
+	} else if (config.useWebserverHttps) {
+		upstreamConf = config.useClustering ? file("$webserverConfigTemplatesDir/upstream-https.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-https.conf.template").text
+	}
 
 	from 'templates/webserver/config'
 
-	include 'default.conf.template'
-	rename 'default.conf.template', 'default.conf'
+	include 'base.conf.template'
+	rename 'base.conf.template', 'default.conf'
+	expand(
+		webserverConfig: config.useWebserverHttps ? file("$webserverConfigTemplatesDir/https.conf.template").text : file("$webserverConfigTemplatesDir/http.conf.template").text,
+		webserverHostnames: config.webserverHostnames,
+		upstreamConf: upstreamConf
+	)
 
-	expand (webserverHostnames: config.webserverHostnames, clusterHttpUpstreamConfig: clusterHttpUpstreamConfig)
-
-	into 'compose-recipes/webserver/build/config'
+	if (config.useWebserverHttp) {
+		into 'compose-recipes/webserver-http/build/config'
+	} else if (config.useWebserverHttps) {
+		into 'compose-recipes/webserver-https/build/config'
+	}
 }
 
 tasks.register("shareWorkspace", Zip) {
@@ -116,6 +177,7 @@ buildDockerImage {
 
 clean {
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 }
 
@@ -124,7 +186,13 @@ dockerDeploy {
 }
 
 composeBuild {
-	dependsOn ":prepareWebserverConfig"
+	if (config.useWebserverHttp || config.useWebserverHttps) {
+		dependsOn ":prepareWebserverConfig"
+	}
+
+	if (config.useWebserverHttps) {
+		dependsOn ":prepareSelfSignedCert"
+	}
 }
 
 composeUp {

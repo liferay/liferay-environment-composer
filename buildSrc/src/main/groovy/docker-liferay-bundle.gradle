@@ -149,3 +149,11 @@ tasks.register("listAdminUsers") {
 		forEachCompanyId listAdminUsersForCompany
 	}
 }
+
+tasks.register("printBundleInfo", Exec) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+
+	executable project.file("scripts/print_bundle_info.sh")
+}

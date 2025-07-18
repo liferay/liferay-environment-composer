@@ -140,6 +140,7 @@ composeUp {
 	}
 
 	finalizedBy ":listAdminUsers"
+	finalizedBy ":printBundleInfo"
 }
 
 Map<String, String> environmentMap = [:]

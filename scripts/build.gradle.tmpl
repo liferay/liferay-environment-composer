@@ -1,0 +1,17 @@
+dependencies {
+	compileOnly group: "com.liferay.portal", name: "release.dxp.api", version: "{{LIFERAY_VERSION}}"
+}
+
+deploy {
+	doLast {
+		String projectName = "{{PROJECT_NAME}}"
+		String composedArchive = "${destinationDir}/${liferay.deployedFileNameClosure.call(jar)}"
+
+		ExecOutput execOutput = providers.exec {
+			commandLine "docker", "compose", "-p", projectName, "cp", "--archive", composedArchive, "liferay:/opt/liferay/deploy"
+		}
+
+		logger.lifecycle("Copying jar to Docker container...")
+		logger.lifecycle(execOutput.standardError.asText.get().trim())
+	}
+}

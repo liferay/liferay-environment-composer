@@ -1,3 +1,7 @@
+import groovy.text.SimpleTemplateEngine
+
+SimpleTemplateEngine templateEngine = new SimpleTemplateEngine()
+
 tasks.register("prepareSelfSignedCert", Copy) {
 	outputs.upToDateWhen {
 		false
@@ -54,30 +58,21 @@ tasks.register("prepareWebserverConfig", Copy) {
 		false
 	}
 
-	String protocol = "http"
-
-	if (config.useWebserverHttps) {
-		protocol = "https"
-	}
-
-	from 'templates/webserver/config'
-
-	include 'base.conf.template'
-	into 'compose-recipes/webserver-${protocol}/build/config'
-	rename 'base.conf.template', 'default.conf'
-
 	File webserverConfigTemplatesDir = "templates/webserver/config" as File
+	String protocol = config.useWebserverHttps ? "https" : "http"
 
-	File upstreamTemplateFile = file("${webserverConfigTemplatesDir}/upstream-${protocol}.conf.template")
+	File upstreamTemplateFile = config.useClustering
+	? file("${webserverConfigTemplatesDir}/upstream.cluster.conf.template")
+	: file("${webserverConfigTemplatesDir}/upstream.conf.template")
 
-	if (config.useClustering) {
-		upstreamTemplateFile = file("${webserverConfigTemplatesDir}/upstream-${protocol}.cluster.conf.template")
-	}
+	from webserverConfigTemplatesDir
+	include "base.conf.template"
+	into "compose-recipes/webserver-${protocol}/build/config"
+	rename "base.conf.template", "default.conf"
 
 	expand(
 		webserverConfig: file("$webserverConfigTemplatesDir/${protocol}.conf.template").text,
 		webserverHostnames: config.webserverHostnames,
-		upstreamConf: upstreamTemplateFile.text
+		upstreamConf: templateEngine.createTemplate(upstreamTemplateFile.text).make([protocol: protocol])
 	)
-
 }

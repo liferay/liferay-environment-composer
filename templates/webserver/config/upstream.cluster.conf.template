@@ -1,5 +1,5 @@
-upstream appserver-http {
-    ip_hash;
+upstream appserver-${protocol} {
+	ip_hash;
 	server liferay:8080;
 	server liferay-cluster-node:8080;
 }

@@ -1,0 +1,4 @@
+upstream appserver-${protocol} {
+	ip_hash;
+	server liferay:8080;
+}

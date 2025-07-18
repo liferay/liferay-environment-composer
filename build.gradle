@@ -105,13 +105,8 @@ dockerDeploy {
 }
 
 composeBuild {
-	if (config.useWebserverHttp || config.useWebserverHttps) {
-		dependsOn ":prepareWebserverConfig"
-	}
-
-	if (config.useWebserverHttps) {
-		dependsOn ":prepareSelfSignedCert"
-	}
+	dependsOn ":prepareWebserverConfig"
+	dependsOn ":prepareSelfSignedCert"
 }
 
 composeUp {

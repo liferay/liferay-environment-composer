@@ -54,28 +54,30 @@ tasks.register("prepareWebserverConfig", Copy) {
 		false
 	}
 
-	File webserverConfigTemplatesDir = "templates/webserver/config" as File
+	String protocol = "http"
 
-	String upstreamConf = ""
-	if (config.useWebserverHttp) {
-		upstreamConf = config.useClustering ? file("$webserverConfigTemplatesDir/upstream-http.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-http.conf.template").text
-	} else if (config.useWebserverHttps) {
-		upstreamConf = config.useClustering ? file("$webserverConfigTemplatesDir/upstream-https.cluster.conf.template").text : file("$webserverConfigTemplatesDir/upstream-https.conf.template").text
+	if (config.useWebserverHttps) {
+		protocol = "https"
 	}
 
 	from 'templates/webserver/config'
 
 	include 'base.conf.template'
+	into 'compose-recipes/webserver-${protocol}/build/config'
 	rename 'base.conf.template', 'default.conf'
+
+	File webserverConfigTemplatesDir = "templates/webserver/config" as File
+
+	File upstreamTemplateFile = file("${webserverConfigTemplatesDir}/upstream-${protocol}.conf.template")
+
+	if (config.useClustering) {
+		upstreamTemplateFile = file("${webserverConfigTemplatesDir}/upstream-${protocol}.cluster.conf.template")
+	}
+
 	expand(
-		webserverConfig: config.useWebserverHttps ? file("$webserverConfigTemplatesDir/https.conf.template").text : file("$webserverConfigTemplatesDir/http.conf.template").text,
+		webserverConfig: file("$webserverConfigTemplatesDir/${protocol}.conf.template").text,
 		webserverHostnames: config.webserverHostnames,
-		upstreamConf: upstreamConf
+		upstreamConf: upstreamTemplateFile.text
 	)
 
-	if (config.useWebserverHttp) {
-		into 'compose-recipes/webserver-http/build/config'
-	} else if (config.useWebserverHttps) {
-		into 'compose-recipes/webserver-https/build/config'
-	}
 }

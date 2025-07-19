@@ -105,8 +105,8 @@ dockerDeploy {
 }
 
 composeBuild {
-	dependsOn ":prepareWebserverConfig"
 	dependsOn ":prepareSelfSignedCert"
+	dependsOn ":prepareWebserverConfig"
 }
 
 composeUp {

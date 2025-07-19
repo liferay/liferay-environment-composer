@@ -23,7 +23,7 @@ echo ""
 sed \
 	-e "s,{{LIFERAY_VERSION}},${LIFERAY_VERSION},g" \
 	-e "s,{{PROJECT_NAME}},${PROJECT_NAME},g" \
-	./scripts/build.gradle.tmpl;
+	./templates/scripts/build.gradle.template;
 
 echo ""
 echo "------------------------------"

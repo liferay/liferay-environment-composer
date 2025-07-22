@@ -42,6 +42,12 @@ class Config {
 			this.dataDirectory = dataDirectory
 		}
 
+		boolean glowrootEnabled = project.getProperty("lr.docker.environment.glowroot")
+
+		if (glowrootEnabled != null) {
+			this.glowrootEnabled = glowrootEnabled.toBoolean()
+		}
+
 		List hotfixURLs = this.toList(project.getProperty("lr.docker.environment.hotfix.urls"))
 
 		if (!hotfixURLs.isEmpty()) {
@@ -126,6 +132,14 @@ class Config {
 
 				include "**/database-partitioning.*.yaml"
 			}
+
+			if (this.glowrootEnabled) {
+				include "**/glowroot.liferay.yaml"
+
+				if (useClustering) {
+					include "**/glowroot-clustering.liferay.yaml"
+				}
+			}
 		}
 
 		List<String> serviceComposeFiles = this.services.collect {
@@ -167,6 +181,7 @@ class Config {
 	public String dataDirectory = "data"
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
+	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"

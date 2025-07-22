@@ -1,0 +1,4 @@
+services:
+    liferay:
+        environment:
+            -   GLOWROOT_ENABLED=true

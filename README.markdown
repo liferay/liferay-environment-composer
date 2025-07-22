@@ -49,6 +49,10 @@ To shut down the environment, run `./gradlew stop`.
 - [Export container data to a timestamped directory](#export-container-data-to-a-timestamped-directory)
 - [Import data for various containers](#import-data-for-various-containers)
 
+### Profiling features overview
+
+- [Enable Glowroot](#enable-glowroot)
+
 ### Sharing features overview
 - [Zip up the workspace to share the setup](#zip-up-the-workspace-to-share-the-setup)
 
@@ -265,6 +269,18 @@ data_folder          (directory in their repsective container)
 
 ```properties
 lr.docker.environment.data.directory=exported_data/data_20241206.175343
+```
+
+### Profiling features
+
+#### Enable Glowroot
+
+Set the `lr.docker.environment.glowroot` property to `true` or `1` in `gradle.properties` to enable Glowroot.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.glowroot=true
 ```
 
 ### Sharing Features

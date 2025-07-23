@@ -52,6 +52,7 @@ To shut down the environment, run `./gradlew stop`.
 ### Profiling features overview
 
 - [Enable Glowroot](#enable-glowroot)
+- [Enable YourKit](#enable-yourkit)
 
 ### Sharing features overview
 - [Zip up the workspace to share the setup](#zip-up-the-workspace-to-share-the-setup)
@@ -281,6 +282,24 @@ Set the `lr.docker.environment.glowroot` property to `true` or `1` in `gradle.pr
 
 ```properties
 lr.docker.environment.glowroot=true
+```
+
+#### Enable YourKit
+
+Set the `lr.docker.environment.yourkit.enabled` property to `true` or `1` in `gradle.properties` to enable YourKit.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.yourkit.enabled=true
+```
+
+You can provide the download URL of the preferred YourKit version zip in the `lr.docker.environment.yourkit.url` property.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip
 ```
 
 ### Sharing Features

@@ -1,0 +1,6 @@
+services:
+    liferay-cluster-node:
+        environment:
+            -   LIFERAY_JVM_OPTS=-agentpath:/opt/liferay/yourkit/libyjpagent.so=port=10001,listen=all
+        ports:
+            -   "10002-10010:10001"

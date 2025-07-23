@@ -157,3 +157,39 @@ tasks.register("printBundleInfo", Exec) {
 
 	executable project.file("scripts/print_bundle_info.sh")
 }
+
+tasks.register("downloadYourKitAgentZip", Download) {
+	onlyIf("using YourKit") {
+		config.yourKitEnabled
+	}
+
+	dest project.layout.dir(project.provider {project.file("tmp")})
+
+	overwrite true
+
+	src config.yourKitUrl
+}
+
+tasks.register("prepareYourKitAgent") {
+	dependsOn ":downloadYourKitAgentZip"
+
+	File targetDir = file("configs/common/yourkit")
+	outputs.dir(targetDir)
+
+	doFirst {
+		File yourKitZipFile = project.fileTree("tmp") {
+			include "YourKit*.zip"
+		}.singleFile
+
+		File yourKitAgentFile = zipTree(yourKitZipFile).matching {
+			include '**/bin/linux-x86-64/libyjpagent.so'
+		}.singleFile
+
+		copy {
+			from yourKitAgentFile
+			into targetDir
+		}
+
+		yourKitZipFile.delete()
+	}
+}

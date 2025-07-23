@@ -24,6 +24,12 @@ class Config {
 
 		this.composeFiles.addAll(this.toList(project.findProperty("lr.docker.environment.compose.files")))
 
+		String clearVolumeData = project.findProperty("lr.docker.environment.clear.volume.data")
+
+		if (clearVolumeData != null) {
+			this.clearVolumeData = clearVolumeData.toBoolean()
+		}
+
 		String databaseNameProperty = project.findProperty("lr.docker.environment.database.name")
 
 		if (databaseNameProperty != null) {
@@ -201,6 +207,7 @@ class Config {
 
 	public Project project
 
+	public boolean clearVolumeData = false
 	public int clusterNodes = 0
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"

@@ -19,14 +19,14 @@ To shut down the environment, run `./gradlew stop`.
 - [Deploy portal-ext.properties](#deploy-portal-ext.properties)
 - [Deploy hotfixes](#deploy-hotfixes)
 - [Deploy custom modules and projects](#deploy-custom-modules-and-projects)
-- [Set the the Liferay version for building modules](#set-the-liferay-version-for-building-modules)
+- [Set the Liferay version for building modules](#set-the-liferay-version-for-building-modules)
 - [Deploy a Document Library](#deploy-a-document-library)
 - [Deploy license files](#deploy-license-files)
 - [Enable clustering](#enable-clustering)
 
 ### Database features overview
 
-- [Enable MySQL 5.7](#enable-mysql-57)
+- [Enable MySQL 8.4](#enable-mysql-84)
 - [Enable PostgreSQL 16.3](#enable-postgresql-163)
 - [Import a database dump](#import-a-database-dump)
 - [Enable database partitioning (MySQL and PostgreSQL only)](#enable-database-partitioning-mysql-and-postgresql-only)
@@ -81,7 +81,7 @@ To shut down the environment, run `./gradlew stop`.
 
 Set the `liferay.workspace.docker.image.liferay` property in `gradle.properties`.
 
-This will override the Docker image version that is determined from the `liferay.workspace.product` property (see [Set the the Liferay version for building modules](#set-the-liferay-version-for-building-modules)).
+This will override the Docker image version that is determined from the `liferay.workspace.product` property (see [Set the Liferay version for building modules](#set-the-liferay-version-for-building-modules)).
 
 `gradle.properties`:
 
@@ -127,7 +127,7 @@ lr.docker.environment.hotfix.urls=\
 
 Liferay Workspace will automatically build and deploy custom modules and projects contained in the Workspace to the built Liferay Docker image. More documentation on creating and building projects can be found at [Liferay Learn](https://learn.liferay.com/w/dxp/liferay-development/tooling/liferay-workspace).
 
-#### Set the the Liferay version for building modules
+#### Set the Liferay version for building modules
 
 #### Deploy a Document Library
 
@@ -145,7 +145,7 @@ Document library files for method #1:
 
 #### Deploy license files
 
-Add a license files to `./configs/common/deploy`.
+Add a license files to `./configs/common/osgi/modules`.
 
 *Note:* The Gradle command to start the server will fail if there are no license files and you are trying to start up a Liferay DXP image.
 
@@ -162,7 +162,7 @@ lr.docker.environment.cluster.nodes=2
 
 ### Database Features
 
-#### Enable MySQL 5.7
+#### Enable MySQL 8.4
 
 Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1` in `gradle.properties`.
 
@@ -328,11 +328,21 @@ The shared workspace should be immediately usable by simply unzipping the archiv
 ./gradlew stop
 ```
 
+By default, stopping a container will delete all persistent data, which has the desirable side-effect that product team members always start from a clean reproduced environment, but has the undesirable side-effect that customer support engineers always lose all changes since the last saved reproduced environment.
+
+To change this behavior, set the following in your `gradle-local.properties`:
+
+```
+lr.docker.environment.clear.volume.data=false
+```
+
 #### Restart environment
 
 ```
 ./gradlew restart
 ```
+
+This will also stop the environment, so please see the previous note which describes the strategy for persisting data between restarts.
 
 #### Export container data
 

@@ -168,7 +168,7 @@ dockerCompose {
 	projectName = config.namespace
 
 	// DEBUG: Set to false to retain volume data on restart
-	removeVolumes = true
+	removeVolumes = config.clearVolumeData
 
 	tcpPortsToIgnoreWhenWaiting = [8000, 11311]
 	useComposeFiles = config.composeFiles

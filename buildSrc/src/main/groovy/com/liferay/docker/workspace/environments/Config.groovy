@@ -56,6 +56,8 @@ class Config {
 
 		String arch = System.getProperty("os.arch")
 
+		String namespace = project.findProperty("lr.docker.environment.namespace")
+
 		if (arch.contains("arm") || arch.contains("aarch")) {
 			this.isARM = true
 		}
@@ -64,6 +66,9 @@ class Config {
 
 		if (namespaceProperty != null) {
 			this.namespace = namespaceProperty
+		}
+		else {
+			this.namespace = this.project.name
 		}
 
 		List services = project.properties.findAll {
@@ -207,7 +212,7 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false
 	public String liferayDockerImageId = ""
-	public String namespace = "lrswde"
+	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false

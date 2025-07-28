@@ -163,33 +163,22 @@ tasks.register("downloadYourKitAgentZip", Download) {
 		config.yourKitEnabled
 	}
 
-	dest project.layout.dir(project.provider {project.file("tmp")})
+	dest layout.buildDirectory.file("downloadYourKitAgentZip/YourKit.zip")
 
 	overwrite true
 
 	src config.yourKitUrl
 }
 
-tasks.register("prepareYourKitAgent") {
+tasks.register("prepareYourKitAgent", Copy) {
 	dependsOn ":downloadYourKitAgentZip"
 
-	File targetDir = file("configs/common/yourkit")
-	outputs.dir(targetDir)
-
-	doFirst {
-		File yourKitZipFile = project.fileTree("tmp") {
-			include "YourKit*.zip"
-		}.singleFile
-
-		File yourKitAgentFile = zipTree(yourKitZipFile).matching {
-			include '**/bin/linux-x86-64/libyjpagent.so'
-		}.singleFile
-
-		copy {
-			from yourKitAgentFile
-			into targetDir
-		}
-
-		yourKitZipFile.delete()
+	eachFile {
+		it.relativePath = RelativePath.parse(true, it.name)
 	}
+
+	from zipTree(downloadYourKitAgentZip.dest)
+	include "**/linux-x86-64/libyjpagent.so"
+	includeEmptyDirs false
+	into "configs/common/yourkit"
 }

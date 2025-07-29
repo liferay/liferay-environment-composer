@@ -1,0 +1,7 @@
+services:
+    liferay-cluster-node:
+        environment:
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=com.ibm.db2.jcc.DB2Driver
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=lportal
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:db2://database/${DATABASE_NAME}:deferPrepares=false;fullyMaterializeInputStreams=true;fullyMaterializeLobData=true;progresssiveLocators=2;progressiveStreaming=2;
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=db2admin

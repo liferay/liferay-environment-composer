@@ -1,0 +1,29 @@
+services:
+    database:
+        build: ./compose-recipes/db2
+        container_name: ${NAMESPACE}-database-db2
+        environment:
+            -   DB2INSTANCE=db2admin
+            -   DB2INST1_PASSWORD=lportal
+            -   DBNAME=${DATABASE_NAME}
+            -   LICENSE=accept
+        healthcheck:
+            retries: 10
+            start_period: 5m
+            test: ./opt/ibm/db2/V11.5/bin/db2gcf -s && grep 'STARTING_UP' /startup_log.txt
+            timeout: 20s
+        privileged: true
+        ports:
+            -   "50000:50000"
+        volumes:
+            -   read_only: true
+                source: data-volume
+                target: /var/custom
+                type: volume
+                volume:
+                    subpath: dumps
+            -   source: data-volume
+                target: /database/data/db2admin/NODE0000/sqldbdir
+                type: volume
+                volume:
+                    subpath: container-data/database

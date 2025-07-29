@@ -1,4 +1,5 @@
 **/*.iml
+**/*.so
 **/*hotfix*.zip
 **/.classpath
 **/.ivy

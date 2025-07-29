@@ -182,7 +182,14 @@ tasks.register("prepareYourKitAgent", Copy) {
 	}
 
 	from zipTree(downloadYourKitAgentZip.dest)
-	include "**/linux-x86-64/libyjpagent.so"
+
+	if (config.isARM) {
+		include "**/linux-arm-64/libyjpagent.so"
+	}
+	else {
+		include "**/linux-x86-64/libyjpagent.so"
+	}
+
 	includeEmptyDirs false
 	into "configs/common/yourkit"
 }

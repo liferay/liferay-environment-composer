@@ -106,6 +106,21 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
+tasks.register("prepareDB2JDBCDriver", Download) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using the DB2 database") {
+		config.useDatabaseDB2
+	}
+
+	dest project.layout.dir(project.provider{ project.file("configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib")})
+
+	overwrite false
+
+	src "https://repo1.maven.org/maven2/com/ibm/db2/jcc/db2jcc/db2jcc4/db2jcc-db2jcc4.jar"
+}
+
 tasks.register("validateHotfixURLs") {
 	onlyIf("using the Liferay service") {
 		config.useLiferay

@@ -94,9 +94,11 @@ buildDockerImage {
 	}
 
 	dependsOn ":checkForLiferayLicense"
+	dependsOn ":prepareDB2JDBCDriver"
 }
 
 clean {
+	dependsOn ":cleanPrepareDB2JDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
@@ -105,6 +107,7 @@ clean {
 }
 
 dockerDeploy {
+	dependsOn ":prepareDB2JDBCDriver"
 	dependsOn ":prepareHotfixes"
 	dependsOn ":prepareYourKitAgent"
 }

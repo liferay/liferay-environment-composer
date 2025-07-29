@@ -120,6 +120,11 @@ class Config {
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
+		if (this.services.contains("db2")) {
+			this.useDatabase = true
+			this.useDatabaseDB2 = true
+		}
+
 		if (this.services.contains("mysql")) {
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
@@ -222,6 +227,7 @@ class Config {
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useDatabase = false
+	public boolean useDatabaseDB2 = false
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
 	public boolean useLiferay = false

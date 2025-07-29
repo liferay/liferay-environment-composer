@@ -171,6 +171,10 @@ tasks.register("downloadYourKitAgentZip", Download) {
 }
 
 tasks.register("prepareYourKitAgent", Copy) {
+	onlyIf("using YourKit") {
+		config.yourKitEnabled
+	}
+
 	dependsOn ":downloadYourKitAgentZip"
 
 	eachFile {

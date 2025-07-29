@@ -54,6 +54,12 @@ class Config {
 			this.hotfixURLs = hotfixURLs
 		}
 
+		String arch = System.getProperty("os.arch")
+
+		if (arch.contains("arm") || arch.contains("aarch")) {
+			this.isARM = true
+		}
+
 		String namespace = project.getProperty("lr.docker.environment.namespace")
 
 		if (namespace != null) {
@@ -203,6 +209,7 @@ class Config {
 	public boolean dockerImageLiferayDXP = false
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
+	public boolean isARM = false
 	public String liferayDockerImageId = ""
 	public String namespace = "lrswde"
 	public String product = null

@@ -187,6 +187,10 @@ class Config {
 	}
 
 	static List toList(String s) {
+		if (s == null) {
+			return []
+		}
+
 		return s.trim().split(",").grep()
 	}
 

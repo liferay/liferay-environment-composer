@@ -76,6 +76,14 @@ ext {
 
 			return "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
 		}
+
+		if (config.useDatabaseDB2) {
+			if (schema == null) {
+				schema = config.databaseName
+			}
+
+			return "docker compose exec --user db2admin database bash -c '/opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null; /opt/ibm/db2/V11.5/bin/db2"
+		}
 	}
 
 	getDefaultVirtualHost = {

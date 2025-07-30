@@ -276,12 +276,12 @@ lr.docker.environment.data.directory=exported_data/data_20241206.175343
 
 #### Enable Glowroot
 
-Set the `lr.docker.environment.glowroot` property to `true` or `1` in `gradle.properties` to enable Glowroot.
+Set the `lr.docker.environment.glowroot.enabled` property to `true` or `1` in `gradle.properties` to enable Glowroot.
 
 `gradle.properties`:
 
 ```properties
-lr.docker.environment.glowroot=true
+lr.docker.environment.glowroot.enabled=true
 ```
 
 #### Enable YourKit

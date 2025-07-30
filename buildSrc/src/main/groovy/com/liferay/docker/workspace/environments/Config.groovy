@@ -42,7 +42,7 @@ class Config {
 			this.dataDirectory = dataDirectoryProperty
 		}
 
-		boolean glowrootEnabledProperty = project.getProperty("lr.docker.environment.glowroot")
+		String glowrootEnabledProperty = project.getProperty("lr.docker.environment.glowroot")
 
 		if (glowrootEnabledProperty != null) {
 			this.glowrootEnabled = glowrootEnabledProperty.toBoolean()

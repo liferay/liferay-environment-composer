@@ -14,38 +14,38 @@ class Config {
 	public Config(Project project) {
 		this.project = project
 
-		Integer clusterNodes = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
+		Integer clusterNodesProperty = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
 
-		if (clusterNodes != null) {
-			this.clusterNodes = clusterNodes
+		if (clusterNodesProperty != null) {
+			this.clusterNodes = clusterNodesProperty
 		}
 
 		this.composeFiles.add("docker-compose.yaml")
 
 		this.composeFiles.addAll(this.toList(project.getProperty("lr.docker.environment.compose.files")))
 
-		String databaseName = project.getProperty("lr.docker.environment.database.name")
+		String databaseNameProperty = project.getProperty("lr.docker.environment.database.name")
 
-		if (databaseName != null) {
-			this.databaseName = databaseName
+		if (databaseNameProperty != null) {
+			this.databaseName = databaseNameProperty
 		}
 
-		String databasePartitioningEnabled = project.getProperty("lr.docker.environment.database.partitioning.enabled")
+		String databasePartitioningEnabledProperty = project.getProperty("lr.docker.environment.database.partitioning.enabled")
 
-		if (databasePartitioningEnabled != null) {
-			this.databasePartitioningEnabled = databasePartitioningEnabled.toBoolean()
+		if (databasePartitioningEnabledProperty != null) {
+			this.databasePartitioningEnabled = databasePartitioningEnabledProperty.toBoolean()
 		}
 
-		String dataDirectory = project.getProperty("lr.docker.environment.data.directory")
+		String dataDirectoryProperty = project.getProperty("lr.docker.environment.data.directory")
 
-		if (dataDirectory != null && dataDirectory.length() > 0) {
-			this.dataDirectory = dataDirectory
+		if (dataDirectoryProperty != null && dataDirectory.length() > 0) {
+			this.dataDirectory = dataDirectoryProperty
 		}
 
-		boolean glowrootEnabled = project.getProperty("lr.docker.environment.glowroot")
+		boolean glowrootEnabledProperty = project.getProperty("lr.docker.environment.glowroot")
 
-		if (glowrootEnabled != null) {
-			this.glowrootEnabled = glowrootEnabled.toBoolean()
+		if (glowrootEnabledProperty != null) {
+			this.glowrootEnabled = glowrootEnabledProperty.toBoolean()
 		}
 
 		List hotfixURLs = this.toList(project.getProperty("lr.docker.environment.hotfix.urls"))
@@ -60,10 +60,10 @@ class Config {
 			this.isARM = true
 		}
 
-		String namespace = project.getProperty("lr.docker.environment.namespace")
+		String namespaceProperty = project.getProperty("lr.docker.environment.namespace")
 
-		if (namespace != null) {
-			this.namespace = namespace
+		if (namespaceProperty != null) {
+			this.namespace = namespaceProperty
 		}
 
 		List services = project.properties.findAll {
@@ -89,22 +89,22 @@ class Config {
 
 		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
 
-		def webserverHostnames = project.getProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
+		def webserverHostnamesProperty = project.getProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
 
-		if (webserverHostnames != null) {
-			this.webserverHostnames = webserverHostnames.join(' ')
+		if (webserverHostnamesProperty != null) {
+			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
-		String yourKitEnabled = project.getProperty("lr.docker.environment.yourkit.enabled")
+		String yourKitEnabledProperty = project.getProperty("lr.docker.environment.yourkit.enabled")
 
-		if (yourKitEnabled != null) {
-			this.yourKitEnabled = yourKitEnabled.toBoolean()
+		if (yourKitEnabledProperty != null) {
+			this.yourKitEnabled = yourKitEnabledProperty.toBoolean()
 		}
 
-		String yourKitUrl = project.getProperty("lr.docker.environment.yourkit.url")
+		String yourKitUrlProperty = project.getProperty("lr.docker.environment.yourkit.url")
 
-		if (yourKitUrl != null) {
-			this.yourKitUrl = yourKitUrl
+		if (yourKitUrlProperty != null) {
+			this.yourKitUrl = yourKitUrlProperty
 		}
 
 		this.useLiferay = this.services.contains("liferay")

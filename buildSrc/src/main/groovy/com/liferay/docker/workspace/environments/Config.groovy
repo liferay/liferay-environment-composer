@@ -214,7 +214,7 @@ class Config {
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false
 	public String webserverHostnames = "localhost"
-	public boolean yourKitEnabled = "false"
+	public boolean yourKitEnabled = false
 	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip"
 
 	@Override

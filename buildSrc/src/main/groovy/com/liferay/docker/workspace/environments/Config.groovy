@@ -14,7 +14,7 @@ class Config {
 	public Config(Project project) {
 		this.project = project
 
-		Integer clusterNodesProperty = project.getProperty("lr.docker.environment.cluster.nodes") as Integer
+		Integer clusterNodesProperty = project.findProperty("lr.docker.environment.cluster.nodes") as Integer
 
 		if (clusterNodesProperty != null) {
 			this.clusterNodes = clusterNodesProperty
@@ -22,33 +22,33 @@ class Config {
 
 		this.composeFiles.add("docker-compose.yaml")
 
-		this.composeFiles.addAll(this.toList(project.getProperty("lr.docker.environment.compose.files")))
+		this.composeFiles.addAll(this.toList(project.findProperty("lr.docker.environment.compose.files")))
 
-		String databaseNameProperty = project.getProperty("lr.docker.environment.database.name")
+		String databaseNameProperty = project.findProperty("lr.docker.environment.database.name")
 
 		if (databaseNameProperty != null) {
 			this.databaseName = databaseNameProperty
 		}
 
-		String databasePartitioningEnabledProperty = project.getProperty("lr.docker.environment.database.partitioning.enabled")
+		String databasePartitioningEnabledProperty = project.findProperty("lr.docker.environment.database.partitioning.enabled")
 
 		if (databasePartitioningEnabledProperty != null) {
 			this.databasePartitioningEnabled = databasePartitioningEnabledProperty.toBoolean()
 		}
 
-		String dataDirectoryProperty = project.getProperty("lr.docker.environment.data.directory")
+		String dataDirectoryProperty = project.findProperty("lr.docker.environment.data.directory")
 
 		if (dataDirectoryProperty != null && dataDirectory.length() > 0) {
 			this.dataDirectory = dataDirectoryProperty
 		}
 
-		String glowrootEnabledProperty = project.getProperty("lr.docker.environment.glowroot.enabled")
+		String glowrootEnabledProperty = project.findProperty("lr.docker.environment.glowroot.enabled")
 
 		if (glowrootEnabledProperty != null) {
 			this.glowrootEnabled = glowrootEnabledProperty.toBoolean()
 		}
 
-		List hotfixURLs = this.toList(project.getProperty("lr.docker.environment.hotfix.urls"))
+		List hotfixURLs = this.toList(project.findProperty("lr.docker.environment.hotfix.urls"))
 
 		if (!hotfixURLs.isEmpty()) {
 			this.hotfixURLs = hotfixURLs
@@ -60,7 +60,7 @@ class Config {
 			this.isARM = true
 		}
 
-		String namespaceProperty = project.getProperty("lr.docker.environment.namespace")
+		String namespaceProperty = project.findProperty("lr.docker.environment.namespace")
 
 		if (namespaceProperty != null) {
 			this.namespace = namespaceProperty
@@ -89,19 +89,19 @@ class Config {
 
 		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
 
-		def webserverHostnamesProperty = project.getProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
+		def webserverHostnamesProperty = project.findProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
 
 		if (webserverHostnamesProperty != null) {
 			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
-		String yourKitEnabledProperty = project.getProperty("lr.docker.environment.yourkit.enabled")
+		String yourKitEnabledProperty = project.findProperty("lr.docker.environment.yourkit.enabled")
 
 		if (yourKitEnabledProperty != null) {
 			this.yourKitEnabled = yourKitEnabledProperty.toBoolean()
 		}
 
-		String yourKitUrlProperty = project.getProperty("lr.docker.environment.yourkit.url")
+		String yourKitUrlProperty = project.findProperty("lr.docker.environment.yourkit.url")
 
 		if (yourKitUrlProperty != null) {
 			this.yourKitUrl = yourKitUrlProperty

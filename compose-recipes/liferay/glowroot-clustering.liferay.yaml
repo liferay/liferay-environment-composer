@@ -1,4 +1,0 @@
-services:
-    liferay-cluster-node:
-        environment:
-            -   GLOWROOT_ENABLED=true

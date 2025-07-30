@@ -2,6 +2,7 @@ services:
     liferay:
         container_name: ${NAMESPACE}-liferay
         environment:
+            -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
         healthcheck:

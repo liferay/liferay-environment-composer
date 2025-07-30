@@ -132,6 +132,7 @@ Map<String, String> environmentMap = [:]
 
 environmentMap.put "DATA_DIRECTORY", config.dataDirectory
 environmentMap.put "DATABASE_NAME", config.databaseName
+environmentMap.put "GLOWROOT_ENABLED", config.glowrootEnabled
 environmentMap.put "NAMESPACE", config.namespace
 
 if (config.useClustering) {

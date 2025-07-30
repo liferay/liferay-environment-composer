@@ -10,6 +10,7 @@ services:
             mode: replicated
             replicas: ${LIFERAY_CLUSTER_NODES}
         environment:
+            -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
         healthcheck:

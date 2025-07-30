@@ -151,14 +151,6 @@ class Config {
 				include "**/database-partitioning.*.yaml"
 			}
 
-			if (this.glowrootEnabled) {
-				include "**/glowroot.liferay.yaml"
-
-				if (useClustering) {
-					include "**/glowroot-clustering.liferay.yaml"
-				}
-			}
-
 			if (this.yourKitEnabled) {
 				include "**/yourkit.liferay.yaml"
 

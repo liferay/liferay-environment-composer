@@ -47,6 +47,22 @@ ext {
 			}
 		}
 
+		if (config.useDatabaseDB2) {
+			String escapedSql = sql.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
+
+			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} ${escapedSql}'").split("\n").minus("")
+
+			results.removeLast()
+
+			String[] columnHeaders = results[0].trim().split(/[ ]+/)
+
+			String[] values = results[results.size()-1].trim().split(/[ ]+/)
+
+			return [columnHeaders, values].transpose().collectEntries {
+				[it[0], it[1]]
+			}
+		}
+
 		throw new GradleException("Unrecognized database type")
 	}
 

@@ -144,9 +144,13 @@ ext {
 
 		companyVirtualHosts.each {
 			try {
-				String schema = config.databasePartitioningEnabled && it[maybeConvertDatabaseTableNameToUpperCase("webId")] != defaultWebId ? "lpartition_${it[maybeConvertDatabaseTableNameToUpperCase("companyId")]}" : config.databaseName
+				String companyIdKey = maybeConvertDatabaseTableNameToUpperCase("companyId")
+				String hostnameKey = maybeConvertDatabaseTableNameToUpperCase("hostname")
+				String webIdKey = maybeConvertDatabaseTableNameToUpperCase("webId")
 
-				action(it[maybeConvertDatabaseTableNameToUpperCase("companyId")], it[maybeConvertDatabaseTableNameToUpperCase("hostname")], it[maybeConvertDatabaseTableNameToUpperCase("webId")], schema)
+				String schema = config.databasePartitioningEnabled && it[webIdKey] != defaultWebId ? "lpartition_${it[companyIdKey]}" : config.databaseName
+
+				action(it[companyIdKey], it[hostnameKey], it[webIdKey], schema)
 			}
 			catch (Exception e) {
 				e.printStackTrace()

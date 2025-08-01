@@ -12,9 +12,9 @@ services:
             test: ./opt/ibm/db2/V11.5/bin/db2gcf -s && grep 'STARTING_UP' /startup_log.txt
             timeout: 20s
         platform: linux/x86_64
-        privileged: true
         ports:
             -   "50000:50000"
+        privileged: true
         volumes:
             -   read_only: true
                 source: data-volume

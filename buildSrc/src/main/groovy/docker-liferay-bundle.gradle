@@ -38,7 +38,7 @@ Closure<Boolean> isValidLicenseFile = {
 Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	String imageName ->
 
-	if ((imageName == null) || !imageName.contains(".q")) {
+	if ((imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
 		return null
 	}
 
@@ -94,6 +94,10 @@ tasks.register("checkForLiferayLicense") {
 			}.last()
 
 			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:" + latestQuarterlyReleaseTag)
+		}
+
+		if (Util.isEmpty(licenseXmlFileCollection)) {
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:latest")
 		}
 
 		if (Util.isEmpty(licenseXmlFileCollection)) {

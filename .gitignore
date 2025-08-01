@@ -8,6 +8,7 @@
 **/.settings
 **/.web_bundle_build
 **/activation-key-*.xml
+**/*dxp-license-*.xml
 **/bin
 **/build
 **/build_gradle

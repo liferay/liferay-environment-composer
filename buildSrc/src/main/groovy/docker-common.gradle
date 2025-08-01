@@ -121,7 +121,6 @@ ext {
 			}
 		}
 
-
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
 				it[webIdKey] == "liferay.com"

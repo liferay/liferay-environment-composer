@@ -48,9 +48,7 @@ ext {
 		}
 
 		if (config.useDatabaseDB2) {
-			String escapedSql = sql.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)")
-
-			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} ${escapedSql}'").split("\n").minus("")
+			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} ${sql}\\\"\"").split("\n").minus("")
 
 			results.removeLast()
 
@@ -100,7 +98,7 @@ ext {
 				schema = config.databaseName
 			}
 
-			return "docker compose exec --user db2admin database bash -c '/opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null; /opt/ibm/db2/V11.5/bin/db2"
+			return "docker compose exec --user db2admin database bash -c \"/opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null; /opt/ibm/db2/V11.5/bin/db2 \\\""
 		}
 	}
 

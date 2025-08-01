@@ -109,6 +109,8 @@ ext {
 
 		Map<String, String> defaultCompanyVirtualHost = null
 
+		String webIdKey = maybeConvertDatabaseTableNameToUpperCase("webId")
+
 		file("configs/common/portal-ext.properties").eachLine {
 			String line = it.trim()
 
@@ -116,14 +118,15 @@ ext {
 				String webId = line.split("=")[1]
 
 				defaultCompanyVirtualHost = companyVirtualHosts.find {
-					it["webId"] == webId
+					it[webIdKey] == webId
 				}
 			}
 		}
 
+
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
-				it["webId"] == "liferay.com"
+				it[webIdKey] == "liferay.com"
 			}
 		}
 
@@ -131,7 +134,7 @@ ext {
 			throw new GradleException("Unable to auto-detect company.default.web.id, please set it in configs/common/portal-ext.properties")
 		}
 
-		return defaultCompanyVirtualHost["webId"]
+		return defaultCompanyVirtualHost[webIdKey]
 	}
 
 	forEachCompanyId = {
@@ -143,14 +146,24 @@ ext {
 
 		companyVirtualHosts.each {
 			try {
-				String schema = config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName
+				String schema = config.databasePartitioningEnabled && it[maybeConvertDatabaseTableNameToUpperCase("webId")] != defaultWebId ? "lpartition_${it[maybeConvertDatabaseTableNameToUpperCase("companyId")]}" : config.databaseName
 
-				action(it["companyId"], it["hostname"], it["webId"], schema)
+				action(it[maybeConvertDatabaseTableNameToUpperCase("companyId")], it[maybeConvertDatabaseTableNameToUpperCase("hostname")], it[maybeConvertDatabaseTableNameToUpperCase("webId")], schema)
 			}
 			catch (Exception e) {
 				e.printStackTrace()
 			}
 		}
+	}
+
+	maybeConvertDatabaseTableNameToUpperCase = {
+		String key ->
+
+		if (config.useDatabaseDB2) {
+			return key.toUpperCase()
+		}
+
+		return key
 	}
 
 	updateGradleLocalProperties = {

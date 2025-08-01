@@ -1,5 +1,7 @@
 package com.liferay.docker.workspace.environments
 
+import org.gradle.api.file.FileCollection
+
 class Util {
 
 	public static String fixReleaseKey(String releaseKey) {
@@ -21,6 +23,14 @@ class Util {
 		}
 
 		return releaseKey
+	}
+
+	public static boolean isEmpty(FileCollection fileCollection) {
+		if (fileCollection == null) {
+			return true
+		}
+
+		return fileCollection.isEmpty()
 	}
 
 }

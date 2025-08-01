@@ -72,11 +72,11 @@ tasks.register("checkForLiferayLicense") {
 			isValidLicenseFile(it)
 		}
 
-		if (licenseXmlFileCollection.isEmpty()) {
+		if (Util.isEmpty(licenseXmlFileCollection)) {
 			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage(project.gradle.liferayWorkspace.dockerImageLiferay)
 		}
 
-		if (licenseXmlFileCollection == null || licenseXmlFileCollection.isEmpty()) {
+		if (Util.isEmpty(licenseXmlFileCollection)) {
 			List<String> dxpImageTagNames = waitForCommand("docker image ls liferay/dxp:*.q* --format='{{ .Tag }}'").split("\n").collect {
 				it.trim()
 			}
@@ -96,7 +96,7 @@ tasks.register("checkForLiferayLicense") {
 			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:" + latestQuarterlyReleaseTag)
 		}
 
-		if (licenseXmlFileCollection == null || licenseXmlFileCollection.isEmpty()) {
+		if (Util.isEmpty(licenseXmlFileCollection)) {
 			throw new GradleException("Please add a non-expired license to configs/common/osgi/modules/")
 		}
 	}

@@ -2,10 +2,60 @@ import com.liferay.docker.workspace.environments.Util
 
 import de.undercouch.gradle.tasks.download.Download
 
+import groovy.xml.XmlSlurper
+import groovy.xml.slurpersupport.GPathResult
+
 import java.nio.file.Path
 import java.nio.file.Paths
 
 project.plugins.apply "docker-common"
+
+Closure<Boolean> isValidLicenseFile = {
+	File licenseFile ->
+
+	String licenseText = licenseFile.text
+
+	if (!licenseText.contains("<license>")) {
+		return false
+	}
+
+	XmlSlurper xmlSlurper = new XmlSlurper()
+
+	GPathResult gPathResult = xmlSlurper.parse(licenseFile)
+	String expirationDateText = gPathResult["expiration-date"].text()
+
+	if (new Date(expirationDateText).after(new Date())) {
+		return true
+	}
+
+	println "License file ${licenseFile.absolutePath} expired on ${expirationDateText}"
+
+	licenseFile.delete()
+
+	return false
+}
+
+Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
+	String imageName ->
+
+	if ((imageName == null) || !imageName.contains(".q")) {
+		return null
+	}
+
+	String temporaryContainerName = "${config.namespace.toLowerCase()}-license-check"
+	String temporaryVolumeName = "${config.namespace.toLowerCase()}-license"
+
+	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/deploy ${imageName}")
+	waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ./configs/common/osgi/modules/:/target alpine sh -c 'cp /source/trial-*.xml /target/'")
+	waitForCommand("docker rm ${temporaryContainerName}")
+	waitForCommand("docker volume rm ${config.namespace.toLowerCase()}-license")
+
+	return project.fileTree("configs") {
+		include "**/osgi/modules/*.xml"
+	}.filter {
+		isValidLicenseFile(it)
+	}
+}
 
 tasks.register("checkForLiferayLicense") {
 	onlyIf("using the Liferay service") {
@@ -19,11 +69,35 @@ tasks.register("checkForLiferayLicense") {
 		FileCollection licenseXmlFileCollection = project.fileTree("configs") {
 			include "**/osgi/modules/*.xml"
 		}.filter {
-			it.text.contains("<license>")
+			isValidLicenseFile(it)
 		}
 
 		if (licenseXmlFileCollection.isEmpty()) {
-			throw new GradleException("Please add a license to configs/common/osgi/modules/")
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage(project.gradle.liferayWorkspace.dockerImageLiferay)
+		}
+
+		if (licenseXmlFileCollection == null || licenseXmlFileCollection.isEmpty()) {
+			List<String> dxpImageTagNames = waitForCommand("docker image ls liferay/dxp:*.q* --format='{{ .Tag }}'").split("\n").collect {
+				it.trim()
+			}
+
+			String latestQuarterlyRelease = dxpImageTagNames.collect {
+				it.substring(0, it.indexOf(".q") + 3)
+			}.sort().last()
+
+			String latestQuarterlyReleaseTag = dxpImageTagNames.findAll {
+				it.startsWith(latestQuarterlyRelease)
+			}.sort {
+				String a, String b ->
+
+				return Integer.parseInt(a.substring(it.indexOf(".q" + 4)).split("-")[0]) - Integer.parseInt(b.substring(it.indexOf(".q" + 4)).split("-")[0])
+			}.last()
+
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:" + latestQuarterlyReleaseTag)
+		}
+
+		if (licenseXmlFileCollection == null || licenseXmlFileCollection.isEmpty()) {
+			throw new GradleException("Please add a non-expired license to configs/common/osgi/modules/")
 		}
 	}
 }

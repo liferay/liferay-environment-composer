@@ -58,9 +58,11 @@ ext {
 
 			String[] values = results[results.size()-1].trim().split(/[ ]+/)
 
-			return [columnHeaders, values].transpose().collectEntries {
+			Map<String, String> result = [columnHeaders, values].transpose().collectEntries {
 				[it[0], it[1]]
 			}
+
+			return [result]
 		}
 
 		throw new GradleException("Unrecognized database type")

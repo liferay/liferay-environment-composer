@@ -62,8 +62,6 @@ class Config {
 
 		String arch = System.getProperty("os.arch")
 
-		String namespace = project.findProperty("lr.docker.environment.namespace")
-
 		if (arch.contains("arm") || arch.contains("aarch")) {
 			this.isARM = true
 		}

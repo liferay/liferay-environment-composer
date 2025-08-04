@@ -110,7 +110,7 @@ ext {
 
 		Map<String, String> defaultCompanyVirtualHost = null
 
-		String webIdKey = maybeConvertDatabaseTableNameToUpperCase("webId")
+		String webIdKey = toTableName("webId")
 
 		file("configs/common/portal-ext.properties").eachLine {
 			String line = it.trim()
@@ -146,9 +146,9 @@ ext {
 
 		companyVirtualHosts.each {
 			try {
-				String companyIdKey = maybeConvertDatabaseTableNameToUpperCase("companyId")
-				String hostnameKey = maybeConvertDatabaseTableNameToUpperCase("hostname")
-				String webIdKey = maybeConvertDatabaseTableNameToUpperCase("webId")
+				String companyIdKey = toTableName("companyId")
+				String hostnameKey = toTableName("hostname")
+				String webIdKey = toTableName("webId")
 
 				String schema = config.databaseName
 
@@ -164,7 +164,7 @@ ext {
 		}
 	}
 
-	maybeConvertDatabaseTableNameToUpperCase = {
+	toTableName = {
 		String key ->
 
 		if (config.useDatabaseDB2) {

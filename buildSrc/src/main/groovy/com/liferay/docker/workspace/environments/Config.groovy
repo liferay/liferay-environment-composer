@@ -142,14 +142,14 @@ class Config {
 		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
 
 		ConfigurableFileTree dockerComposeFileTree = project.fileTree(projectDir) {
-			include "**/service.*.yaml"
+			include "compose-recipes/**/service.*.yaml"
 
 			if (useClustering) {
-				include "**/clustering.*.yaml"
+				include "compose-recipes/**/clustering.*.yaml"
 			}
 
 			if (useLiferay) {
-				include "**/liferay.*.yaml"
+				include "compose-recipes/**/liferay.*.yaml"
 			}
 
 			if (this.databasePartitioningEnabled) {
@@ -157,14 +157,14 @@ class Config {
 					throw new GradleException("Database partitioning must be used with one of these databases: ${databasePartitioningCompatibleServiceNames}")
 				}
 
-				include "**/database-partitioning.*.yaml"
+				include "compose-recipes/**/database-partitioning.*.yaml"
 			}
 
 			if (this.yourKitEnabled) {
-				include "**/yourkit.liferay.yaml"
+				include "compose-recipes/**/yourkit.liferay.yaml"
 
 				if (useClustering) {
-					include "**/yourkit-clustering.liferay.yaml"
+					include "compose-recipes/**/yourkit-clustering.liferay.yaml"
 				}
 			}
 		}
@@ -173,7 +173,7 @@ class Config {
 			String serviceName ->
 
 			FileTree matchingFileTree = dockerComposeFileTree.matching {
-				include "**/*.${serviceName}.yaml"
+				include "compose-recipes/**/*.${serviceName}.yaml"
 			}
 
 			if (matchingFileTree.isEmpty()) {

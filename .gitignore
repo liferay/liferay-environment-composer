@@ -1,5 +1,6 @@
 **/*.iml
 **/*.so
+**/*db2jcc4.jar
 **/*hotfix*.zip
 **/.classpath
 **/.ivy

@@ -150,7 +150,11 @@ ext {
 				String hostnameKey = maybeConvertDatabaseTableNameToUpperCase("hostname")
 				String webIdKey = maybeConvertDatabaseTableNameToUpperCase("webId")
 
-				String schema = config.databasePartitioningEnabled && it[webIdKey] != defaultWebId ? "lpartition_${it[companyIdKey]}" : config.databaseName
+				String schema = config.databaseName
+
+				if (config.databasePartitioningEnabled && (it[webIdKey] != defaultWebId)) {
+					schema = "lpartition_${it[companyIdKey]}"
+				}
 
 				action(it[companyIdKey], it[hostnameKey], it[webIdKey], schema)
 			}

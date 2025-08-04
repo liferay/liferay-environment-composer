@@ -1,6 +1,7 @@
 **/*.iml
 **/*.so
 **/*db2jcc4.jar
+**/*dxp-license-*.xml
 **/*hotfix*.zip
 **/.classpath
 **/.ivy
@@ -9,7 +10,6 @@
 **/.settings
 **/.web_bundle_build
 **/activation-key-*.xml
-**/*dxp-license-*.xml
 **/bin
 **/build
 **/build_gradle

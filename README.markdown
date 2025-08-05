@@ -332,7 +332,7 @@ By default, stopping a container will delete all persistent data, which has the 
 
 To change this behavior, set the following in your `gradle-local.properties`:
 
-```
+```properties
 lr.docker.environment.clear.volume.data=false
 ```
 

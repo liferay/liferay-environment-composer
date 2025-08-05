@@ -5,6 +5,8 @@ services:
             -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
+        env_file:
+            -   ./liferay-jvm-opts.env
         healthcheck:
             interval: 5s
             start_period: 5m

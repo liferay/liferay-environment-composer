@@ -2,7 +2,8 @@ services:
     liferay:
         container_name: ${NAMESPACE}-liferay
         env_file:
-            -   ./liferay-jvm-opts.env
+            -   path: ./liferay-jvm-opts.env
+                required: false
         environment:
             -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_JPDA_ENABLED=true

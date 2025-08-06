@@ -45,7 +45,7 @@ To shut down the environment, run `./gradlew stop`.
 - Supports Liferay clustering OOTB
 
 ### Java Virtual Machine features overview
-- [Use custom JVM Arguments](#use-custom-jvm-arguments)
+- [Use custom JVM arguments to improve performance](#use-custom-jvm-arguments-to-improve-performance)
 
 ### Data features overview
 
@@ -165,7 +165,7 @@ lr.docker.environment.cluster.nodes=2
 
 ### Java Virtual Machine features overview
 
-#### Use custom JVM Arguments
+#### Use custom JVM arguments to improve performance
 
 The default JVM arguments for running the Liferay server can be overriden inside of `./liferay-jvm-opts.env`. You can also add other JVM arguments as long as it is appended to LIFERAY_JVM_OPTS. There are pre-existing overrides already in this file to help improve with Liferay server performance.
 

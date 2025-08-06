@@ -43,17 +43,78 @@ Closure<Boolean> isValidLicenseFile = {
 	return false
 }
 
-Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
+Closure<String> getLatestImageName = {
+	List<String> dxpImageNames ->
+
+	if (dxpImageNames.isEmpty()) {
+		return null
+	}
+
+	String latestQuarterlyRelease = dxpImageNames.collect {
+		it.substring(0, it.indexOf(".q") + 3)
+	}.sort().last()
+
+	String latestQuarterlyReleaseTag = dxpImageNames.findAll {
+		it.startsWith(latestQuarterlyRelease)
+	}.sort {
+		String a, String b ->
+
+		int aPatch = Integer.parseInt(a.substring(a.indexOf(".q") + 4).split("-")[0])
+		int bPatch = Integer.parseInt(b.substring(b.indexOf(".q") + 4).split("-")[0])
+
+		return aPatch - bPatch
+	}.last()
+
+	return "liferay/dxp:" + latestQuarterlyReleaseTag
+}
+
+Closure<String> getLatestImageNameLocal = {
 	String imageName ->
 
 	if ((imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
 		return null
 	}
 
+	List<String> dxpImageNames = waitForCommand("docker image ls ${imageName} --format='{{ .Tag }}'").readLines()
+
+	if (dxpImageNames.isEmpty()) {
+		dxpImageNames = waitForCommand("docker image ls ${imageName}-* --format='{{ .Tag }}'").readLines()
+	}
+
+	return getLatestImageName(dxpImageNames)
+}
+
+Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
+	String imageName, boolean pullImage = false ->
+
+	if ((imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
+		return null
+	}
+
+	String latestImageName = getLatestImageNameLocal(imageName)
+
+	if (latestImageName == null) {
+		if (!pullImage) {
+			return null
+		}
+
+		println "Docker image ${imageName} is not available, retrieving via docker pull (this may take awhile)"
+
+		waitForCommand("docker pull ${imageName}")
+
+		latestImageName = getLatestImageNameLocal(imageName)
+
+		if (latestImageName == null) {
+			return null
+		}
+	}
+
 	String temporaryContainerName = "${config.namespace.toLowerCase()}-license-check"
 	String temporaryVolumeName = "${config.namespace.toLowerCase()}-license"
 
-	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/deploy ${imageName}")
+	println "Attempting to copy trial license from ${latestImageName}"
+
+	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/deploy ${latestImageName}")
 	waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ./configs/common/osgi/modules/:/target alpine sh -c 'cp /source/trial-*.xml /target/'")
 	waitForCommand("docker rm ${temporaryContainerName}")
 	waitForCommand("docker volume rm ${config.namespace.toLowerCase()}-license")
@@ -85,27 +146,19 @@ tasks.register("checkForLiferayLicense") {
 		}
 
 		if (Util.isEmpty(licenseXmlFileCollection)) {
-			List<String> dxpImageTagNames = waitForCommand("docker image ls liferay/dxp:*.q* --format='{{ .Tag }}'").split("\n").collect {
-				it.trim()
-			}
-
-			String latestQuarterlyRelease = dxpImageTagNames.collect {
-				it.substring(0, it.indexOf(".q") + 3)
-			}.sort().last()
-
-			String latestQuarterlyReleaseTag = dxpImageTagNames.findAll {
-				it.startsWith(latestQuarterlyRelease)
-			}.sort {
-				String a, String b ->
-
-				return Integer.parseInt(a.substring(it.indexOf(".q" + 4)).split("-")[0]) - Integer.parseInt(b.substring(it.indexOf(".q" + 4)).split("-")[0])
-			}.last()
-
-			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:" + latestQuarterlyReleaseTag)
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:*.q*")
 		}
 
 		if (Util.isEmpty(licenseXmlFileCollection)) {
 			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:latest")
+		}
+
+		if (Util.isEmpty(licenseXmlFileCollection)) {
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage(project.gradle.liferayWorkspace.dockerImageLiferay, true)
+		}
+
+		if (Util.isEmpty(licenseXmlFileCollection)) {
+			licenseXmlFileCollection = copyLiferayLicenseFromDXPImage("liferay/dxp:latest", true)
 		}
 
 		if (Util.isEmpty(licenseXmlFileCollection)) {

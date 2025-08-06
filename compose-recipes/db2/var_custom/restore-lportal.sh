@@ -13,6 +13,5 @@ db2stop force && \
 ipclean -a && \
 db2set DB2COMM=TCPIP && \
 db2start && \
-db2 activate db lportal && \
-db2 connect to lportal || echo
+db2 activate db lportal || echo
 EOSU

@@ -44,6 +44,9 @@ To shut down the environment, run `./gradlew stop`.
 - [Use custom hostnames](#use-custom-hostnames)
 - Supports Liferay clustering OOTB
 
+### Java Virtual Machine features overview
+- [Use custom JVM Arguments](#use-custom-jvm-arguments)
+
 ### Data features overview
 
 - [Export container data to a timestamped directory](#export-container-data-to-a-timestamped-directory)
@@ -160,6 +163,12 @@ Clustering can be enabled by setting the `lr.docker.environment.cluster.nodes` p
 lr.docker.environment.cluster.nodes=2
 ```
 
+### Java Virtual Machine features overview
+
+#### Use custom JVM Arguments
+
+The default JVM arguments for running the Liferay server can be overriden inside of `./liferay-jvm-opts.env`. You can also add other JVM arguments as long as it is appended to LIFERAY_JVM_OPTS. There are pre-existing overrides already in this file to help improve with Liferay server performance.
+
 ### Database Features
 
 #### Enable MySQL 8.4
@@ -242,10 +251,6 @@ You can provide multiple hostnames, separated by commas.
 ```properties
 lr.docker.environment.web.server.hostnames=localhost
 ```
-
-#### Use custom JVM Arguments
-
-The default JVM arguments for running the Liferay server can be overriden inside of `./liferay-jvm-opts.env`. You can also add other JVM arguments as long as it is appended to LIFERAY_JVM_OPTS. There are pre-existing overrides already in this file to help improve with Liferay server performance.
 
 ### Data Features
 

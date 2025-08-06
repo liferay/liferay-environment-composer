@@ -1,6 +1,6 @@
 echo "lportal" | su db2admin <<EOSU
 . /database/config/db2admin/sqllib/db2profile
-[ "$(ls -A /database/data/db2admin/NODE0000/lportal/backup)" ] && \
+[ "$(ls /database/data/db2admin/NODE0000/lportal/backup)" ] && \
     db2 connect to lportal && \
     db2 force application all && \
     db2 terminate && \

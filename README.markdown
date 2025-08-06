@@ -167,7 +167,7 @@ lr.docker.environment.cluster.nodes=2
 
 #### Use custom JVM arguments to improve performance
 
-The default JVM arguments for running the Liferay server can be overriden inside of `./liferay-jvm-opts.env`. You can also add other JVM arguments as long as it is appended to LIFERAY_JVM_OPTS. There are pre-existing overrides already in this file to help improve with Liferay server performance.
+To customize Liferay's JVM arguments, modify the `LIFERAY_JVM_OPTS` variable in `./liferay-jvm-opts.env`. This file already includes several default arguments for better server performance.
 
 ### Database Features
 

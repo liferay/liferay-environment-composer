@@ -3,6 +3,7 @@ services:
         build: ./compose-recipes/db2
         container_name: ${NAMESPACE}-database-db2
         environment:
+            -   COMPOSER_DATABASE_NAME=lportal
             -   DB2INSTANCE=db2admin
             -   DB2INST1_PASSWORD=lportal
             -   LICENSE=accept

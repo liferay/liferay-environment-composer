@@ -69,10 +69,10 @@ class Config {
 		String namespaceProperty = project.findProperty("lr.docker.environment.namespace")
 
 		if (namespaceProperty != null) {
-			this.namespace = namespaceProperty
+			this.namespace = Util.toDockerSafeName(namespaceProperty)
 		}
 		else {
-			this.namespace = this.project.name.replace(".", "-")
+			this.namespace = Util.toDockerSafeName(this.project.name)
 		}
 
 		List services = project.properties.findAll {

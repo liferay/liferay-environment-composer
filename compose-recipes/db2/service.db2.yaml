@@ -18,7 +18,7 @@ services:
         volumes:
             -   read_only: true
                 source: data-volume
-                target: /var/custom
+                target: /database/data/db2admin/NODE0000/backups
                 type: volume
                 volume:
                     subpath: dumps

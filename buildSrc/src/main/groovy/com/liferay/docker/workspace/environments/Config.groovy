@@ -72,7 +72,7 @@ class Config {
 			this.namespace = namespaceProperty
 		}
 		else {
-			this.namespace = this.project.name
+			this.namespace = this.project.name.replace(".", "-")
 		}
 
 		List services = project.properties.findAll {

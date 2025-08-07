@@ -96,7 +96,7 @@ class Config {
 			this.dockerImageLiferayDXP = true
 		}
 
-		this.liferayDockerImageId = "${this.namespace.toLowerCase()}-liferay"
+		this.liferayDockerImageId = "${this.namespace}-liferay"
 
 		def webserverHostnamesProperty = project.findProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
 

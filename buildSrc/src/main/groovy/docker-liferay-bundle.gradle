@@ -109,15 +109,15 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 		}
 	}
 
-	String temporaryContainerName = "${config.namespace.toLowerCase()}-license-check"
-	String temporaryVolumeName = "${config.namespace.toLowerCase()}-license"
+	String temporaryContainerName = "${config.namespace}-license-check"
+	String temporaryVolumeName = "${config.namespace}-license"
 
 	println "Attempting to copy trial license from ${latestImageName}"
 
 	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/deploy ${latestImageName}")
 	waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ./configs/common/osgi/modules/:/target alpine sh -c 'cp /source/trial-*.xml /target/'")
 	waitForCommand("docker rm ${temporaryContainerName}")
-	waitForCommand("docker volume rm ${config.namespace.toLowerCase()}-license")
+	waitForCommand("docker volume rm ${config.namespace}-license")
 
 	return project.fileTree("configs") {
 		include "**/osgi/modules/*.xml"

@@ -148,7 +148,7 @@ if (config.useLiferay) {
 }
 
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
-environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace.toLowerCase())
+environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
 new File('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->

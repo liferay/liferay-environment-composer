@@ -33,4 +33,11 @@ class Util {
 		return fileCollection.isEmpty()
 	}
 
+	public static String toDockerSafeName(String s) {
+		s = s.replace(" ", "_")
+		s = s.replace(".", "-")
+
+		return s.toLowerCase()
+	}
+
 }

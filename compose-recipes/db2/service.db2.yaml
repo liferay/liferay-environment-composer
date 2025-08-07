@@ -24,7 +24,7 @@ services:
                 volume:
                     subpath: dumps
             -   source: data-volume
-                target: /database/data/db2admin/NODE0000/sqldbdir
+                target: /database/data/db2admin/NODE0000
                 type: volume
                 volume:
                     subpath: container-data/database

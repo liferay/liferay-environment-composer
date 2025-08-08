@@ -104,6 +104,12 @@ class Config {
 			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
+		String liferayAdminUserPassword = project.getProperty("lr.docker.environment.liferay.admin.user.password")
+
+		if (liferayAdminUserPassword != null) {
+			this.liferayAdminUserPassword = liferayAdminUserPassword
+		}
+
 		String yourKitEnabledProperty = project.findProperty("lr.docker.environment.yourkit.enabled")
 
 		if (yourKitEnabledProperty != null) {
@@ -222,6 +228,7 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false
 	public String liferayDockerImageId = ""
+	public String liferayAdminUserPassword = ""
 	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()

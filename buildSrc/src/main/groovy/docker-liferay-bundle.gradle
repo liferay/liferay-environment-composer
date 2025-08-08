@@ -294,3 +294,26 @@ tasks.register("prepareYourKitAgent", Copy) {
 	includeEmptyDirs false
 	into "configs/common/yourkit"
 }
+
+tasks.register("resetAdminPassword") {
+	println "Resetting admin password register"
+
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+
+	doLast {
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				resetLiferayAdminUserPasswords(it, config.databasePartitioningEnabled && it["webId"] != defaultWebId ? "lpartition_${it["companyId"]}" : config.databaseName)
+			}
+			catch (Exception e) {
+				println "Unable to update ${it["hostname"]}: ${e.getMessage()}"
+			}
+		}
+	}
+}

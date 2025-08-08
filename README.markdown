@@ -68,6 +68,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Shut down environment](#shut-down-environment)
 - [Clean up prepared hotfixes](#clean-up-prepared-hotfixes)
 - [Clean up all prepared data and built Liferay Docker images](#clean-up-all-prepared-data-and-built-liferay-docker-images)
+- [Reset Liferay Admin User Password](#reset-liferay-admin-user-password)
 
 ## Requirements
 
@@ -343,6 +344,14 @@ lr.docker.environment.clear.volume.data=false
 ```
 
 This will also stop the environment, so please see the previous note which describes the strategy for persisting data between restarts.
+
+#### Reset Liferay Admin User Password
+
+```
+./gradlew resetAdminPassword
+```
+
+This resets the superadmin password to the password defined in `gradle.properties` property `lr.docker.environment.liferay.admin.user.password`. The user cache needs to be reset without logging into the user in order for the change to persist, so the most recommended way is to restart the Liferay instance.
 
 #### Export container data
 

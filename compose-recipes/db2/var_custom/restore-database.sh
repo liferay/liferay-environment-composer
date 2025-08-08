@@ -13,5 +13,6 @@ db2stop force && \
 ipclean -a && \
 db2set DB2COMM=TCPIP && \
 db2start && \
-db2 activate db ${COMPOSER_DATABASE_NAME} || echo
+db2 activate db ${COMPOSER_DATABASE_NAME} || \
+echo "Skipping database restore as no dump was found"
 EOSU

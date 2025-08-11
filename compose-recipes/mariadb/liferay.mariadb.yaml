@@ -1,0 +1,10 @@
+services:
+    liferay:
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=org.mariadb.jdbc.Driver
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:mariadb://database:3306/${DATABASE_NAME}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=root

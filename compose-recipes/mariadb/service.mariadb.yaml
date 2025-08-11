@@ -1,0 +1,31 @@
+services:
+    database:
+        build: ./compose-recipes/mariadb
+        container_name: ${NAMESPACE}-database-mariadb
+        environment:
+            -   MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
+            -   MARIADB_DATABASE=${DATABASE_NAME}
+        healthcheck:
+            retries: 10
+            start_period: 5m
+            test: mysqladmin ping -h localhost && grep 'STARTING_UP' /startup_log.txt
+            timeout: 20s
+        ports:
+            -   "3307:3306"
+        ulimits:
+            nofile:
+                hard: 40000
+                soft: 20000
+            nproc: 65535
+        volumes:
+            -   read_only: true
+                source: data-volume
+                target: /docker-entrypoint-initdb.d
+                type: volume
+                volume:
+                    subpath: dumps
+            -   source: data-volume
+                target: /var/lib/mysql
+                type: volume
+                volume:
+                    subpath: container-data/database

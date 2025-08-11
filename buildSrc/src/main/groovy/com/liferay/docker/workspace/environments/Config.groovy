@@ -125,6 +125,11 @@ class Config {
 			this.useDatabaseDB2 = true
 		}
 
+		if (this.services.contains("mariadb")) {
+			this.useDatabase = true
+			this.useDatabaseMariaDB = true
+		}
+
 		if (this.services.contains("mysql")) {
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
@@ -228,6 +233,7 @@ class Config {
 	public boolean useClustering = false
 	public boolean useDatabase = false
 	public boolean useDatabaseDB2 = false
+	public boolean useDatabaseMariaDB = false
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
 	public boolean useLiferay = false

@@ -15,7 +15,7 @@ ext {
 
 		waitForContainer("database", "${config.namespace}-database")
 
-		if (config.useDatabaseMySQL) {
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
 
 			String[] columnHeaders = results[0].split("\t")
@@ -75,7 +75,7 @@ ext {
 	getDatabaseAccessCommand = {
 		String schema ->
 
-		if (config.useDatabaseMySQL) {
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			String command = "docker compose exec -it database mysql --user root"
 
 			if (schema != null) {

@@ -23,6 +23,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Deploy a Document Library](#deploy-a-document-library)
 - [Deploy license files](#deploy-license-files)
 - [Enable clustering](#enable-clustering)
+- [Change default virtual host](#change-default-virtual-host)
 
 ### Database features overview
 
@@ -162,6 +163,10 @@ Clustering can be enabled by setting the `lr.docker.environment.cluster.nodes` p
 # This will start the main Liferay instance and 2 additional cluster nodes
 lr.docker.environment.cluster.nodes=2
 ```
+
+#### Change default virtual host
+
+The default Liferay virtual host can be changed by setting the `company.default.virtual.host.name` property in `configs/common/portal-ext.properties`. You will also need to enable the virtual host to in your `/etc/hosts` file. For example, you can add `127.0.0.1 www.able.com` to `/etc/hosts` to allow a Virtual host other than localhost to exist in your server.
 
 ### Java Virtual Machine features overview
 

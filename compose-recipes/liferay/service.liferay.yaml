@@ -8,6 +8,7 @@ services:
             -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
+            -   LIFERAY_UPGRADE_PERIOD_DATABASE_PERIOD_AUTO_PERIOD_RUN=true
         healthcheck:
             interval: 5s
             start_period: 5m

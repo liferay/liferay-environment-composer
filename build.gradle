@@ -58,6 +58,7 @@ tasks.register("shareWorkspace", Zip) {
 	exclude ".gitignore"
 	exclude ".git"
 	exclude ".gradle"
+	exclude "binds"
 	exclude "shared_workspaces"
 	exclude {
 		it.relativePath.pathString.startsWith("exported_data/") &&

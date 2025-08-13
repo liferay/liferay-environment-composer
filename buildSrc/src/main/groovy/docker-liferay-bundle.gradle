@@ -17,7 +17,7 @@ configurations {
 
 dependencies {
 	db2 group: "com.ibm.db2.jcc", name: "db2jcc", version: "db2jcc4"
-	sqlserver group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: '12.10.1.jre11'
+	sqlserver group: "com.microsoft.sqlserver", name: "mssql-jdbc", version: "12.10.1.jre11"
 }
 
 Closure<Boolean> isValidLicenseFile = {

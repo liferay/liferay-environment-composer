@@ -12,10 +12,12 @@ project.plugins.apply "docker-common"
 
 configurations {
 	db2
+	sqlserver
 }
 
 dependencies {
 	db2 group: "com.ibm.db2.jcc", name: "db2jcc", version: "db2jcc4"
+	sqlserver group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: '12.10.1.jre11'
 }
 
 Closure<Boolean> isValidLicenseFile = {
@@ -199,6 +201,18 @@ tasks.register("prepareDB2JDBCDriver", Copy) {
 	}
 
 	from configurations.db2
+	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+}
+
+tasks.register("prepareSQLServerJDBCDriver", Copy) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using the SQL Server database") {
+		config.useDatabaseSQLServer
+	}
+
+	from configurations.sqlserver
 	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
 }
 

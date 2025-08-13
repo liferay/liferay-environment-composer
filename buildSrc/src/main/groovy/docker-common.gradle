@@ -59,6 +59,22 @@ ext {
 			return toResultRows(results, /\s+/)
 		}
 
+		if (config.useDatabaseSQLServer) {
+			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
+
+			results.removeLast()
+
+			String[] columnHeaders = results[0].trim().split(/[ ]+/)
+
+			String[] values = results[results.size()-1].trim().split(/[ ]+/)
+
+			Map<String, String> result = [columnHeaders, values].transpose().collectEntries {
+				[it[0], it[1]]
+			}
+
+			return [result]
+		}
+
 		throw new GradleException("Unrecognized database type")
 	}
 
@@ -133,6 +149,10 @@ ext {
 				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
 				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2"
 			].join("\n")
+		}
+
+		if (config.useDatabaseSQLServer) {
+			return "docker compose exec -it database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -P Liferay123 -d ${config.databaseName} -Q"
 		}
 	}
 

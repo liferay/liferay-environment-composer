@@ -21,6 +21,14 @@ gradle.liferayWorkspace {
 	dockerImageId = config.liferayDockerImageId
 }
 
+Instant now = Instant.now()
+
+DateTimeFormatter formatter = DateTimeFormatter.
+ofPattern("yyyyMMdd.HHmmss").
+withZone(ZoneId.systemDefault())
+
+String timestamp = formatter.format(now)
+
 tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	containerId = "${config.namespace}-data-helper"
 
@@ -29,11 +37,7 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	}
 
 	hostPath = provider {
-		DateTimeFormatter formatter = DateTimeFormatter.
-		ofPattern("yyyyMMdd.HHmmss").
-		withZone(ZoneId.systemDefault())
-
-		"exported_data/data_${config.namespace}_${formatter.format(Instant.now())}"
+		"exported_data/data_${config.namespace}_${timestamp}"
 	}
 
 	remotePath = "/data/container-data"
@@ -41,11 +45,7 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 
 tasks.register("shareWorkspace", Zip) {
 	archiveFileName = provider {
-		DateTimeFormatter formatter = DateTimeFormatter.
-		ofPattern("yyyyMMdd.HHmmss").
-		withZone(ZoneId.systemDefault())
-
-		"workspace_${config.namespace}_${formatter.format(Instant.now())}.zip"
+		"workspace_${config.namespace}_${timestamp}.zip"
 	}
 
 	destinationDirectory = file 'shared_workspaces'

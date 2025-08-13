@@ -1,5 +1,6 @@
 #!/bin/bash
 
+DEPLOY_DIR="$(pwd)/binds/liferay/deploy"
 PROJECT_NAME="$(docker compose ls --quiet)"
 
 LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version)"
@@ -22,7 +23,7 @@ echo ""
 
 sed \
 	-e "s,{{LIFERAY_VERSION}},${LIFERAY_VERSION},g" \
-	-e "s,{{PROJECT_NAME}},${PROJECT_NAME},g" \
+	-e "s,{{DEPLOY_DIR}},${DEPLOY_DIR},g" \
 	./templates/scripts/build.gradle.template;
 
 echo ""

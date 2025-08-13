@@ -36,6 +36,12 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 		mkdir hostPath.get()
 	}
 
+	doLast {
+		updateGradleLocalProperties(["lr.docker.environment.data.directory" : hostPath.get()])
+
+		logger.lifecycle("\nUpdated gradle-local.properties with the new value:\nlr.docker.environment.data.directory=${hostPath.get()}")
+	}
+
 	hostPath = provider {
 		"exported_data/data_${config.namespace}_${timestamp}"
 	}

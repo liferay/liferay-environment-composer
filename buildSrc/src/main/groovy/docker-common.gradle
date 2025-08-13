@@ -114,7 +114,12 @@ ext {
 			return config.companyVirtualHosts
 		}
 
-		config.companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		if (config.useDatabaseSQLServer) {
+			config.companyVirtualHosts = executeSQLQuery("select VirtualHost.companyId, hostname, webId from VirtualHost inner join Company on (VirtualHost.companyId = Company.companyId) where layoutSetId = 0", config.databaseName)
+		}
+		else {
+			config.companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		}
 
 		return config.companyVirtualHosts
 	}
@@ -171,6 +176,7 @@ ext {
 
 		Map<String, String> defaultCompanyVirtualHost = (companyVirtualHosts.size() == 1) ? companyVirtualHosts[0] : null
 
+
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
 				Map<String, String> companyVirtualHost ->
@@ -193,6 +199,7 @@ ext {
 			}
 		}
 
+
 		if (defaultCompanyVirtualHost == null) {
 			throw new GradleException("Unable to auto-detect company.default.web.id from ${companyVirtualHosts}, please set it in configs/common/portal-ext.properties")
 		}
@@ -207,6 +214,7 @@ ext {
 
 		return volumeNameLines.isEmpty() ? [] : volumeNameLines.split("\n")
 	}
+
 
 	getPortalPropertyValue = {
 		String propertyKey, String propertiesFileName = null ->

@@ -1,0 +1,22 @@
+services:
+    database:
+        build: ./compose-recipes/sqlserver
+        container_name: ${NAMESPACE}-database-sqlserver
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+                reservations:
+                    memory: 2G
+        environment:
+            -   ACCEPT_EULA=Y
+            -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}
+            -   MSSQL_SA_PASSWORD=Liferay123
+        healthcheck:
+            interval: 5s
+            retries: 50
+            start_period: 30s
+            test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Liferay123 -Q  "select name from sys.databases where name = ${DATABASE_NAME}"
+            timeout: 5s
+        ports:
+            -   "1433:1433"

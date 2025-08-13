@@ -50,29 +50,13 @@ ext {
 			return toResultRows(results, /,/)
 		}
 
-		if (config.useDatabaseDB2) {
+		if (config.useDatabaseDB2 || config.useDatabaseSQLServer) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
 
 			results.removeLast()
 			results.remove(1)
 
 			return toResultRows(results, /\s+/)
-		}
-
-		if (config.useDatabaseSQLServer) {
-			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
-
-			results.removeLast()
-
-			String[] columnHeaders = results[0].trim().split(/[ ]+/)
-
-			String[] values = results[results.size()-1].trim().split(/[ ]+/)
-
-			Map<String, String> result = [columnHeaders, values].transpose().collectEntries {
-				[it[0], it[1]]
-			}
-
-			return [result]
 		}
 
 		throw new GradleException("Unrecognized database type")

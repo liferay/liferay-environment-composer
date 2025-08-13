@@ -160,7 +160,14 @@ ext {
 	forEachCompanyId = {
 		Closure<Void> action ->
 
-		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		List<Map<String, String>> companyVirtualHosts
+
+		if (config.useDatabaseSQLServer) {
+			companyVirtualHosts = executeSQLQuery("select VirtualHost.companyId, hostname, webId from VirtualHost inner join Company on (VirtualHost.companyId = Company.companyId) where layoutSetId = 0", config.databaseName)
+		}
+		else {
+			companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		}
 
 		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
 

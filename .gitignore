@@ -21,6 +21,7 @@
 .env
 .gradle
 .idea
+/binds
 /bundles
 /containerLogs
 /data/*

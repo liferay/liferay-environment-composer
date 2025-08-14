@@ -3,7 +3,10 @@
 DEPLOY_DIR="$(pwd)/binds/liferay/deploy"
 PROJECT_NAME="$(docker compose ls --quiet)"
 
-LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version)"
+if [[ -z "${LIFERAY_VERSION}" ]]; then
+	LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version)"
+fi
+
 GIT_HASH="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .githash)"
 
 echo "#######################################################"
@@ -21,10 +24,18 @@ echo ""
 echo "------------------------------"
 echo ""
 
+if [[ "${LIFERAY_VERSION}" ]]; then
+	sed \
+		-e "s,{{LIFERAY_PRODUCT}},${LIFERAY_PRODUCT:-dxp},g" \
+		-e "s,{{LIFERAY_VERSION}},${LIFERAY_VERSION},g" \
+		./templates/scripts/dependencies_part.build.gradle.template
+
+	echo ""
+fi
+
 sed \
-	-e "s,{{LIFERAY_VERSION}},${LIFERAY_VERSION},g" \
 	-e "s,{{DEPLOY_DIR}},${DEPLOY_DIR},g" \
-	./templates/scripts/build.gradle.template;
+	./templates/scripts/deploy_part.build.gradle.template
 
 echo ""
 echo "------------------------------"

@@ -1,0 +1,3 @@
+deploy {
+    into "{{DEPLOY_DIR}}"
+}

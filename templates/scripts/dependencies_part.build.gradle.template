@@ -1,0 +1,3 @@
+dependencies {
+    compileOnly group: "com.liferay.portal", name: "release.{{LIFERAY_PRODUCT}}.api", version: "{{LIFERAY_VERSION}}"
+}

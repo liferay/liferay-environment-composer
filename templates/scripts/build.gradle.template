@@ -1,7 +1,0 @@
-dependencies {
-	compileOnly group: "com.liferay.portal", name: "release.dxp.api", version: "{{LIFERAY_VERSION}}"
-}
-
-deploy {
-	into "{{DEPLOY_DIR}}"
-}

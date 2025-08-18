@@ -20,3 +20,15 @@ services:
             timeout: 5s
         ports:
             -   "1433:1433"
+        volumes:
+            -   read_only: true
+                source: data-volume
+                target: /var/opt/mssql/backups
+                type: volume
+                volume:
+                    subpath: dumps
+            -   source: data-volume
+                target: /var/opt/mssql/data
+                type: volume
+                volume:
+                    subpath: container-data/database

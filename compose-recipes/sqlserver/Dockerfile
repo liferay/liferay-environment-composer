@@ -5,7 +5,6 @@ USER root
 RUN mkdir -p /var/opt/mssql/backups /var/opt/mssql/data
 RUN chown -R mssql:mssql /var/opt/mssql/backups
 RUN chown -R mssql:mssql /var/opt/mssql/data
-
 RUN touch /startup_log.txt
 RUN chown mssql:mssql /startup_log.txt
 

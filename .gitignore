@@ -39,3 +39,4 @@
 /plugins-sdk/lib
 /shared_workspaces
 test-results
+.DS_Store

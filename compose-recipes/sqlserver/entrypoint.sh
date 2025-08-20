@@ -5,7 +5,7 @@ _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSW
 _is_database_present() {
 	local database_name=${1}
 
-	if	[[ $(ls /opt/mssql/data/ | grep ${database_name}) ]] || \
+	if	[[ $(ls /var/opt/mssql/data/ | grep ${database_name}) ]] || \
 		[[ $(${_sqlcmd} -Q "select name from sys.databases" | grep "${database_name}") ]]; then
 
 		echo true

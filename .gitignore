@@ -18,6 +18,7 @@
 **/node_modules_cache
 **/test-coverage
 **/tmp
+.DS_Store
 .env
 .gradle
 .idea
@@ -39,4 +40,3 @@
 /plugins-sdk/lib
 /shared_workspaces
 test-results
-.DS_Store

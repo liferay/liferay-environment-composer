@@ -30,7 +30,9 @@ class Util {
 			return true
 		}
 
-		return fileCollection.isEmpty()
+		return fileCollection.filter {
+			!it.name.equals(".gitkeep")
+		}.isEmpty()
 	}
 
 	public static String toDockerSafeName(String s) {

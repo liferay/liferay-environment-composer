@@ -13,7 +13,7 @@ ext {
 			throw new GradleException("Database service not detected")
 		}
 
-		waitForContainer("database", "${config.namespace}-database")
+		waitForContainer("database", config.dockerContainerDatabase)
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
@@ -70,6 +70,33 @@ ext {
 		String productVersion ->
 
 		return Util.fixReleaseKey(productVersion)
+	}
+
+	forEachCompanyId = {
+		Closure<Void> action ->
+
+		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+
+		companyVirtualHosts.each {
+			try {
+				String companyIdKey = toTableName("companyId")
+				String hostnameKey = toTableName("hostname")
+				String webIdKey = toTableName("webId")
+
+				String schema = config.databaseName
+
+				if (config.databasePartitioningEnabled && (it[webIdKey] != defaultWebId)) {
+					schema = "lpartition_${it[companyIdKey]}"
+				}
+
+				action(it[companyIdKey], it[hostnameKey], it[webIdKey], schema)
+			}
+			catch (Exception e) {
+				e.printStackTrace()
+			}
+		}
 	}
 
 	getDatabaseAccessCommand = {
@@ -135,33 +162,6 @@ ext {
 		}
 
 		return defaultCompanyVirtualHost[webIdKey]
-	}
-
-	forEachCompanyId = {
-		Closure<Void> action ->
-
-		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
-
-		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
-
-		companyVirtualHosts.each {
-			try {
-				String companyIdKey = toTableName("companyId")
-				String hostnameKey = toTableName("hostname")
-				String webIdKey = toTableName("webId")
-
-				String schema = config.databaseName
-
-				if (config.databasePartitioningEnabled && (it[webIdKey] != defaultWebId)) {
-					schema = "lpartition_${it[companyIdKey]}"
-				}
-
-				action(it[companyIdKey], it[hostnameKey], it[webIdKey], schema)
-			}
-			catch (Exception e) {
-				e.printStackTrace()
-			}
-		}
 	}
 
 	toTableName = {

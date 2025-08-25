@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   webserver-http:/container-data/webserver-http
     webserver:
         build: ./compose-recipes/webserver-http
         container_name: ${NAMESPACE}-webserver-http
@@ -8,8 +11,6 @@ services:
         ports:
             -   "80:80"
         volumes:
-            -   source: data-volume
-                target: /etc/nginx/conf.d
-                type: volume
-                volume:
-                    subpath: container-data/webserver
+            -   webserver-http:/etc/nginx/conf.d
+volumes:
+    webserver-http:

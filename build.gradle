@@ -46,7 +46,7 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 		"exported_data/data_${config.namespace}_${timestamp}"
 	}
 
-	remotePath = "/data/container-data"
+	remotePath = "/container-data"
 }
 
 tasks.register("shareWorkspace", Zip) {

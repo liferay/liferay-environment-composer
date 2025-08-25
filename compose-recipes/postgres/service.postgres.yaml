@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   postgres:/container-data/postgres
     database:
         build: ./compose-recipes/postgres
         container_name: ${NAMESPACE}-database-postgres
@@ -22,14 +25,7 @@ services:
             -   "5433:5432"
         shm_size: 128mb
         volumes:
-            -   read_only: true
-                source: data-volume
-                target: /docker-entrypoint-initdb.d
-                type: volume
-                volume:
-                    subpath: dumps
-            -   source: data-volume
-                target: /var/lib/postgresql/data
-                type: volume
-                volume:
-                    subpath: container-data/database
+            -   dumps:/docker-entrypoint-initdb.d
+            -   postgres:/var/lib/postgresql/data
+volumes:
+    postgres:

@@ -8,6 +8,6 @@ services:
             dockerfile: Dockerfile.helper
         container_name: ${NAMESPACE}-data-helper
         volumes:
-            -   data-volume:/data
+            -   dumps:/dumps
 volumes:
-    data-volume:
+    dumps:

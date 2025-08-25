@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   liferay:/container-data/liferay
     liferay:
         container_name: ${NAMESPACE}-liferay
         env_file:
@@ -29,8 +32,6 @@ services:
             -   source: ./binds/liferay/reports/
                 target: /opt/liferay/reports
                 type: bind
-            -   source: data-volume
-                target: /opt/liferay/data
-                type: volume
-                volume:
-                    subpath: container-data/liferay
+            -   liferay:/opt/liferay/data
+volumes:
+    liferay:

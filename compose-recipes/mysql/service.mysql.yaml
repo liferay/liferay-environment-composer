@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   mysql:/container-data/mysql
     database:
         build: ./compose-recipes/mysql
         container_name: ${NAMESPACE}-database-mysql
@@ -18,14 +21,7 @@ services:
                 soft: 20000
             nproc: 65535
         volumes:
-            -   read_only: true
-                source: data-volume
-                target: /docker-entrypoint-initdb.d
-                type: volume
-                volume:
-                    subpath: dumps
-            -   source: data-volume
-                target: /var/lib/mysql
-                type: volume
-                volume:
-                    subpath: container-data/database
+            -   dumps:/docker-entrypoint-initdb.d
+            -   mysql:/var/lib/mysql
+volumes:
+    mysql:

@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   elasticsearch:/container-data/elasticsearch
     elasticsearch:
         build: ./compose-recipes/elasticsearch
         container_name: ${NAMESPACE}-elasticsearch
@@ -23,8 +26,6 @@ services:
             -   9200:9200
             -   9300:9300
         volumes:
-            -   source: data-volume
-                target: /usr/share/elasticsearch/data/
-                type: volume
-                volume:
-                    subpath: container-data/elasticsearch
+            -   elasticsearch:/usr/share/elasticsearch/data/
+volumes:
+    elasticsearch:

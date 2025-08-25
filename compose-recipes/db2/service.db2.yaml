@@ -1,4 +1,7 @@
 services:
+    data-helper:
+        volumes:
+            -   db2:/container-data/db2
     database:
         build: ./compose-recipes/db2
         container_name: ${NAMESPACE}-database-db2
@@ -17,14 +20,7 @@ services:
             -   "50000:50000"
         privileged: true
         volumes:
-            -   read_only: true
-                source: data-volume
-                target: /database/data/db2admin/backups
-                type: volume
-                volume:
-                    subpath: dumps
-            -   source: data-volume
-                target: /database/data/db2admin/NODE0000
-                type: volume
-                volume:
-                    subpath: container-data/database
+            -   dumps:/database/data/db2admin/backups
+            -   db2:/database/data/db2admin/NODE0000
+volumes:
+    db2:

@@ -1,6 +1,9 @@
 services:
     database:
-        build: ./compose-recipes/sqlserver
+        build:
+            args:
+                -   DATA_DIRECTORY=${DATA_DIRECTORY}
+            context: ./compose-recipes/sqlserver
         container_name: ${NAMESPACE}-database-sqlserver
         deploy:
             resources:
@@ -27,8 +30,8 @@ services:
                 type: volume
                 volume:
                     subpath: dumps
-            -   source: data-volume
-                target: /var/opt/mssql/data
-                type: volume
-                volume:
-                    subpath: container-data/database
+            # -   source: data-volume
+            #     target: /var/opt/mssql/data
+            #     type: volume
+            #     volume:
+            #         subpath: container-data/database

@@ -160,7 +160,7 @@ ext {
 		}
 
 		if (defaultCompanyVirtualHost == null) {
-			throw new GradleException("Unable to auto-detect company.default.web.id, please set it in configs/common/portal-ext.properties")
+			throw new GradleException("Unable to auto-detect company.default.web.id from ${companyVirtualHosts}, please set it in configs/common/portal-ext.properties")
 		}
 
 		config.defaultCompanyVirtualHost = defaultCompanyVirtualHost

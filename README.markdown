@@ -249,6 +249,14 @@ The database port can be configured by the `DATABASE_PORTS` environment variable
 DATABASE_PORTS=54321-54330
 ```
 
+#### Reset user passwords
+
+Set the `lr.docker.environment.liferay.user.password` property to the password you wish to type when signing in using existing users in imported databases.
+
+```properties
+lr.docker.environment.liferay.user.password=test
+```
+
 ### Elasticsearch Features
 
 #### Enable standalone Elasticsearch

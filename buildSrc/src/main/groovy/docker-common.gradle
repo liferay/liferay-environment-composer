@@ -160,6 +160,14 @@ ext {
 		}
 
 		if (defaultCompanyVirtualHost == null) {
+			defaultCompanyVirtualHost = companyVirtualHosts.find {
+				Map<String, String> companyVirtualHost ->
+
+				companyVirtualHost["webId"].startsWith("admin-") && companyVirtualHost["webId"].endsWith(".lxc.liferay.com")
+			}
+		}
+
+		if (defaultCompanyVirtualHost == null) {
 			throw new GradleException("Unable to auto-detect company.default.web.id from ${companyVirtualHosts}, please set it in configs/common/portal-ext.properties")
 		}
 

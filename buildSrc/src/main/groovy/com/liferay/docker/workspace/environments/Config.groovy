@@ -50,6 +50,18 @@ class Config {
 			this.lxcBackupPassword = lxcBackupPasswordProperty
 		}
 
+		String lxcEnvironmentNameProperty = project.findProperty("lr.docker.environment.lxc.environment.name")
+
+		if (lxcEnvironmentNameProperty != null) {
+			this.lxcEnvironmentName = lxcEnvironmentNameProperty
+		}
+
+		String lxcRepositoryPathProperty = project.findProperty("lr.docker.environment.lxc.repository.path")
+
+		if (lxcRepositoryPathProperty != null) {
+			this.lxcRepositoryPath = lxcRepositoryPathProperty
+		}
+
 		String liferayUserPasswordProperty = project.findProperty("lr.docker.environment.liferay.user.password")
 
 		if (liferayUserPasswordProperty != null) {
@@ -261,6 +273,8 @@ class Config {
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null
+	public String lxcEnvironmentName = null
+	public String lxcRepositoryPath = null
 	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()

@@ -1,5 +1,131 @@
 import com.liferay.docker.workspace.environments.Util
 
+ext {
+	SSO_CONFIGS = [".ldap.", ".multi.factor.authentication.", ".saml.", ".openid."]
+	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
+
+	clearSingleSignOnConfigurations = {
+		String schema ->
+
+		SSO_CONFIGS.each {
+			executeSQLQuery("delete from Configuration_ where configurationId like '%${it}%'", schema)
+		}
+
+		truncateTables('OpenId%', schema)
+		truncateTables('Saml%', schema)
+
+		println "Deleted known problematic single sign on entries from schema ${schema}"
+	}
+
+	deleteMeantForProductionOnlyConfigurations = {
+		String schema ->
+
+		PROD_ONLY_CONFIGS.each {
+			executeSQLQuery("delete from Configuration_ where configurationId like '%${it}%'", schema)
+		}
+
+		Map<String, String> sanitizedPreferences = [
+			"liferayAnalyticsEndpointURL": "fake://fakeAEU",
+			"liferayAnalyticsFaroBackendURL": "fake://fakeFBU",
+			"liferayAnalyticsURL": "fake://fakeAU",
+		]
+
+		sanitizePortalPreferenceValues(schema, sanitizedPreferences)
+
+		println "Deleted known Analytics Cloud, Captcha, CSP, Elasticsearch, Kubernetes entries from schema ${schema}"
+	}
+
+	disableUserObjectValidations = {
+		String schema ->
+
+		executeSQLQuery("update ObjectValidationRule set active_ = false where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
+
+		println "Disabled object validation users for User system object in schema ${schema}"
+	}
+
+	reactivateDisabledUsers = {
+		String schema ->
+
+		executeSQLQuery("update User_ set status = 0", schema)
+
+		executeSQLQuery("update User_ set emailAddress = 'liferaydevsecops@liferay.com', screenName='liferaydevsecops', firstName='Liferay', lastName='DevSecOps' where emailAddress = 'test@lxc.app' and screenName = 'test'", schema)
+
+		println "Re-activated all users in schema ${schema}"
+	}
+
+	replaceUserPasswords = {
+		String schema ->
+
+		executeSQLQuery("update User_ set password_ = '${config.liferayUserPassword}', passwordEncrypted = false, passwordReset = false, lockout = false", schema)
+
+		println "Reset all user passwords to '${config.liferayUserPassword}' in schema ${schema}"
+	}
+
+	sanitizeMailConfigurations = {
+		String schema ->
+
+		Map<String, String> sanitizedPreferences = [
+			"mail.session.mail.pop3.host": "fake-pop3-host",
+			"mail.session.mail.smtp.host": "fake-smtp-host",
+			"mail.session.mail.pop3.user": "fake-pop3-user",
+			"mail.session.mail.smtp.user": "fake-stmp-host",
+			"mail.session.mail.pop3.password": "fake-pop3-password",
+			"mail.session.mail.smtp.password": "fake-smtp-password",
+			"mail.session.mail": "false",
+			"pop.server.notifications.enabled": "false"
+		]
+
+		sanitizePortalPreferenceValues(schema, sanitizedPreferences)
+
+		executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = false", schema)
+
+		println "Sanitized known POP and SMTP configurations in schema ${schema}"
+	}
+
+	sanitizePortalPreferenceValues = {
+		schema, Map<String, String> sanitizedValues ->
+
+		sanitizedValues.each {
+			Map.Entry<String, String> entry ->
+
+			executeSQLQuery("update PortalPreferenceValue set smallValue = '${entry.value}' where key_ = '${entry.key}'", schema)
+		}
+	}
+
+	truncateTables = {
+		String tableNamePattern, String schema ->
+
+		List<Map<String, String>> tableNames = executeSQLQuery("select TABLE_NAME from information_schema.TABLES WHERE TABLE_SCHEMA = '${schema}' and TABLE_NAME like '${tableNamePattern}' OR TABLE_NAME like '${tableNamePattern.toLowerCase()}'", schema)
+
+		tableNames.each {
+			Map<String, String> resultRow ->
+
+			executeSQLQuery("truncate table ${resultRow.get("TABLE_NAME")}", schema)
+		}
+	}
+
+	updateDatabaseForLocalDevelopment = {
+		forEachCompanyId {
+			String companyId, String hostname, String webId, String schema ->
+
+			replaceUserPasswords(schema)
+			clearSingleSignOnConfigurations(schema)
+			reactivateDisabledUsers(schema)
+			disableUserObjectValidations(schema)
+			sanitizeMailConfigurations(schema)
+			deleteMeantForProductionOnlyConfigurations(schema)
+		}
+
+		updateVirtualHosts()
+	}
+
+	updateVirtualHosts = {
+		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
+
+		println "Added .localhost to the end of all virtual host names that were not localhost"
+	}
+}
+
 tasks.register("decryptCloudBackupDatabase") {
 	onlyIf("using an external database") {
 		config.useDatabase
@@ -157,8 +283,6 @@ tasks.register("copyDatabaseDumpsToDumpsVolume") {
 
 			globalVariableScript.delete()
 		}
-
-		updateDatabaseForLocalDevelopment()
 	}
 }
 
@@ -194,6 +318,10 @@ tasks.register("importDatabaseDumps") {
 
 			executeSQLQuery(query)
 		}
+
+		println "Attempting to update database for local development"
+
+		updateDatabaseForLocalDevelopment()
 	}
 }
 

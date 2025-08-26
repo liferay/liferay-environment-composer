@@ -50,6 +50,12 @@ class Config {
 			this.lxcBackupPassword = lxcBackupPasswordProperty
 		}
 
+		String liferayUserPasswordProperty = project.findProperty("lr.docker.environment.liferay.user.password")
+
+		if (liferayUserPasswordProperty != null) {
+			this.liferayUserPassword = liferayUserPasswordProperty
+		}
+
 		String dataDirectoryProperty = project.findProperty("lr.docker.environment.data.directory")
 
 		if (dataDirectoryProperty != null && dataDirectory.length() > 0) {
@@ -253,6 +259,7 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false
 	public String liferayDockerImageId = ""
+	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null
 	public String namespace = null
 	public String product = null

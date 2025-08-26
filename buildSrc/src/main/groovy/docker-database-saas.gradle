@@ -1,5 +1,13 @@
 import com.liferay.docker.workspace.environments.Util
 
+import groovy.json.JsonSlurper
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 ext {
 	SSO_CONFIGS = [".ldap.", ".multi.factor.authentication.", ".saml.", ".openid."]
 	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
@@ -15,6 +23,125 @@ ext {
 		truncateTables('Saml%', schema)
 
 		println "Deleted known problematic single sign on entries from schema ${schema}"
+	}
+
+	copyLiferayLXCRepositoryConfiguration = {
+		File configFolder, String sourceName, String targetName ->
+
+		File sourceFile = new File(configFolder, sourceName)
+
+		if (!sourceFile.exists()) {
+			return false
+		}
+
+		File targetFile = file("configs/${targetName}")
+
+		if (sourceFile.isDirectory()) {
+			for (String fileName : sourceFile.list()) {
+				copyLiferayLXCRepositoryConfiguration(sourceFile, fileName, "${targetName}/${fileName}".toString())
+			}
+		}
+		else {
+			targetFile.parentFile.mkdirs()
+
+			Files.copy(sourceFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+		}
+
+		return true
+	}
+
+	copyLiferayLXCRepositoryConfigurations = {
+		println ""
+
+		if (config.defaultCompanyVirtualHost == null) {
+			println "Unable to copy configurations from LXC repository, because the company default virtual host is unknown"
+
+			return
+		}
+
+		String expectedWebId = config.defaultCompanyVirtualHost["webId"]
+		String expectedHostName = config.defaultCompanyVirtualHost["hostname"]
+
+		if (expectedHostName.endsWith(".localhost")) {
+			expectedHostName = expectedHostName.substring(0, expectedHostName.length() - ".localhost".length())
+		}
+
+		File environmentFolder = null
+
+		if (config.lxcEnvironmentName == null) {
+			environmentFolder = fileTree("${config.lxcRepositoryPath}/liferay/configs") {
+				"**/portal-env.properties"
+			}.filter {
+				File envPropertiesFile ->
+
+				(expectedWebId.equals("liferay.com") || envPropertiesFile.text.contains("company.default.web.id=${expectedWebId}")) &&
+				envPropertiesFile.text.contains("company.default.virtual.host.name=${expectedHostName}")
+			}.collect {
+				File envPropertiesFile ->
+
+				envPropertiesFile.parentFile
+			}.last()
+
+			if (environmentFolder != null) {
+				config.lxcEnvironmentName = environmentFolder.name
+			}
+		}
+		else {
+			environmentFolder = new File(config.lxcRepositoryPath, "liferay/configs/${config.lxcEnvironmentName}")
+		}
+
+		if (config.lxcEnvironmentName == null) {
+			println "Unable to copy configurations from ${config.lxcRepositoryPath}, because there is no metadata for LXC environment company.default.web.id=${expectedWebId}, company.default.virtual.host.name=${expectedHostName}"
+
+			return
+		}
+
+		String environment = config.lxcEnvironmentName
+
+		if (!environmentFolder.exists()) {
+			println "Unable to copy configurations from ${config.lxcRepositoryPath}, because ${environmentFolder.absolutePath} does not exist"
+
+			return
+		}
+
+		if (!config.databasePartitioningEnabled) {
+			config.databasePartitioningEnabled = true
+
+			updateGradleLocalProperties(["lr.docker.environment.database.partitioning.enabled": "true"])
+		}
+
+		List<String> includeAndOverrideFileNames = ["portal-liferay-online-database-partition.properties"]
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "portal-env.properties", "configs/common/properties/lxc-portal-env-${environment}.properties")) {
+			includeAndOverrideFileNames.add("./properties/lxc-portal-env-${environment}.properties")
+
+			println "Copied ${environment}/portal-env.properties from ${config.lxcRepositoryPath}"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "scripts", "docker")) {
+			println "Copied ${environment}/scripts from ${config.lxcRepositoryPath}"
+		}
+
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "osgi", "common/osgi")) {
+			println "Copied ${environment}/osgi from ${config.lxcRepositoryPath}"
+		}
+
+		file("configs/common/properties/lxc-customer.properties").withOutputStream {
+			BufferedOutputStream outputStream ->
+
+			includeAndOverrideFileNames.each {
+				String includeAndOverrideFileName ->
+
+				outputStream << "include-and-override=" << includeAndOverrideFileName << "\n"
+			}
+		}
+
+		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion()
+
+		if (latestReleaseInfoDate != null) {
+			println ""
+			println "Updated gradle-local.properties to environment dated ${latestReleaseInfoDate}"
+		}
 	}
 
 	deleteMeantForProductionOnlyConfigurations = {
@@ -41,6 +168,45 @@ ext {
 		executeSQLQuery("update ObjectValidationRule set active_ = false where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
 
 		println "Disabled object validation users for User system object in schema ${schema}"
+	}
+
+	getReleaseInfo = {
+		String descriptorText ->
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		Object environmentDescriptor = jsonSlurper.parseText(descriptorText)
+
+		String liferayImage = environmentDescriptor["liferay-image"]
+		String hotfixId = environmentDescriptor["hotfix"]
+
+		Pattern releasePattern = ~'[0-9]+\\.q[1-4]\\.[0-9]+'
+
+		Matcher releaseMatcher = releasePattern.matcher(liferayImage)
+
+		if (!releaseMatcher.find()) {
+			println "did not match ${liferayImage}"
+			return null
+		}
+
+		String release = releaseMatcher.group()
+
+		if ((release.indexOf(".q1") != -1) && !release.startsWith("2024.")) {
+			release = release + "-lts"
+		}
+
+		String workspaceProduct = "dxp-${release}"
+
+		Map<String, String> releaseInfo = [
+			"liferay.workspace.product": workspaceProduct,
+			"liferay.workspace.docker.image.liferay": liferayImage,
+		]
+
+		if (hotfixId != null && !hotfixId.isEmpty()) {
+			releaseInfo["lr.docker.environment.hotfix.urls"] = "https://releases-cdn.liferay.com/dxp/hotfix/${release}/liferay-dxp-${release}-${hotfixId}.zip"
+		}
+
+		return releaseInfo
 	}
 
 	reactivateDisabledUsers = {
@@ -117,6 +283,74 @@ ext {
 		}
 
 		updateVirtualHosts()
+		copyLiferayLXCRepositoryConfigurations()
+	}
+
+	updateGradlePropertiesWithLiferayVersion = {
+		String environment = config.lxcEnvironmentName
+
+		File lxcRepositoryFolder = file(config.lxcRepositoryPath)
+		String descriptorPath = "automation/environment-descriptors/${environment}.json"
+
+		File environmentDescriptorFile = new File(lxcRepositoryFolder, descriptorPath)
+
+		if (!environmentDescriptorFile.exists()) {
+			return null
+		}
+
+		Map<String, String> latestReleaseInfo = null
+		String latestReleaseInfoDate = null
+
+		waitForCommand("git log -5 --pretty='%H %cd' --date=format-local:'%Y-%m-%d %H:%M:%S %Z' -- ${descriptorPath}", lxcRepositoryFolder).eachLine {
+			String line ->
+
+			int pos = line.indexOf(" ")
+
+			String commit = line.substring(0, pos)
+			String releaseInfoDate = line.substring(pos + 1)
+
+			println ""
+			println releaseInfoDate
+
+			Map<String, String> releaseInfo = getReleaseInfo(waitForCommand("git show ${commit}:${descriptorPath}", lxcRepositoryFolder)).each {
+				Map.Entry<String, String> entry ->
+
+				println entry
+			}
+
+			if (latestReleaseInfo == null) {
+				latestReleaseInfo = releaseInfo
+				latestReleaseInfoDate = releaseInfoDate
+			}
+		}
+
+		if (latestReleaseInfo != null) {
+			latestReleaseInfo.put("lr.docker.environment.lxc.environment.name", environment)
+
+			String product = latestReleaseInfo["liferay.workspace.product"]
+
+			if (product != null && !product.equals(config.product)) {
+				config.product = product
+				project.gradle.liferayWorkspace.product = product
+			}
+
+			String dockerImageLiferay = latestReleaseInfo["liferay.workspace.docker.image.liferay"]
+
+			if (dockerImageLiferay != null && !dockerImageLiferay.equals(config.dockerImageLiferay)) {
+				config.dockerImageLiferay = dockerImageLiferay
+				project.gradle.liferayWorkspace.dockerImageLiferay = dockerImageLiferay
+			}
+
+			String hotfixURL = latestReleaseInfo["lr.docker.environment.hotfix.urls"]
+
+			if (hotfixURL != null && !config.hotfixURLs.contains(hotfixURL)) {
+				config.hotfixURLs.add(hotfixURL)
+			}
+
+			updateGradleLocalProperties(latestReleaseInfo)
+		}
+
+		return latestReleaseInfoDate
 	}
 
 	updateVirtualHosts = {

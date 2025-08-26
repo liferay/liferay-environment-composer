@@ -139,6 +139,12 @@ composeUp {
 	finalizedBy ":printBundleInfo"
 }
 
+createDockerfile {
+	instruction "USER root"
+	instruction "RUN apt-get update && apt-get install -y --no-install-recommends mysql-client postgresql-client"
+	instruction "USER liferay"
+}
+
 Map<String, String> environmentMap = [:]
 
 environmentMap.put "DATA_DIRECTORY", config.dataDirectory

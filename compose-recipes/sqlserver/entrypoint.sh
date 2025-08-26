@@ -22,19 +22,29 @@ _is_database_present() {
 create_database() {
 	local database_name=${1}
 
-	if [[ ! $(_is_database_present ${database_name}) ]]; then
-		echo "Could not find database ${database_name}; creating database..."
-
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
-
-		${_sqlcmd} -i /init/init.sql
-
-		return
-	else
+	if [[ $(_is_database_present ${database_name}) ]]; then
 		echo "Database ${database_name} is present; skipping database creation"
 
 		return
 	fi
+
+	if [[ $(_has_database_files ${database_name}) ]]; then
+		echo "Database files found; reattaching database ${database_name}..."
+
+		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
+
+		${_sqlcmd} -i /init/reinit.sql
+
+		return
+	fi
+
+	echo "Could not find database ${database_name}; creating database..."
+
+	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
+
+	${_sqlcmd} -i /init/init.sql
+
+	return
 }
 
 main() {

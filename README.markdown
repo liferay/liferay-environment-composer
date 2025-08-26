@@ -234,6 +234,15 @@ For SaaS database backups, you will often be provided with a password-protected 
 ./dumps/dumpfile.zip  # database dump file provided by SRE team (SaaS), usually password-protected
 ```
 
+When importing SaaS database backups, make sure to set properties to allow the tool to find information related to the SaaS environment.
+
+```
+lr.docker.environment.lxc.environment.name=abc1prd
+lr.docker.environment.lxc.repository.path=/home/me/dev/projects/liferay-lxc
+```
+
+For example, if the projectId is `lxcabc1-abc1prd`, the environment name name is `abc1prd`. The tool will use this information to automatically copy configurations from the `liferay/liferay-lxc` repository, the same way Spinner does.
+
 #### Enable database partitioning (MySQL and PostgreSQL only)
 
 Set the `lr.docker.environment.database.partitioning.enabled` property to `true` or `1` in `gradle.properties`.

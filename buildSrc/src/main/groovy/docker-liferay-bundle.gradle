@@ -302,13 +302,10 @@ tasks.register("listAdminUsers") {
 		else {
 			println "Detected the following users explicitly granted the Administrator role"
 
-			String emailAddressKey = toTableName("emailAddress")
-			String screenNameKey = toTableName("screenName")
-
 			results.each {
 				Map<String, String> resultRow ->
 
-				println " - ${resultRow[screenNameKey]} (${resultRow[emailAddressKey]})"
+				println " - ${resultRow["screenName"]} (${resultRow["emailAddress"]})"
 			}
 		}
 	}

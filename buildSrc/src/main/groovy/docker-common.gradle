@@ -37,17 +37,7 @@ ext {
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
 
-			String[] columnHeaders = results[0].split("\t")
-
-			return results.subList(1, results.size()).collect {
-				String resultRow ->
-
-				[columnHeaders, resultRow.split("\t")].transpose().collectEntries {
-					String[] keyValuePair ->
-
-					[keyValuePair[0], keyValuePair[1]]
-				}
-			}
+			return toResultRows(results, /\t/)
 		}
 
 		if (config.useDatabasePostgreSQL) {
@@ -57,39 +47,16 @@ ext {
 
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --quiet --csv --command=\"${sql}\"").split("\n")
 
-			String[] columnHeaders = results[0].split(",")
-
-			return results.subList(1, results.size()).collect {
-				String resultRow ->
-
-				Map<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
-
-				result.putAll([columnHeaders, resultRow.split(",")].transpose().collectEntries {
-					String[] keyValuePair ->
-
-					[keyValuePair[0], keyValuePair[1]]
-				})
-
-				return result
-			}
+			return toResultRows(results, /,/)
 		}
 
 		if (config.useDatabaseDB2) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
 
 			results.removeLast()
+			results.remove(1)
 
-			String[] columnHeaders = results[0].trim().split(/[ ]+/)
-
-			String[] values = results[results.size()-1].trim().split(/[ ]+/)
-
-			Map<String, String> result = [columnHeaders, values].transpose().collectEntries {
-				String[] keyValuePair ->
-
-				[keyValuePair[0], keyValuePair[1]]
-			}
-
-			return [result]
+			return toResultRows(results, /\s+/)
 		}
 
 		throw new GradleException("Unrecognized database type")
@@ -112,17 +79,13 @@ ext {
 			Map<String, String> companyVirtualHost ->
 
 			try {
-				String companyIdKey = toTableName("companyId")
-				String hostnameKey = toTableName("hostname")
-				String webIdKey = toTableName("webId")
-
 				String schema = config.databaseName
 
-				if (config.databasePartitioningEnabled && (companyVirtualHost[webIdKey] != defaultWebId)) {
-					schema = "lpartition_${companyVirtualHost[companyIdKey]}"
+				if (config.databasePartitioningEnabled && (companyVirtualHost["webId"] != defaultWebId)) {
+					schema = "lpartition_${companyVirtualHost["companyId"]}"
 				}
 
-				action(companyVirtualHost[companyIdKey], companyVirtualHost[hostnameKey], companyVirtualHost[webIdKey], schema)
+				action(companyVirtualHost["companyId"], companyVirtualHost["hostname"], companyVirtualHost["webId"], schema)
 			}
 			catch (Exception e) {
 				e.printStackTrace()
@@ -186,15 +149,13 @@ ext {
 			propertyWebId = "liferay.com"
 		}
 
-		String webIdKey = toTableName("webId")
-
 		Map<String, String> defaultCompanyVirtualHost = (companyVirtualHosts.size() == 1) ? companyVirtualHosts[0] : null
 
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
 				Map<String, String> companyVirtualHost ->
 
-				companyVirtualHost[webIdKey] == propertyWebId
+				companyVirtualHost["webId"] == propertyWebId
 			}
 		}
 
@@ -204,7 +165,7 @@ ext {
 
 		config.defaultCompanyVirtualHost = defaultCompanyVirtualHost
 
-		return config.defaultCompanyVirtualHost[webIdKey]
+		return config.defaultCompanyVirtualHost["webId"]
 	}
 
 	getExistingVolumeNames = {
@@ -273,14 +234,30 @@ ext {
 		}
 	}
 
-	toTableName = {
-		String key ->
+	toResultRows = {
+		List<String> results, String lineSplitPattern ->
 
-		if (config.useDatabaseDB2) {
-			return key.toUpperCase()
+		results = new ArrayList<String>(results)
+
+		String[] columnHeaders = results.pop().split(lineSplitPattern)
+
+		return results.collect {
+			String result ->
+
+			result.trim().split(lineSplitPattern)
+		}.collect {
+			String[] row ->
+
+			return [columnHeaders, row].transpose().collectEntries()
+		}.collect {
+			Map<String, String> resultRow ->
+
+			Map<String, String> caseInsensitiveResultRow = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
+
+			caseInsensitiveResultRow.putAll(resultRow)
+
+			return caseInsensitiveResultRow
 		}
-
-		return key
 	}
 
 	updateGradleLocalProperties = {

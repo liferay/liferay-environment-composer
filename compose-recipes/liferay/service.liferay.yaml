@@ -23,18 +23,10 @@ services:
             -   "11311:11311"
             -   "8000:8000"
         volumes:
-            -   source: ./binds/liferay/deploy
-                target: /mnt/liferay/deploy
-                type: bind
-            -   source: ./binds/liferay/logs/
-                target: /opt/liferay/logs
-                type: bind
-            -   source: ./binds/liferay/reports/
-                target: /opt/liferay/reports
-                type: bind
-            -   source: ./binds/liferay/routes
-                target: /opt/liferay/routes
-                type: bind
+            -   ./binds/liferay/deploy:/mnt/liferay/deploy
+            -   ./binds/liferay/logs:/opt/liferay/logs
+            -   ./binds/liferay/reports:/opt/liferay/reports
+            -   ./binds/liferay/routes:/opt/liferay/routes
             -   liferay:/opt/liferay/data
 volumes:
     liferay:

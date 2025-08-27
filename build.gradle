@@ -67,8 +67,10 @@ tasks.register("shareWorkspace", Zip) {
 	exclude "binds"
 	exclude "shared_workspaces"
 	exclude {
-		it.relativePath.pathString.startsWith("exported_data/") &&
-		!it.relativePath.pathString.startsWith(config.dataDirectory)
+		File file ->
+
+		file.relativePath.pathString.startsWith("exported_data/") &&
+		!file.relativePath.pathString.startsWith(config.dataDirectory)
 	}
 
 	from '.'

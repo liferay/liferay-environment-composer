@@ -1,5 +1,7 @@
 package com.liferay.docker.workspace.environments
 
+import java.lang.reflect.Field
+
 import java.util.regex.Pattern
 import java.util.regex.Matcher
 
@@ -76,11 +78,17 @@ class Config {
 		}
 
 		List services = project.properties.findAll {
-			it.key =~ /^lr.docker.environment.service.enabled\[\w+\]$/
+			Map.Entry<String, String> property ->
+
+			property.key =~ /^lr.docker.environment.service.enabled\[\w+\]$/
 		}.findAll {
-			it.value =~ /true|1/
+			Map.Entry<String, String> serviceProperty ->
+
+			serviceProperty.value =~ /true|1/
 		}.collect {
-			it.key.substring(it.key.indexOf("[") + 1, it.key.indexOf("]"))
+			Map.Entry<String, String> serviceProperty ->
+
+			serviceProperty.key.substring(serviceProperty.key.indexOf("[") + 1, serviceProperty.key.indexOf("]"))
 		}
 
 		if (!services.isEmpty()) {
@@ -188,9 +196,13 @@ class Config {
 
 			if (matchingFileTree.isEmpty()) {
 				List<String> possibleServices = dockerComposeFileTree.findAll{
-					it.name.startsWith("service.")
+					File composeFile ->
+
+					composeFile.name.startsWith("service.")
 				}.collect {
-					it.name.substring("service.".length(), it.name.indexOf(".yaml"))
+					File serviceComposeFile ->
+
+					serviceComposeFile.name.substring("service.".length(), serviceComposeFile.name.indexOf(".yaml"))
 				}
 
 				throw new GradleException(
@@ -199,7 +211,9 @@ class Config {
 
 			matchingFileTree.getFiles()
 		}.flatten().collect {
-			projectDir.relativePath(it)
+			File serviceComposeFile ->
+
+			projectDir.relativePath(serviceComposeFile)
 		}
 
 		this.composeFiles.addAll(serviceComposeFiles)
@@ -245,6 +259,6 @@ class Config {
 
 	@Override
 	public String toString() {
-		return "${this.class.declaredFields.findAll{ !it.synthetic && !it.name.toLowerCase().contains("password") }*.name.collect { "${it}: ${this[it]}" }.join("\n")}"
+		return "${this.class.declaredFields.findAll{ Field field -> !field.synthetic && !field.name.toLowerCase().contains("password") }*.name.collect { String fieldName -> "${fieldName}: ${this[fieldName]}" }.join("\n")}"
 	}
 }

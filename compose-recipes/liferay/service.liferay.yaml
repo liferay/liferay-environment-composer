@@ -32,6 +32,9 @@ services:
             -   source: ./binds/liferay/reports/
                 target: /opt/liferay/reports
                 type: bind
+            -   source: ./binds/liferay/routes
+                target: /opt/liferay/routes
+                type: bind
             -   liferay:/opt/liferay/data
 volumes:
     liferay:

@@ -21,8 +21,12 @@ ext {
 			String[] columnHeaders = results[0].split("\t")
 
 			return results.subList(1, results.size()).collect {
-				[columnHeaders, it.split("\t")].transpose().collectEntries {
-					[it[0], it[1]]
+				String resultRow ->
+
+				[columnHeaders, resultRow.split("\t")].transpose().collectEntries {
+					String[] keyValuePair ->
+
+					[keyValuePair[0], keyValuePair[1]]
 				}
 			}
 		}
@@ -37,11 +41,15 @@ ext {
 			String[] columnHeaders = results[0].split(",")
 
 			return results.subList(1, results.size()).collect {
+				String resultRow ->
+
 				Map<String, String> result = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER)
 
-				result.putAll([columnHeaders, it.split(",")].transpose().collectEntries {
-						[it[0], it[1]]
-					})
+				result.putAll([columnHeaders, resultRow.split(",")].transpose().collectEntries {
+					String[] keyValuePair ->
+
+					[keyValuePair[0], keyValuePair[1]]
+				})
 
 				return result
 			}
@@ -57,7 +65,9 @@ ext {
 			String[] values = results[results.size()-1].trim().split(/[ ]+/)
 
 			Map<String, String> result = [columnHeaders, values].transpose().collectEntries {
-				[it[0], it[1]]
+				String[] keyValuePair ->
+
+				[keyValuePair[0], keyValuePair[1]]
 			}
 
 			return [result]
@@ -80,6 +90,8 @@ ext {
 		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
 
 		companyVirtualHosts.each {
+			Map<String, String> companyVirtualHost ->
+
 			try {
 				String companyIdKey = toTableName("companyId")
 				String hostnameKey = toTableName("hostname")
@@ -87,11 +99,11 @@ ext {
 
 				String schema = config.databaseName
 
-				if (config.databasePartitioningEnabled && (it[webIdKey] != defaultWebId)) {
-					schema = "lpartition_${it[companyIdKey]}"
+				if (config.databasePartitioningEnabled && (companyVirtualHost[webIdKey] != defaultWebId)) {
+					schema = "lpartition_${companyVirtualHost[companyIdKey]}"
 				}
 
-				action(it[companyIdKey], it[hostnameKey], it[webIdKey], schema)
+				action(companyVirtualHost[companyIdKey], companyVirtualHost[hostnameKey], companyVirtualHost[webIdKey], schema)
 			}
 			catch (Exception e) {
 				e.printStackTrace()
@@ -153,7 +165,9 @@ ext {
 
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
-				it[webIdKey] == "liferay.com"
+				Map<String, String> companyVirtualHost ->
+
+				companyVirtualHost["webId"] == propertyWebId
 			}
 		}
 
@@ -186,14 +200,20 @@ ext {
 			gradleLocalPropertiesLines = gradleLocalPropertiesFile.readLines().collect {
 				String line ->
 
-				String newLine = newProperties.find {
-					if (line.startsWith("${it.key}=")) {
-						seenProperties.add(it.key)
-						return "${it.key}=${it.value}"
-					}
+				int pos = line.indexOf('=')
+
+				if (pos == -1) {
+					return line
 				}
 
-				return newLine != null ? newLine : line
+				String key = line.substring(0, pos)
+
+				if (newProperties.containsKey(key)) {
+					seenProperties.add(key)
+					return "${key}=${newProperties[key]}"
+				}
+
+				return line
 			}
 		}
 
@@ -201,12 +221,16 @@ ext {
 			BufferedOutputStream outputStream ->
 
 			gradleLocalPropertiesLines.each {
-				outputStream << it << "\n"
+				String line ->
+
+				outputStream << line << "\n"
 			}
 
 			newProperties.each {
-				if (!seenProperties.contains(it.key)) {
-					outputStream << it.key << "=" << it.value << "\n"
+				Map.Entry<String, String> entry ->
+
+				if (!seenProperties.contains(entry.key)) {
+					outputStream << entry.key << "=" << entry.value << "\n"
 				}
 			}
 		}
@@ -283,8 +307,10 @@ tasks.register("testFixProductVersion") {
 			["dxp-2025.q2.1", "dxp-2025.q2.1"],
 			["dxp-2025.q2.1-lts", "dxp-2025.q2.1"],
 		].each {
-			String input = it[0]
-			String expected = it[1]
+			String[] keyValuePair ->
+
+			String input = keyValuePair[0]
+			String expected = keyValuePair[1]
 
 			assert expected == Util.fixReleaseKey(input)
 		}

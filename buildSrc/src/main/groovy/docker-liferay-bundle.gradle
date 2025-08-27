@@ -51,11 +51,15 @@ Closure<String> getLatestImageName = {
 	}
 
 	String latestQuarterlyRelease = dxpImageNames.collect {
-		it.substring(0, it.indexOf(".q") + 3)
+		String dxpImageName ->
+
+		dxpImageName.substring(0, dxpImageName.indexOf(".q") + 3)
 	}.sort().last()
 
 	String latestQuarterlyReleaseTag = dxpImageNames.findAll {
-		it.startsWith(latestQuarterlyRelease)
+		String dxpImageName ->
+
+		dxpImageName.startsWith(latestQuarterlyRelease)
 	}.sort {
 		String a, String b ->
 
@@ -196,7 +200,9 @@ tasks.register("validateHotfixURLs") {
 		}
 
 		String mismatchedHotfixURL = config.hotfixURLs.find {
-			!it.contains("/${liferayVersion}/")
+			String hotfixURL ->
+
+			!hotfixURL.contains("/${liferayVersion}/")
 		}
 
 		if (mismatchedHotfixURL != null) {
@@ -216,7 +222,9 @@ tasks.register("deleteStaleHotfixes") {
 			hotfixNames = project.fileTree("configs") {
 				include "**/patching/liferay*hotfix*.zip"
 			}.collect {
-				it.name
+				File hotfixFile ->
+
+				hotfixFile.name
 			}.toSet()
 		}
 
@@ -224,10 +232,14 @@ tasks.register("deleteStaleHotfixes") {
 			include "build/docker/configs/**/patching/liferay*hotfix*.zip"
 			include "configs/**/patching/liferay*hotfix*.zip"
 		}.filter {
-			!hotfixNames.contains(it.name)
+			File hotfixFile ->
+
+			!hotfixNames.contains(hotfixFile.name)
 		}.each {
-			println "Deleting stale hotfix ${it.absolutePath}"
-			it.delete()
+			File hotfixFile ->
+
+			println "Deleting stale hotfix ${hotfixFile.absolutePath}"
+			hotfixFile.delete()
 		}
 	}
 }
@@ -294,7 +306,9 @@ tasks.register("listAdminUsers") {
 			String screenNameKey = toTableName("screenName")
 
 			results.each {
-				println " - ${it[screenNameKey]} (${it[emailAddressKey]})"
+				Map<String, String> resultRow ->
+
+				println " - ${resultRow[screenNameKey]} (${resultRow[emailAddressKey]})"
 			}
 		}
 	}
@@ -343,7 +357,9 @@ tasks.register("prepareYourKitAgent", Copy) {
 	dependsOn ":downloadYourKitAgentZip"
 
 	eachFile {
-		it.relativePath = RelativePath.parse(true, it.name)
+		File file ->
+
+		file.relativePath = RelativePath.parse(true, file.name)
 	}
 
 	from zipTree(downloadYourKitAgentZip.dest)

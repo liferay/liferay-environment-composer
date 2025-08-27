@@ -240,10 +240,12 @@ class Config {
 
 	public boolean clearVolumeData = false
 	public int clusterNodes = 0
+	public List<Map<String, String>> companyVirtualHosts = null
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dockerContainerDatabase = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false

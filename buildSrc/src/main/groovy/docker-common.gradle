@@ -104,9 +104,9 @@ ext {
 	forEachCompanyId = {
 		Closure<Void> action ->
 
-		List<Map<String, String>> companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		List<Map<String, String>> companyVirtualHosts = getCompanyVirtualHosts()
 
-		String defaultWebId = getDefaultVirtualHost(companyVirtualHosts)
+		String defaultWebId = getCompanyDefaultWebId(companyVirtualHosts)
 
 		companyVirtualHosts.each {
 			Map<String, String> companyVirtualHost ->
@@ -128,6 +128,16 @@ ext {
 				e.printStackTrace()
 			}
 		}
+	}
+
+	getCompanyVirtualHosts = {
+		if (!config.useDatabase || (config.companyVirtualHosts != null)) {
+			return config.companyVirtualHosts
+		}
+
+		config.companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+
+		return config.companyVirtualHosts
 	}
 
 	getDatabaseAccessCommand = {
@@ -163,30 +173,28 @@ ext {
 		}
 	}
 
-	getDefaultVirtualHost = {
+	getCompanyDefaultWebId = {
 		List<Map<String, String>> companyVirtualHosts ->
 
-		Map<String, String> defaultCompanyVirtualHost = null
+		if (!config.useDatabase || (config.defaultCompanyVirtualHost != null) || companyVirtualHosts.isEmpty()) {
+			return config.defaultCompanyVirtualHost != null ? config.defaultCompanyVirtualHost["webId"] : null
+		}
+
+		String propertyWebId = getPortalPropertyValue("company.default.web.id")
+
+		if (propertyWebId == null) {
+			propertyWebId = "liferay.com"
+		}
 
 		String webIdKey = toTableName("webId")
 
-		file("configs/common/portal-ext.properties").eachLine {
-			String line = it.trim()
-
-			if (line.startsWith("company.default.web.id=")) {
-				String webId = line.split("=")[1]
-
-				defaultCompanyVirtualHost = companyVirtualHosts.find {
-					it[webIdKey] == webId
-				}
-			}
-		}
+		Map<String, String> defaultCompanyVirtualHost = (companyVirtualHosts.size() == 1) ? companyVirtualHosts[0] : null
 
 		if (defaultCompanyVirtualHost == null) {
 			defaultCompanyVirtualHost = companyVirtualHosts.find {
 				Map<String, String> companyVirtualHost ->
 
-				companyVirtualHost["webId"] == propertyWebId
+				companyVirtualHost[webIdKey] == propertyWebId
 			}
 		}
 
@@ -194,13 +202,75 @@ ext {
 			throw new GradleException("Unable to auto-detect company.default.web.id, please set it in configs/common/portal-ext.properties")
 		}
 
-		return defaultCompanyVirtualHost[webIdKey]
+		config.defaultCompanyVirtualHost = defaultCompanyVirtualHost
+
+		return config.defaultCompanyVirtualHost[webIdKey]
 	}
 
 	getExistingVolumeNames = {
 		String volumeNameLines = waitForCommand("docker volume ls --filter 'name=${config.namespace}_' --format '{{ .Name }}'")
 
 		return volumeNameLines.isEmpty() ? [] : volumeNameLines.split("\n")
+	}
+
+	getPortalPropertyValue = {
+		String propertyKey, String propertiesFileName = null ->
+
+		String includeAndOverrideValue = null
+
+		if (propertiesFileName == null) {
+			includeAndOverrideValue = getPortalPropertyValue(propertyKey, "portal-setup-wizard.properties")
+
+			if (includeAndOverrideValue == null) {
+				includeAndOverrideValue = getPortalPropertyValue(propertyKey, "portal-ext.properties")
+			}
+
+			if (includeAndOverrideValue == null) {
+				includeAndOverrideValue = getPortalPropertyValue(propertyKey, "portal-bundle.properties")
+			}
+
+			return includeAndOverrideValue
+		}
+
+		File propertiesFile = file("configs/local/${propertiesFileName}")
+
+		if (!propertiesFile.exists()) {
+			propertiesFile = file("configs/common/${propertiesFileName}")
+		}
+
+		if (!propertiesFile.exists()) {
+			return null
+		}
+
+		propertiesFile.eachLine {
+			String line ->
+
+			line = line.trim()
+
+			if (line.startsWith("include-and-override=")) {
+				String includeAndOverrideFileName = line.split("=")[1]
+
+				String newIncludeAndOverrideValue = getPortalPropertyValue(propertyKey, includeAndOverrideFileName)
+
+				if (newIncludeAndOverrideValue != null) {
+					includeAndOverrideValue = newIncludeAndOverrideValue
+				}
+			}
+		}
+
+		if (includeAndOverrideValue != null) {
+			return includeAndOverrideValue
+		}
+
+		propertiesFile.withInputStream {
+			BufferedInputStream inputStream ->
+
+			Properties properties = new Properties()
+
+			properties.load(inputStream)
+
+			return properties.getProperty(propertyKey)
+		}
 	}
 
 	toTableName = {

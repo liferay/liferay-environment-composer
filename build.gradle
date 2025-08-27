@@ -49,6 +49,12 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/container-data"
 }
 
+tasks.register("prepareBindsDirectories", Exec) {
+	args config.composeFiles
+
+	executable project.file("scripts/prepare_binds_directories.sh")
+}
+
 tasks.register("shareWorkspace", Zip) {
 	archiveFileName = provider {
 		"workspace_${config.namespace}_${timestamp}.zip"
@@ -120,6 +126,7 @@ dockerDeploy {
 }
 
 composeBuild {
+	dependsOn ":prepareBindsDirectories"
 	dependsOn ":prepareSelfSignedCert"
 	dependsOn ":prepareWebserverConfig"
 }

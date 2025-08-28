@@ -7,7 +7,5 @@ services:
             context: .
             dockerfile: Dockerfile.helper
         container_name: ${NAMESPACE}-data-helper
-        volumes:
-            -   dumps:/dumps
 volumes:
     dumps:

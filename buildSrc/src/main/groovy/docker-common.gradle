@@ -6,6 +6,25 @@ import groovy.json.JsonSlurper
 ext {
 	config = new Config(project)
 
+	addToVolume = {
+		String volumeName, File sourceFile ->
+
+		String sourcePath = sourceFile.absolutePath
+
+		if (!sourceFile.exists()) {
+			throw new GradleException("Unable to find file ${sourcePath}")
+		}
+
+		String targetName = sourceFile.name
+
+		println "Copying file ${sourcePath} to ${volumeName}"
+		waitForCommand("docker run --rm -v ${volumeName}:/target -v ${sourcePath}:/source/${targetName} busybox:latest sh -c 'cp --recursive --update /source/. /target/'")
+
+		println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${targetName}")
+
+		println "Copied file ${sourcePath} to ${volumeName}"
+	}
+
 	executeSQLQuery = {
 		String sql, String schema = null ->
 
@@ -176,6 +195,12 @@ ext {
 		}
 
 		return defaultCompanyVirtualHost[webIdKey]
+	}
+
+	getExistingVolumeNames = {
+		String volumeNameLines = waitForCommand("docker volume ls --filter 'name=${config.namespace}_' --format '{{ .Name }}'")
+
+		return volumeNameLines.isEmpty() ? [] : volumeNameLines.split("\n")
 	}
 
 	toTableName = {

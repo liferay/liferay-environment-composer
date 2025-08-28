@@ -44,6 +44,12 @@ class Config {
 			this.databasePartitioningEnabled = databasePartitioningEnabledProperty.toBoolean()
 		}
 
+		String lxcBackupPasswordProperty = project.findProperty("lr.docker.environment.lxc.backup.password")
+
+		if (lxcBackupPasswordProperty != null) {
+			this.lxcBackupPassword = lxcBackupPasswordProperty
+		}
+
 		String dataDirectoryProperty = project.findProperty("lr.docker.environment.data.directory")
 
 		if (dataDirectoryProperty != null && dataDirectory.length() > 0) {
@@ -131,6 +137,7 @@ class Config {
 		if (this.services.contains("db2")) {
 			this.useDatabase = true
 			this.useDatabaseDB2 = true
+			this.dockerContainerDatabase = "${this.namespace}-database-db2"
 		}
 
 		if (this.services.contains("mariadb")) {
@@ -141,11 +148,13 @@ class Config {
 		if (this.services.contains("mysql")) {
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
+			this.dockerContainerDatabase = "${this.namespace}-database-mysql"
 		}
 
 		if (this.services.contains("postgres")) {
 			this.useDatabase = true
 			this.useDatabasePostgreSQL = true
+			this.dockerContainerDatabase = "${this.namespace}-database-postgres"
 		}
 
 		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
@@ -235,12 +244,14 @@ class Config {
 	public String databaseName = "lportal"
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
+	public String dockerContainerDatabase = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false
 	public String liferayDockerImageId = ""
+	public String lxcBackupPassword = null
 	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()

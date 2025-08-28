@@ -1,5 +1,7 @@
 import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
 
+import com.liferay.docker.workspace.environments.Util
+
 import groovy.json.JsonSlurper
 
 import java.time.format.DateTimeFormatter
@@ -7,6 +9,7 @@ import java.time.format.DateTimeFormatter
 plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
 	id "docker-common"
+	id "docker-database-saas"
 	id "docker-liferay-bundle"
 	id "docker-webserver"
 }
@@ -104,6 +107,8 @@ buildDockerImage {
 
 	dependsOn ":checkForLiferayLicense"
 	dependsOn ":prepareDB2JDBCDriver"
+
+	mustRunAfter ":importDatabaseDumps"
 }
 
 clean {
@@ -132,6 +137,7 @@ composeUp {
 	}
 
 	dependsOn ":buildDockerImage"
+	dependsOn ":importDatabaseDumps"
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"

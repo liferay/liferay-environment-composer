@@ -5,6 +5,3 @@ ARG DATA_DIRECTORY=data
 USER 1000
 
 COPY --chown=1000:1000 ${DATA_DIRECTORY} /container-data
-COPY --chown=1000:1000 dumps /dumps
-
-RUN mkdir -p /dumps

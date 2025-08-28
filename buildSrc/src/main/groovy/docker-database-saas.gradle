@@ -1,0 +1,200 @@
+import com.liferay.docker.workspace.environments.Util
+
+tasks.register("decryptCloudBackupDatabase") {
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doFirst {
+		FileCollection decryptedBackups = project.fileTree("dumps") {
+			include "**/*.sql"
+			include "**/*.sql.gz"
+			include "**/*.gz"
+		}
+
+		if (!Util.isEmpty(decryptedBackups)) {
+			print("Found existing unencrypted backups in dumps/ folder")
+
+			return
+		}
+
+		FileCollection encryptedBackups = project.fileTree("dumps") {
+			include "*.7z"
+			exclude "*doclib*"
+		}
+
+		if (Util.isEmpty(encryptedBackups)) {
+			encryptedBackups = project.fileTree("dumps") {
+				include "*.zip"
+				exclude "*doclib*"
+			}
+		}
+
+		if (encryptedBackups.isEmpty()) {
+			return
+		}
+		else if (encryptedBackups.size() != 1) {
+			throw new GradleException("Aborting because multiple potential backups where found in the dumps/ folder")
+		}
+
+		if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
+			println "Extracting LXC database backup (using password specified in gradle.properties)"
+
+			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p${config.lxcBackupPassword}")
+		}
+		else {
+			println "Extracting LXC database backup (assuming no password, because none was set in gradle.properties)"
+
+			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p")
+		}
+	}
+}
+
+tasks.register("copyDatabaseDumpsToDumpsVolume") {
+	dependsOn ":decryptCloudBackupDatabase"
+
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doFirst {
+		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+
+		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
+			return;
+		}
+
+		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		if (getExistingVolumeNames().contains(dumpsVolumeName)) {
+			waitForCommand("docker compose down database")
+			waitForCommand("docker volume rm ${dumpsVolumeName}")
+		}
+
+		waitForCommand("docker compose build database")
+		waitForCommand("docker compose create database")
+
+		fileTree("dumps") {
+			include "**/*.sql"
+			include "**/*.sql.gz"
+			include "**/*.gz"
+		}.forEach {
+			File dumpFile ->
+
+			println dumpFile
+
+			String oldPath = dumpFile.absolutePath
+			String newPath = null
+
+			if (dumpFile.name.endsWith(".gz") && !dumpFile.name.endsWith(".sql.gz")) {
+				newPath = "${oldPath.substring(0, oldPath.length() - 3)}.sql.gz"
+			}
+			else if (!dumpFile.name.contains(".")) {
+				newPath = "${dumpFile.absolutePath}.sql"
+			}
+
+			if (newPath != null) {
+				dumpFile.renameTo(newPath)
+				dumpFile = file(newPath)
+			}
+
+			addToVolume(dumpsVolumeName, dumpFile)
+		}
+
+		println "Loading database backup into database dumps volume"
+
+		File globalVariableScript = file("0.sql")
+
+		Map<String, String> oldVariables = [
+			"max_allowed_packet": String.valueOf(1L << 26),
+			"autocommit": "1",
+			"unique_checks": "1",
+			"foreign_key_checks": "1",
+			"innodb_stats_auto_recalc": "1",
+		]
+
+		if (config.useDatabaseMySQL) {
+			Map<String, String> newVariables = [
+				"max_allowed_packet": String.valueOf(1L << 30),
+				"autocommit": "0",
+				"unique_checks": "0",
+				"foreign_key_checks": "0",
+				"innodb_stats_auto_recalc": "0",
+			]
+
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << newVariables.collect {
+					Map.Entry<String, String> entry ->
+
+					"SET GLOBAL ${entry.key}=${entry.value};"
+				}.join("\n") << ";"
+
+				initSQLOutputStream << ["lportal", "dxpcloud", "cloudsqlimport"].collect {
+					String userName ->
+
+					"create user if not exists ${userName} identified by 'lportal';\ngrant all on *.* to '${userName}'@'%';\n"
+				}.join("\n")
+			}
+		}
+		else if (config.useDatabasePostgreSQL) {
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << "create role cloudsqlsuperuser with login superuser password 'lportal';"
+			}
+		}
+
+		if (globalVariableScript.exists()) {
+			addToVolume(dumpsVolumeName, globalVariableScript)
+
+			globalVariableScript.delete()
+		}
+
+		updateDatabaseForLocalDevelopment()
+	}
+}
+
+tasks.register("importDatabaseDumps") {
+	dependsOn ":copyDatabaseDumpsToDumpsVolume"
+
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doFirst {
+		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+
+		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
+			println "Skipping database dumps import because a data backup will be imported from ${config.dataDirectory}"
+
+			return;
+		}
+
+		println "Initializing database via first start scripts"
+
+		waitForContainer("database", config.dockerContainerDatabase)
+
+		if (config.useDatabaseMySQL) {
+			String query = oldVariables.collect {
+				Map.Entry<String, String> oldVariable ->
+
+				"SET GLOBAL ${oldVariable.key}=${oldVariable.value};\n"
+			}.join("")
+
+			executeSQLQuery(query)
+		}
+	}
+}
+
+project.plugins.apply "docker-common"

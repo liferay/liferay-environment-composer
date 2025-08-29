@@ -24,9 +24,6 @@ services:
             -   "8000:8000"
         volumes:
             -   ./binds/liferay/deploy:/mnt/liferay/deploy
-            -   ./binds/liferay/logs:/opt/liferay/logs
-            -   ./binds/liferay/reports:/opt/liferay/reports
-            -   ./binds/liferay/routes:/opt/liferay/routes
             -   liferay:/opt/liferay/data
 volumes:
     liferay:

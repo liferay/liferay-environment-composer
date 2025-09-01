@@ -23,6 +23,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Deploy a Document Library](#deploy-a-document-library)
 - [Deploy license files](#deploy-license-files)
 - [Enable clustering](#enable-clustering)
+- [Configure Liferay ports](#configure-liferay-ports)
 
 ### Database features overview
 
@@ -30,11 +31,13 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable PostgreSQL 16.3](#enable-postgresql-163)
 - [Import a database dump](#import-a-database-dump)
 - [Enable database partitioning (MySQL and PostgreSQL only)](#enable-database-partitioning-mysql-and-postgresql-only)
+- [Configure database port](#configure-database-port)
 - Supports Liferay clustering OOTB
 
 ### Elasticsearch features overview
 
 - [Enable standalone Elasticsearch](#enable-standalone-elasticsearch)
+- [Configure Elasticsearch ports](#configure-elasticsearch-ports)
 - Supports Liferay clustering OOTB
 
 ### Webserver features overview
@@ -42,6 +45,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable NGINX (HTTP)](#enable-nginx-http)
 - [Enable NGINX (HTTPS)](#enable-nginx-https)
 - [Use custom hostnames](#use-custom-hostnames)
+- [Configure webserver ports](#configure-webserver-ports)
 - Supports Liferay clustering OOTB
 
 ### Java Virtual Machine features overview
@@ -167,6 +171,20 @@ Clustering can be enabled by setting the `lr.docker.environment.cluster.nodes` p
 lr.docker.environment.cluster.nodes=2
 ```
 
+#### Configure Liferay ports
+
+You can configure the Liferay ports in the `ports.env` file. Each variable in this file defines a range from which the
+exact port numbers will be automatically chosen based on availability.
+
+`ports.env`:
+
+```dotenv
+LIFERAY_PORTS=8080-8089
+LIFERAY_GOGO_SHELL_PORTS=11311-11319
+LIFERAY_DEBUG_PORTS=8000-8009
+LIFERAY_YOURKIT_PORTS=10001-10010
+```
+
 ### Java Virtual Machine features overview
 
 #### Use custom JVM arguments to improve performance
@@ -213,6 +231,16 @@ Set the `lr.docker.environment.database.partitioning.enabled` property to `true`
 lr.docker.environment.database.partitioning.enabled=true
 ```
 
+#### Configure database port
+
+The database port can be configured by the `DATABASE_PORT` environment variable in the `ports.env` file.
+
+`ports.env`:
+
+```dotenv
+DATABASE_PORT=54321
+```
+
 ### Elasticsearch Features
 
 #### Enable standalone Elasticsearch
@@ -223,6 +251,18 @@ Set the `lr.docker.environment.service.enabled[elasticsearch]` property to `true
 
 ```properties
 lr.docker.environment.service.enabled[elasticsearch]=true
+```
+
+#### Configure Elasticsearch ports
+
+The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORT` and
+the `ELASTICSEARCH_TRANSPORT_PORT` respectively in the `ports.env` file.
+
+`ports.env`:
+
+```dotenv
+ELASTICSEARCH_HTTP_PORT=9200
+ELASTICSEARCH_TRANSPORT_PORT=9300
 ```
 
 ### Webserver Features
@@ -245,6 +285,18 @@ Set the `lr.docker.environment.service.enabled[webserver_https]` property to `tr
 
 ```properties
 lr.docker.environment.service.enabled[webserver_https]=true
+```
+
+#### Configure webserver ports
+
+The webserver HTTP and HTTPS ports can be configured by the `WEBSERVER_HTTP_PORT` and the `WEBSERVER_HTTPS_PORT`
+environment variables respectively in the `ports.env` file.
+
+`ports.env`:
+
+```dotenv
+WEBSERVER_HTTP_PORT=80
+WEBSERVER_HTTPS_PORT=443
 ```
 
 #### Use custom hostnames

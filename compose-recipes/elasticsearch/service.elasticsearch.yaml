@@ -23,8 +23,8 @@ services:
             timeout: 5s
         mem_limit: 4g
         ports:
-            -   9200:9200
-            -   9300:9300
+            -   "${ELASTICSEARCH_HTTP_PORT}:9200"
+            -   "${ELASTICSEARCH_TRANSPORT_PORT}:9300"
         volumes:
             -   elasticsearch:/usr/share/elasticsearch/data/
 volumes:

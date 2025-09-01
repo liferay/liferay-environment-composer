@@ -167,6 +167,19 @@ new File('.env').withOutputStream {
 	}
 }
 
+File portsEnvFile = file("ports.env")
+Map<String, String> portsMap = [:]
+
+if(portsEnvFile.exists()) {
+	portsEnvFile.withInputStream {
+		Properties ports = new Properties()
+		ports.load(it)
+		portsMap = ports as Map
+	}
+} else {
+	throw new GradleException("ports.env file does not exist")
+}
+
 dockerCompose {
 	// DEBUG: Set to true to print container startup output to the console
 	captureContainersOutput = true
@@ -175,6 +188,7 @@ dockerCompose {
 	// captureContainersOutputToFiles = project.file('containerLogs')
 
 	environment.putAll environmentMap
+	environment.putAll portsMap
 
 	projectName = config.namespace
 

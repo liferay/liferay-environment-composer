@@ -9,7 +9,7 @@ services:
             liferay:
                 condition: service_healthy
         ports:
-            -   "443:443"
+            -   "${WEBSERVER_HTTPS_PORT}:443"
         volumes:
             -   webserver-https:/etc/nginx/conf.d
 volumes:

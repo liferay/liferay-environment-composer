@@ -22,12 +22,12 @@
 .env
 .gradle
 .idea
-/binds
 /bundles
 /containerLogs
 /data/*
 /dumps/*
 /exported_data
+/exports
 /gradle-*.properties
 /helper/data
 /helper/dumps

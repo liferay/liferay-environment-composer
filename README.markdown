@@ -72,6 +72,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Restart environment](#restart-environment)
 - [Export container data](#export-container-data)
 - [Zip the workspace for sharing](#zip-the-workspace-for-sharing)
+- [Export the Liferay logs, reports, and routes directories](#export-the-liferay-logs,-reports,-and-routes-directories)
 - [Clean up prepared hotfixes](#clean-up-prepared-hotfixes)
 - [Clean up all prepared data and built Liferay Docker images](#clean-up-all-prepared-data-and-built-liferay-docker-images)
 
@@ -367,6 +368,14 @@ This will also stop the environment, so please see the previous note which descr
 ```
 ./gradlew shareWorkspace
 ```
+
+#### Export the Liferay logs, reports, and routes directories
+
+```
+./gradlew exportLiferayLogs
+```
+
+This will copy the logs, reports, and routes directories to the `./exports/liferay` directory on your machine (host machine).
 
 #### Clean up prepared hotfixes
 

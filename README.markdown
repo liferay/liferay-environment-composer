@@ -69,6 +69,9 @@ To shut down the environment, run `./gradlew stop`.
 
 - [Start up environment](#start-up-environment)
 - [Shut down environment](#shut-down-environment)
+- [Restart environment](#restart-environment)
+- [Export container data](#export-container-data)
+- [Zip the workspace for sharing](#zip-the-workspace-for-sharing)
 - [Clean up prepared hotfixes](#clean-up-prepared-hotfixes)
 - [Clean up all prepared data and built Liferay Docker images](#clean-up-all-prepared-data-and-built-liferay-docker-images)
 

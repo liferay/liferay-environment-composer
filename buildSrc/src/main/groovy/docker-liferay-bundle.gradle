@@ -304,6 +304,14 @@ tasks.register("listAdminUsers") {
 	}
 }
 
+tasks.register("exportLiferayLogs", Exec) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+
+	executable project.file("scripts/export_liferay_logs.sh")
+}
+
 tasks.register("printBundleInfo", Exec) {
 	onlyIf("using the Liferay service") {
 		config.useLiferay

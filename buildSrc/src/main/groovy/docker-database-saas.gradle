@@ -471,14 +471,6 @@ tasks.register("copyDatabaseDumpsToDumpsVolume") {
 
 		File globalVariableScript = file("0.sql")
 
-		Map<String, String> oldVariables = [
-			"max_allowed_packet": String.valueOf(1L << 26),
-			"autocommit": "1",
-			"unique_checks": "1",
-			"foreign_key_checks": "1",
-			"innodb_stats_auto_recalc": "1",
-		]
-
 		if (config.useDatabaseMySQL) {
 			Map<String, String> newVariables = [
 				"max_allowed_packet": String.valueOf(1L << 30),
@@ -544,6 +536,14 @@ tasks.register("importDatabaseDumps") {
 		waitForContainer("database", config.dockerContainerDatabase)
 
 		if (config.useDatabaseMySQL) {
+			Map<String, String> oldVariables = [
+				"max_allowed_packet": String.valueOf(1L << 26),
+				"autocommit": "1",
+				"unique_checks": "1",
+				"foreign_key_checks": "1",
+				"innodb_stats_auto_recalc": "1",
+			]
+
 			String query = oldVariables.collect {
 				Map.Entry<String, String> oldVariable ->
 

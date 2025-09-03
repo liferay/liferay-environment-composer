@@ -53,6 +53,12 @@ ext {
 	copyLiferayLXCRepositoryConfigurations = {
 		println ""
 
+		if (config.lxcRepositoryPath == null) {
+			println "Unable to copy configurations from LXC repository, because no LXC repository has been set in gradle.properties"
+
+			return
+		}
+
 		if (config.defaultCompanyVirtualHost == null) {
 			println "Unable to copy configurations from LXC repository, because the company default virtual host is unknown"
 
@@ -69,7 +75,7 @@ ext {
 		File environmentFolder = null
 
 		if (config.lxcEnvironmentName == null) {
-			environmentFolder = fileTree("${config.lxcRepositoryPath}/liferay/configs") {
+			List<File> environmentFolders = fileTree("${config.lxcRepositoryPath}/liferay/configs") {
 				"**/portal-env.properties"
 			}.filter {
 				File envPropertiesFile ->
@@ -80,7 +86,11 @@ ext {
 				File envPropertiesFile ->
 
 				envPropertiesFile.parentFile
-			}.last()
+			}
+
+			if (!environmentFolders.isEmpty()) {
+				environmentFolder = environmentFolders.last()
+			}
 
 			if (environmentFolder != null) {
 				config.lxcEnvironmentName = environmentFolder.name
@@ -96,8 +106,6 @@ ext {
 			return
 		}
 
-		String environment = config.lxcEnvironmentName
-
 		if (!environmentFolder.exists()) {
 			println "Unable to copy configurations from ${config.lxcRepositoryPath}, because ${environmentFolder.absolutePath} does not exist"
 
@@ -109,6 +117,8 @@ ext {
 
 			updateGradleLocalProperties(["lr.docker.environment.database.partitioning.enabled": "true"])
 		}
+
+		String environment = config.lxcEnvironmentName
 
 		List<String> includeAndOverrideFileNames = ["portal-liferay-online-database-partition.properties"]
 

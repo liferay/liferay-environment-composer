@@ -81,7 +81,7 @@ ext {
 			try {
 				String schema = config.databaseName
 
-				if (config.databasePartitioningEnabled && (companyVirtualHost["webId"] != defaultWebId)) {
+				if (config.databasePartitioningEnabled && !companyVirtualHost["webId"].equals(defaultWebId)) {
 					schema = "lpartition_${companyVirtualHost["companyId"]}"
 				}
 
@@ -164,6 +164,12 @@ ext {
 				Map<String, String> companyVirtualHost ->
 
 				companyVirtualHost["webId"].startsWith("admin-") && companyVirtualHost["webId"].endsWith(".lxc.liferay.com")
+			}
+
+			if (defaultCompanyVirtualHost != null && !config.databasePartitioningEnabled) {
+				config.databasePartitioningEnabled = true
+
+				updateGradleLocalProperties(["lr.docker.environment.database.partitioning.enabled": "true"])
 			}
 		}
 

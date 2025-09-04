@@ -8,15 +8,40 @@ if [[ -z "${LEC_WORKSPACES_DIR}" ]]; then
 fi
 
 #
-# Base util functions
+# Git helper functions
 #
+
+_git() {
+	git -C "${LEC_REPO_ROOT}" "${@}"
+}
+
+#
+# Color and printing functions
+#
+
+C_BLUE="\033[36m"
+C_BOLD="\033[1m"
+C_NC="\033[0m"
+C_RED="\033[31m"
 
 _bold() {
 	# escape format: \e[{codes}m
 	# reset = 0
 	# bold = 1
-	printf "\e[1m%s\e[0m" "${*}"
+	# printf "\e[1m%s\e[0m" "${*}"
+	printf "${C_BOLD}%s${C_NC}" "${*}"
 }
+_print_error() {
+	printf "${C_BOLD}${C_RED}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+}
+_print_step() {
+	printf "${C_BOLD}${C_BLUE}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+}
+
+#
+# Control flow functions
+#
+
 _cancelIfEmpty() {
 	if [[ -z "${1}" ]]; then
 		echo "Canceled"
@@ -24,17 +49,9 @@ _cancelIfEmpty() {
 	fi
 }
 _errorExit() {
-	echo "Error: ${*}"
+	_print_error "${*}"
 	exit 1
 }
-_git() {
-	git -C "${LEC_REPO_ROOT}" "${@}"
-}
-_prompt() {
-	printf "%s" "${1:?Provide prompt text}"
-	read -r "${2:?Need a variable to write response to}"
-}
-
 _printHelpAndExit() {
 	cat <<-EOF
 		$(_bold Liferay Environment Composer CLI)
@@ -54,6 +71,26 @@ _printHelpAndExit() {
 	EOF
 
 	exit 0
+}
+
+#
+# Interactivity functions
+#
+_confirm() {
+	local message="${*}"
+
+	printf "${C_BOLD}%s (y/N): ${C_NC}" "${message}"
+	read -r -n1
+
+	echo
+
+	if [ "${REPLY}" != "y" ] && [ "${REPLY}" != "Y" ]; then
+		return 1
+	fi
+}
+_prompt() {
+	printf "${C_BOLD}%s${C_NC}" "${1:?Provide prompt text}"
+	read -r "${2:?Need a variable to write response to}"
 }
 
 #
@@ -167,11 +204,10 @@ cmd_clean() {
 	(
 		cd "${CWD_REPO_ROOT}" || exit
 
+		_print_step "Stopping environment"
 		./gradlew stop
 
-		echo ""
-		echo "Deleting volumes..."
-		echo ""
+		_print_step "Deleting volumes..."
 		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
 	)
 }
@@ -201,7 +237,7 @@ cmd_init() {
 	_cancelIfEmpty "${liferay_version}"
 	_verifyLiferayVersion "${liferay_version}"
 
-	echo ""
+	_print_step "Creating new worktree"
 	if ! _git worktree add -b "${worktree_name}" "${LEC_WORKSPACES_DIR}/${worktree_name}" master; then
 		exit 1
 	fi
@@ -209,9 +245,10 @@ cmd_init() {
 	local worktree_dir
 	worktree_dir="$(_getWorktreeDir "${worktree_name}")"
 
-	echo ""
+	echo
 	echo "Created new Liferay Environment Composer project at ${worktree_dir}"
 
+	_print_step "Writing Liferay version"
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 }
 cmd_list() {
@@ -241,7 +278,13 @@ cmd_start() {
 	(
 		cd "${CWD_REPO_ROOT}" || exit
 
-		./gradlew start && docker compose logs -f
+		_print_step "Starting environment"
+		if ! ./gradlew start; then
+			exit 1
+		fi
+
+		_print_step "Tailing logs"
+		docker compose logs -f
 	)
 }
 cmd_stop() {
@@ -250,6 +293,7 @@ cmd_stop() {
 	(
 		cd "${CWD_REPO_ROOT}" || exit
 
+		_print_step "Stopping environment"
 		./gradlew stop
 	)
 }

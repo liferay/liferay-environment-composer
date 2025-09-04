@@ -23,6 +23,7 @@ C_BLUE="\033[36m"
 C_BOLD="\033[1m"
 C_NC="\033[0m"
 C_RED="\033[31m"
+C_YELLOW="\033[33m"
 
 _bold() {
 	# escape format: \e[{codes}m
@@ -36,6 +37,9 @@ _print_error() {
 }
 _print_step() {
 	printf "${C_BOLD}${C_BLUE}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+}
+_print_warn() {
+	printf "${C_BOLD}${C_YELLOW}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
 }
 
 #
@@ -299,6 +303,49 @@ cmd_stop() {
 		_print_step "Stopping environment"
 		./gradlew stop
 	)
+}
+cmd_update() {
+	local current_branch
+	local remote
+	local upstream_repo_owner=liferay-devtools
+
+	current_branch="$(_git branch --show-current)"
+
+	remote="$(_git remote -v | grep "${upstream_repo_owner}/liferay-environment-composer" | grep -F '(fetch)' | awk '{print $1}')"
+	if [[ -z "${remote}" ]]; then
+		_print_warn "No valid remote repository was found to update from."
+		if _confirm "Do you want to add ${upstream_repo_owner}/liferay-environment-composer as a remote?"; then
+			_git remote add upstream git@github.com:${upstream_repo_owner}/liferay-environment-composer.git
+
+			remote=upstream
+		fi
+	fi
+	if [[ -z "${remote}" ]]; then
+		_print_error "No valid remote found"
+
+		cat <<-EOF
+			Please set "${upstream_repo_owner}/liferay-environment-composer" as a remote in the "${LEC_REPO_ROOT}" repository like this:
+
+			  cd ${LEC_REPO_ROOT}
+			  git remote add upstream git@github.com:${upstream_repo_owner}/liferay-environment-composer.git
+
+		EOF
+
+		exit 1
+	fi
+
+	_print_step "Updating Liferay Environment Composer from remote \"${remote}\"..."
+
+	_git fetch "${remote}" master
+
+	if ! _git rebase "${remote}/master" master; then
+		_errorExit "Could not update master branch at ${LEC_REPO_ROOT}"
+	fi
+
+	if [[ "${current_branch}" != master ]]; then
+		_print_step "Returning to original branch"
+		_git checkout "${current_branch}"
+	fi
 }
 
 #

@@ -1,6 +1,10 @@
 #!/bin/bash
 
-LEC_REPO_ROOT="${LIFERAY_ENVIRONMENT_COMPOSER_HOME:?The LIFERAY_ENVIRONMENT_COMPOSER_HOME environment variable must be set}"
+LEC_REPO_ROOT="${LIFERAY_ENVIRONMENT_COMPOSER_HOME}"
+if [[ -z "${LEC_REPO_ROOT}" ]]; then
+	echo "The LIFERAY_ENVIRONMENT_COMPOSER_HOME environment variable must be set. \"lec\" not enabled."
+	return
+fi
 
 # Set the alias to the main script
 # shellcheck disable=SC2139

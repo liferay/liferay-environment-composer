@@ -3,5 +3,6 @@
 <suppressions>
 	<source-check>
 		<suppress checks="MarkdownFileExtensionCheck" files="README\.markdown" />
+		<suppress checks="WhitespaceCheck" files="scripts/cli/lec\.sh" />
 	</source-check>
 </suppressions>

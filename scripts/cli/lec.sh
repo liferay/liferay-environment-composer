@@ -147,6 +147,9 @@ _checkReleasesJsonFile() {
 # Helper functions to list information
 #
 
+_listCommands() {
+	compgen -c | grep "^cmd_" | sed "s/^cmd_//g"
+}
 _listReleases() {
 	_checkReleasesJsonFile
 
@@ -154,6 +157,21 @@ _listReleases() {
 }
 _listWorktrees() {
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'
+}
+
+#
+# Command helper functions
+#
+
+_getClosestCommand() {
+	local command="${1}"
+
+	_listCommands | fzf --bind="load:accept" --exit-0 --height 30% --reverse --select-1 --query "${command}"
+}
+_verifyCommand() {
+	local command="${1}"
+
+	_listCommands | grep -q "^${command}$"
 }
 
 #
@@ -194,12 +212,38 @@ _writeLiferayVersion() {
 	)
 }
 
-_printCommands() {
-	compgen -c | grep "^cmd_" | sed "s/^cmd_//g"
+#
+# PRIVATE COMMAND DEFINITIONS
+#
+
+_cmd_commands() {
+	_listCommands
+}
+_cmd_gw() {
+	_checkCWDRepo
+
+	(
+		cd "${CWD_REPO_ROOT}" || exit
+
+		./gradlew "${@}"
+	)
+}
+_cmd_list() {
+	_listWorktrees
+}
+_cmd_setVersion() {
+	local liferay_version
+
+	_checkCWDRepo
+
+	liferay_version="$(_selectLiferayRelease)"
+	_cancelIfEmpty "${liferay_version}"
+
+	_writeLiferayVersion "${CWD_REPO_ROOT}" "${liferay_version}"
 }
 
 #
-# COMMAND DEFINITIONS
+# PUBLIC COMMAND DEFINITIONS
 #
 
 cmd_clean() {
@@ -214,9 +258,6 @@ cmd_clean() {
 		_print_step "Deleting volumes..."
 		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
 	)
-}
-cmd_commands() {
-	_printCommands
 }
 cmd_init() {
 	local ticket="${1}"
@@ -256,28 +297,6 @@ cmd_init() {
 
 	_print_step "Writing Liferay version"
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
-}
-cmd_list() {
-	_listWorktrees
-}
-cmd_gw() {
-	_checkCWDRepo
-
-	(
-		cd "${CWD_REPO_ROOT}" || exit
-
-		./gradlew "${@}"
-	)
-}
-cmd_setVersion() {
-	local liferay_version
-
-	_checkCWDRepo
-
-	liferay_version="$(_selectLiferayRelease)"
-	_cancelIfEmpty "${liferay_version}"
-
-	_writeLiferayVersion "${CWD_REPO_ROOT}" "${liferay_version}"
 }
 cmd_start() {
 	_checkCWDRepo
@@ -351,12 +370,28 @@ cmd_update() {
 #
 # GO
 #
+
 COMMAND="${1}"
 if [[ -z "${COMMAND}" ]]; then
 	_printHelpAndExit
 fi
-if ! _printCommands | grep -q "^${COMMAND}$"; then
-	_print_error "Invalid command: ${COMMAND}"
+
+PRIVATE_COMMAND="_cmd_${COMMAND}"
+if [[ $(type -t "${PRIVATE_COMMAND}") == function ]]; then
+	"${PRIVATE_COMMAND}" "${@:2}"
+	exit
+fi
+
+if ! _verifyCommand "${COMMAND}"; then
+	CLOSEST_COMMAND="$(_getClosestCommand "${COMMAND}")"
+
+	if _verifyCommand "${CLOSEST_COMMAND}" && _confirm "Command \"${COMMAND}\" is unknown. Use closest command \"${CLOSEST_COMMAND}\"?"; then
+		COMMAND="${CLOSEST_COMMAND}"
+	fi
+fi
+
+if ! _verifyCommand "${COMMAND}"; then
+	_print_error "Invalid command: \"${COMMAND}\" "
 	echo
 	_printHelpAndExit
 fi

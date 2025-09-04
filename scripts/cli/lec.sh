@@ -119,10 +119,11 @@ _checkCWDRepo() {
 
 RELEASES_JSON_FILE="$HOME/.liferay/workspace/releases.json"
 _checkReleasesJsonFile() {
+	local curl_cmd
+	local etag_status_code
 	local releases_json_etag_file="$HOME/.liferay/workspace/releases-json.etag"
 	local releases_json_url="https://releases-cdn.liferay.com/releases.json"
 
-	local curl_cmd
 	curl_cmd=(curl --silent --output "${RELEASES_JSON_FILE}" --etag-save "${releases_json_etag_file}" "${releases_json_url}")
 
 	if [[ ! -f "${RELEASES_JSON_FILE}" ]]; then
@@ -130,10 +131,9 @@ _checkReleasesJsonFile() {
 		return
 	fi
 
-	local ETAG_STATUS_CODE
-	ETAG_STATUS_CODE="$(curl --silent --etag-compare "${releases_json_etag_file}" -w "%{http_code}" "${releases_json_url}")"
+	etag_status_code="$(curl --silent --etag-compare "${releases_json_etag_file}" -w "%{http_code}" "${releases_json_url}")"
 
-	if [[ "${ETAG_STATUS_CODE}" != 304 ]]; then
+	if [[ "${etag_status_code}" != 304 ]]; then
 		"${curl_cmd[@]}"
 		return
 	fi
@@ -218,14 +218,17 @@ cmd_init() {
 	local ticket="${1}"
 	local liferay_version="${2}"
 
+	local existing_worktree
+	local worktree_dir
+	local worktree_name
+
 	if [[ -z "${ticket}" ]]; then
 		_prompt "LPP ticket number: " ticket
 	fi
 	_cancelIfEmpty "${ticket}"
 
-	local worktree_name="lec-${ticket}"
+	worktree_name="lec-${ticket}"
 
-	local existing_worktree
 	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
 	if [[ "${existing_worktree}" ]]; then
 		_errorExit "Worktree $worktree_name already exists at: ${existing_worktree}"
@@ -242,7 +245,6 @@ cmd_init() {
 		exit 1
 	fi
 
-	local worktree_dir
 	worktree_dir="$(_getWorktreeDir "${worktree_name}")"
 
 	echo
@@ -264,9 +266,10 @@ cmd_gw() {
 	)
 }
 cmd_setVersion() {
+	local liferay_version
+
 	_checkCWDRepo
 
-	local liferay_version
 	liferay_version="$(_selectLiferayRelease)"
 	_cancelIfEmpty "${liferay_version}"
 

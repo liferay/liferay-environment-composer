@@ -355,8 +355,9 @@ COMMAND="${1}"
 if [[ -z "${COMMAND}" ]]; then
 	_printHelpAndExit
 fi
-if ! _printCommands | grep -q "${COMMAND}"; then
-	echo "Invalid command: ${COMMAND}"
+if ! _printCommands | grep -q "^${COMMAND}$"; then
+	_print_error "Invalid command: ${COMMAND}"
+	echo
 	_printHelpAndExit
 fi
 

@@ -43,10 +43,10 @@ _printHelpAndExit() {
 	  lec <command>
 
 	$(_bold COMMANDS:)
-	  init [ticket] [version] Create a new Composer project
-	  start Start a Composer project
-	  stop Stop a Composer project
-	  clean Stop a Composer project and remove Docker volumes
+	  init [ticket] [version]    Create a new Composer project
+	  start                      Start a Composer project
+	  stop                       Stop a Composer project
+	  clean                      Stop a Composer project and remove Docker volumes
 
 	$(_bold JUMP TO A PROJECT:)
 	  lecd [project name]

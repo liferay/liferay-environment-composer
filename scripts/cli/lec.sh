@@ -36,20 +36,20 @@ _prompt() {
 }
 
 _printHelpAndExit() {
-	cat <<- EOF
-	$(_bold Liferay Environment Composer CLI)
+	cat <<-EOF
+		$(_bold Liferay Environment Composer CLI)
 
-	$(_bold USAGE:)
-	  lec <command>
+		$(_bold USAGE:)
+		  lec <command>
 
-	$(_bold COMMANDS:)
-	  init [ticket] [version]    Create a new Composer project
-	  start                      Start a Composer project
-	  stop                       Stop a Composer project
-	  clean                      Stop a Composer project and remove Docker volumes
+		$(_bold COMMANDS:)
+		  init [ticket] [version]    Create a new Composer project
+		  start                      Start a Composer project
+		  stop                       Stop a Composer project
+		  clean                      Stop a Composer project and remove Docker volumes
 
-	$(_bold JUMP TO A PROJECT:)
-	  lecd [project name]
+		$(_bold JUMP TO A PROJECT:)
+		  lecd [project name]
 
 	EOF
 
@@ -60,7 +60,7 @@ _printHelpAndExit() {
 # The Git dir of where the current working directory, if any
 #
 
-CWD_REPO_ROOT="$(git -C "$(pwd)" rev-parse --show-toplevel 2> /dev/null)"
+CWD_REPO_ROOT="$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)"
 
 #
 # Check to see if the script is called from a Composer project
@@ -135,7 +135,7 @@ _selectLiferayRelease() {
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
 
-	if ! _listReleases | grep -q "${liferay_version}" ; then
+	if ! _listReleases | grep -q "${liferay_version}"; then
 		_errorExit "'${liferay_version}' is not a valid Liferay version"
 	fi
 }

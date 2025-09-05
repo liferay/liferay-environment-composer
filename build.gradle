@@ -157,19 +157,14 @@ if (config.useLiferay) {
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
 environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
-File portsEnvFile = file("ports.env")
-Map<String, String> portsMap = [:]
+file("ports.env").withInputStream {
+	portsFile ->
 
-if(portsEnvFile.exists()) {
-	portsEnvFile.withInputStream {
-		Properties ports = new Properties()
-		ports.load(it)
-		portsMap = ports as Map
+	Properties ports = new Properties()
 
-		environmentMap.putAll portsMap
-	}
-} else {
-	throw new GradleException("ports.env file does not exist")
+	ports.load(portsFile)
+
+	environmentMap.putAll ports as Map
 }
 
 new File('.env').withOutputStream {

@@ -233,12 +233,12 @@ lr.docker.environment.database.partitioning.enabled=true
 
 #### Configure database port
 
-The database port can be configured by the `DATABASE_PORT` environment variable in the `ports.env` file.
+The database port can be configured by the `DATABASE_PORTS` environment variable in the `ports.env` file.
 
 `ports.env`:
 
 ```dotenv
-DATABASE_PORT=54321
+DATABASE_PORTS=54321
 ```
 
 ### Elasticsearch Features
@@ -255,14 +255,14 @@ lr.docker.environment.service.enabled[elasticsearch]=true
 
 #### Configure Elasticsearch ports
 
-The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORT` and
-the `ELASTICSEARCH_TRANSPORT_PORT` respectively in the `ports.env` file.
+The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORTS` and
+the `ELASTICSEARCH_TRANSPORT_PORTS` respectively in the `ports.env` file.
 
 `ports.env`:
 
 ```dotenv
-ELASTICSEARCH_HTTP_PORT=9200
-ELASTICSEARCH_TRANSPORT_PORT=9300
+ELASTICSEARCH_HTTP_PORTS=9200
+ELASTICSEARCH_TRANSPORT_PORTS=9300
 ```
 
 ### Webserver Features

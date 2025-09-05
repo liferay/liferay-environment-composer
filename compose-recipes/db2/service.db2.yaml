@@ -17,7 +17,7 @@ services:
             timeout: 20s
         platform: linux/x86_64
         ports:
-            -   "${DATABASE_PORT}:50000"
+            -   "${DATABASE_PORTS}:50000"
         privileged: true
         volumes:
             -   dumps:/database/data/db2admin/backups

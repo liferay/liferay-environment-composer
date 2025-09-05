@@ -157,6 +157,21 @@ if (config.useLiferay) {
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
 environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
+File portsEnvFile = file("ports.env")
+Map<String, String> portsMap = [:]
+
+if(portsEnvFile.exists()) {
+	portsEnvFile.withInputStream {
+		Properties ports = new Properties()
+		ports.load(it)
+		portsMap = ports as Map
+
+		environmentMap.putAll portsMap
+	}
+} else {
+	throw new GradleException("ports.env file does not exist")
+}
+
 new File('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->
 
@@ -167,19 +182,6 @@ new File('.env').withOutputStream {
 	}
 }
 
-File portsEnvFile = file("ports.env")
-Map<String, String> portsMap = [:]
-
-if(portsEnvFile.exists()) {
-	portsEnvFile.withInputStream {
-		Properties ports = new Properties()
-		ports.load(it)
-		portsMap = ports as Map
-	}
-} else {
-	throw new GradleException("ports.env file does not exist")
-}
-
 dockerCompose {
 	// DEBUG: Set to true to print container startup output to the console
 	captureContainersOutput = true
@@ -188,7 +190,6 @@ dockerCompose {
 	// captureContainersOutputToFiles = project.file('containerLogs')
 
 	environment.putAll environmentMap
-	environment.putAll portsMap
 
 	projectName = config.namespace
 

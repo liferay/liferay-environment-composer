@@ -68,6 +68,7 @@ _printHelpAndExit() {
 		  start                      Start a Composer project
 		  stop                       Stop a Composer project
 		  clean                      Stop a Composer project and remove Docker volumes
+		  update                     Check for updates to Composer and lec
 
 		$(_bold JUMP TO A PROJECT:)
 		  lecd [project name]

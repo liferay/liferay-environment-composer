@@ -238,7 +238,7 @@ The database port can be configured by the `DATABASE_PORTS` environment variable
 `ports.env`:
 
 ```dotenv
-DATABASE_PORTS=54321
+DATABASE_PORTS=54321-54330
 ```
 
 ### Elasticsearch Features
@@ -261,8 +261,8 @@ the `ELASTICSEARCH_TRANSPORT_PORTS` respectively in the `ports.env` file.
 `ports.env`:
 
 ```dotenv
-ELASTICSEARCH_HTTP_PORTS=9200
-ELASTICSEARCH_TRANSPORT_PORTS=9300
+ELASTICSEARCH_HTTP_PORTS=9200-9209
+ELASTICSEARCH_TRANSPORT_PORTS=9300-9309
 ```
 
 ### Webserver Features

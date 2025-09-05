@@ -167,7 +167,7 @@ file("ports.env").withInputStream {
 	environmentMap.putAll ports as Map
 }
 
-new File('.env').withOutputStream {
+file('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->
 
 	environmentMap.forEach {

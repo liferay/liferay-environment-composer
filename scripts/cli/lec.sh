@@ -218,7 +218,17 @@ _writeLiferayVersion() {
 #
 
 _cmd_commands() {
+	echo
+
+	_bold "Public Commands"
+	echo
 	_listCommands
+
+	echo
+
+	_bold "Private Commands"
+	echo
+	compgen -c | grep "^_cmd_" | sed "s/^_cmd_//g"
 }
 _cmd_gw() {
 	_checkCWDRepo

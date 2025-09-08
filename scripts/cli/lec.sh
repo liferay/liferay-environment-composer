@@ -327,7 +327,7 @@ cmd_stop() {
 cmd_update() {
 	local current_branch
 	local remote
-	local upstream_repo_owner=liferay-devtools
+	local upstream_repo_owner=liferay
 
 	current_branch="$(_git branch --show-current)"
 

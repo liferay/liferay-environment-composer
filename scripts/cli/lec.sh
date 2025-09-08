@@ -331,7 +331,7 @@ cmd_update() {
 
 	current_branch="$(_git branch --show-current)"
 
-	remote="$(_git remote -v | grep "${upstream_repo_owner}/liferay-environment-composer" | grep -F '(fetch)' | awk '{print $1}')"
+	remote="$(_git remote -v | grep "${upstream_repo_owner}/liferay-environment-composer" | grep -F '(fetch)' | awk '{print $1}' | head -n1)"
 	if [[ -z "${remote}" ]]; then
 		_print_warn "No valid remote repository was found to update from."
 		if _confirm "Do you want to add ${upstream_repo_owner}/liferay-environment-composer as a remote?"; then

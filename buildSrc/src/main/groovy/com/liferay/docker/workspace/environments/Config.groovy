@@ -56,10 +56,26 @@ class Config {
 			this.lxcEnvironmentName = lxcEnvironmentNameProperty
 		}
 
-		String lxcRepositoryPathProperty = project.findProperty("lr.docker.environment.lxc.repository.path")
+		String lxcRepositoryPathEnvironmentVariable = System.env["LXC_REPOSITORY_PATH"]
 
-		if (lxcRepositoryPathProperty != null) {
-			this.lxcRepositoryPath = lxcRepositoryPathProperty
+		if ((lxcRepositoryPathEnvironmentVariable != null) && !lxcRepositoryPathEnvironmentVariable.isEmpty()) {
+			File lxcRepositoryPath = project.file(lxcRepositoryPathEnvironmentVariable)
+
+			if (!lxcRepositoryPath.exists()) {
+				lxcRepositoryPathEnvironmentVariable = null
+			}
+		}
+
+		if ((lxcRepositoryPathEnvironmentVariable == null) || lxcRepositoryPathEnvironmentVariable.isEmpty()) {
+			File defaultLXCRepositoryPath = new File(System.getProperty("user.home"), "dev/projects/liferay-lxc")
+
+			if (defaultLXCRepositoryPath.exists()) {
+				lxcRepositoryPathEnvironmentVariable = defaultLXCRepositoryPath.getAbsolutePath()
+			}
+		}
+
+		if ((lxcRepositoryPathEnvironmentVariable != null) && !lxcRepositoryPathEnvironmentVariable.isEmpty()) {
+			this.lxcRepositoryPath = lxcRepositoryPathEnvironmentVariable
 		}
 
 		String liferayUserPasswordProperty = project.findProperty("lr.docker.environment.liferay.user.password")

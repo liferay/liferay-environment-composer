@@ -37,6 +37,8 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 
 	doFirst {
 		mkdir hostPath.get()
+
+		waitForCommand("docker compose create data-helper")
 	}
 
 	doLast {

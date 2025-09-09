@@ -14,7 +14,7 @@ services:
             test: mysqladmin ping -h localhost && grep 'STARTING_UP' /startup_log.txt
             timeout: 20s
         ports:
-            -   "${DATABASE_PORTS}:3306"
+            -   "${DATABASE_PORT}:3306"
         ulimits:
             nofile:
                 hard: 40000

@@ -3,4 +3,4 @@ services:
         environment:
             -   LIFERAY_JVM_OPTS=-agentpath:/opt/liferay/yourkit/libyjpagent.so=port=10001,listen=all
         ports:
-            -   "${LIFERAY_YOURKIT_PORTS}:10001"
+            -   "${LIFERAY_YOURKIT_PORT}:10001"

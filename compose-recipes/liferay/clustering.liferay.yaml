@@ -20,6 +20,6 @@ services:
             timeout: 5m
         image: ${LIFERAY_IMAGE_NAME}
         ports:
-            -   "${LIFERAY_DEBUG_PORTS}:8000"
-            -   "${LIFERAY_PORTS}:8080"
-            -   "${LIFERAY_GOGO_SHELL_PORTS}:11311"
+            -   "${LIFERAY_DEBUG_PORT}:8000"
+            -   "${LIFERAY_PORT}:8080"
+            -   "${LIFERAY_GOGO_SHELL_PORT}:11311"

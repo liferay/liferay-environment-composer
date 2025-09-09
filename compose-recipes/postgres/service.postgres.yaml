@@ -22,7 +22,7 @@ services:
             test: pg_isready -U liferay -d ${DATABASE_NAME} && grep 'STARTING_UP' /startup_log.txt
             timeout: 5s
         ports:
-            -   "${DATABASE_PORTS}:5432"
+            -   "${DATABASE_PORT}:5432"
         shm_size: 128mb
         volumes:
             -   dumps:/docker-entrypoint-initdb.d

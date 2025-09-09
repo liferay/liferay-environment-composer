@@ -179,10 +179,10 @@ exact port numbers will be automatically chosen based on availability.
 `ports.env`:
 
 ```dotenv
-LIFERAY_PORTS=8080-8089
-LIFERAY_GOGO_SHELL_PORTS=11311-11319
-LIFERAY_DEBUG_PORTS=8000-8009
-LIFERAY_YOURKIT_PORTS=10001-10010
+LIFERAY_PORT=8080-8089
+LIFERAY_GOGO_SHELL_PORT=11311-11319
+LIFERAY_DEBUG_PORT=8000-8009
+LIFERAY_YOURKIT_PORT=10001-10010
 ```
 
 ### Java Virtual Machine features overview
@@ -233,12 +233,12 @@ lr.docker.environment.database.partitioning.enabled=true
 
 #### Configure database port
 
-The database port can be configured by the `DATABASE_PORTS` environment variable in the `ports.env` file.
+The database port can be configured by the `DATABASE_PORT` environment variable in the `ports.env` file.
 
 `ports.env`:
 
 ```dotenv
-DATABASE_PORTS=54321-54330
+DATABASE_PORT=54321-54330
 ```
 
 ### Elasticsearch Features
@@ -255,14 +255,14 @@ lr.docker.environment.service.enabled[elasticsearch]=true
 
 #### Configure Elasticsearch ports
 
-The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORTS` and
-the `ELASTICSEARCH_TRANSPORT_PORTS` respectively in the `ports.env` file.
+The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORT` and
+the `ELASTICSEARCH_TRANSPORT_PORT` respectively in the `ports.env` file.
 
 `ports.env`:
 
 ```dotenv
-ELASTICSEARCH_HTTP_PORTS=9200-9209
-ELASTICSEARCH_TRANSPORT_PORTS=9300-9309
+ELASTICSEARCH_HTTP_PORT=9200-9209
+ELASTICSEARCH_TRANSPORT_PORT=9300-9309
 ```
 
 ### Webserver Features

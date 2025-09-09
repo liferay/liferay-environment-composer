@@ -164,7 +164,31 @@ file("ports.env").withInputStream {
 
 	ports.load(portsFile)
 
-	environmentMap.putAll ports as Map
+	environmentMap.putAll ports.collectEntries {
+		key, value ->
+
+		if (!value.contains("-")) {
+			return [key, value]
+		}
+
+		String[] parts = value.split("-")
+
+		String portLowest = parts[0]
+		String portHighest = parts[1]
+
+		ByteArrayOutputStream stdout = new ByteArrayOutputStream()
+
+		ExecResult execResult = project.exec {
+			args portLowest, portHighest
+			executable "scripts/find_first_available_port.sh"
+			ignoreExitValue true
+			standardOutput stdout
+		}
+
+		execResult.assertNormalExitValue()
+
+		return [key, stdout.toString().trim()]
+	}
 }
 
 file('.env').withOutputStream {

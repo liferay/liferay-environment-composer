@@ -215,7 +215,11 @@ dockerCompose {
 	// DEBUG: Set to false to retain volume data on restart
 	removeVolumes = config.clearVolumeData
 
-	tcpPortsToIgnoreWhenWaiting = [8000, 11311]
+	tcpPortsToIgnoreWhenWaiting = [
+		environmentMap['LIFERAY_DEBUG_PORT'],
+		environmentMap['LIFERAY_GOGO_SHELL_PORT'],
+	]
+
 	useComposeFiles = config.composeFiles
 
 	// DEBUG: Set to true if container startup is failing

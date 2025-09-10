@@ -137,6 +137,29 @@ ext {
 		return defaultCompanyVirtualHost[webIdKey]
 	}
 
+	getFirstAvailablePort = {
+		Integer portLowest, Integer portHighest ->
+
+		logger.info "Finding lowest available port in range: ${portLowest}-${portHighest}"
+
+		for (int port = portLowest; port <= portHighest; port++) {
+			try {
+				logger.info "Trying port ${port}..."
+
+				ServerSocket socket = new ServerSocket(port)
+
+				socket.close()
+
+				logger.info "Port ${port} is available!"
+
+				return port
+			} catch (IOException ex) {
+			}
+		}
+
+		return null
+	}
+
 	forEachCompanyId = {
 		Closure<Void> action ->
 

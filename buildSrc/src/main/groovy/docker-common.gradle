@@ -238,22 +238,40 @@ ext {
 	waitForCommand = {
 		String command, File workingDir = null ->
 
-		StringBuffer err = new StringBuffer()
-		StringBuffer out = new StringBuffer()
+		// StringBuffer err = new StringBuffer()
+		// StringBuffer out = new StringBuffer()
 
-		Process process = ['bash', '-c', command].execute([], workingDir)
+		// Process process = ['bash', '-c', command].execute([], workingDir)
 
-		process.waitForProcessOutput(out, err)
+		// process.waitForProcessOutput(out, err)
 
-		if (process.exitValue() != 0) {
-			throw new GradleException("Process exit code ${process.exitValue()}: ${err.toString()}")
+		// if (process.exitValue() != 0) {
+		// 	throw new GradleException("Process exit code ${process.exitValue()}: ${err.toString()}")
+		// }
+
+		// if (err.length() > 0) {
+		// 	System.err.println err.toString()
+		// }
+
+		// return out.toString()
+
+		File theWorkingDir = workingDir
+		ByteArrayOutputStream stdout = new ByteArrayOutputStream()
+		ByteArrayOutputStream stderr = new ByteArrayOutputStream()
+
+		ExecResult execResult = project.exec {
+			commandLine "bash", "-c", command
+			ignoreExitValue true
+			standardOutput stdout
+			// standardError stderr
+			if (theWorkingDir != null) {
+				workingDir theWorkingDir
+			}
 		}
 
-		if (err.length() > 0) {
-			System.err.println err.toString()
-		}
+		execResult.assertNormalExitValue()
 
-		return out.toString()
+		return stdout.toString().trim()
 	}
 
 	waitForContainer = {

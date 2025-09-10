@@ -12,11 +12,11 @@ for FILEPATH in ${FILEPATHS[@]}; do
 		SOURCE_DIR="${SOURCE_DIR::-1}"
 	fi
 
-	_FILEPATH=$(dirname ${FILEPATH} | sed "s,${SOURCE_DIR},,")
+	_FILEPATH=$(dirname ${FILEPATH} | sed "s,${SOURCE_DIR},${DEST_DIR},")
 
 	if [[ ${_FILEPATH} ]]; then
-		mkdir -p "${DEST_DIR}/${_FILEPATH}"
+		mkdir -p "${_FILEPATH}"
 	fi
 
-	touch "${DEST_DIR}/${_FILEPATH}/$(basename ${FILEPATH})"
+	touch "${_FILEPATH}/$(basename ${FILEPATH})"
 done

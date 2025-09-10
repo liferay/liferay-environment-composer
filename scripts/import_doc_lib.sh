@@ -3,8 +3,6 @@
 SOURCE_DIR=${1}
 DEST_DIR=${2}
 
-mkdir -p "${DEST_DIR}"
-
 FILEPATHS=($(find "${SOURCE_DIR}" -type f))
 
 for FILEPATH in ${FILEPATHS[@]}; do

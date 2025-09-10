@@ -167,6 +167,19 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
+tasks.register("importDocumentLibrary", Exec) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using an external document library") {
+		config.useExternalDocumentLibrary
+	}
+
+	args config.documentLibraryDirectory, project.file("configs/common/data/document_library")
+
+	executable project.file("scripts/import_doc_lib.sh")
+}
+
 tasks.register("prepareDB2JDBCDriver", Copy) {
 	onlyIf("using the Liferay service") {
 		config.useLiferay

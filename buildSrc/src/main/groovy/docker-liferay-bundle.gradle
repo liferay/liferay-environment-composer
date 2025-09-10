@@ -2,6 +2,8 @@ import com.liferay.docker.workspace.environments.Util
 
 import de.undercouch.gradle.tasks.download.Download
 
+import groovy.io.FileType
+
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
 
@@ -186,6 +188,29 @@ tasks.register("checkForLiferayLicense") {
 			}
 
 			throw new GradleException("Please add a non-expired license to configs/common/osgi/modules/")
+		}
+	}
+}
+
+tasks.register("importDocumentLibrary") {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using an external document library") {
+		config.useExternalDocumentLibrary
+	}
+
+	File documentLibraryDirectory = new File(config.documentLibraryDirectory)
+
+	documentLibraryDirectory.eachFileRecurse (FileType.FILES) {
+		file -> {
+			String composerDocLibFilePath = file.toString().replaceAll(config.documentLibraryDirectory, project.file("configs/common/data/document_library").toString())
+
+			mkdir composerDocLibFilePath.split("/").init().join("/")
+
+			File composerDocLibFile = new File(composerDocLibFilePath)
+
+			composerDocLibFile.createNewFile()
 		}
 	}
 }

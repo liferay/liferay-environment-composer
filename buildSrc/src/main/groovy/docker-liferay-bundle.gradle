@@ -200,17 +200,19 @@ tasks.register("importDocumentLibrary") {
 		config.useExternalDocumentLibrary
 	}
 
-	File documentLibraryDirectory = new File(config.documentLibraryDirectory)
+	doLast {
+		File documentLibraryDirectory = new File(config.documentLibraryDirectory)
 
-	documentLibraryDirectory.eachFileRecurse (FileType.FILES) {
-		file -> {
-			String composerDocLibFilePath = file.toString().replaceAll(config.documentLibraryDirectory, project.file("configs/common/data/document_library").toString())
+		documentLibraryDirectory.eachFileRecurse (FileType.FILES) {
+			file -> {
+				String composerDocLibFilePath = file.toString().replaceAll(config.documentLibraryDirectory, project.file("configs/common/data/document_library").toString())
 
-			mkdir composerDocLibFilePath.split("/").init().join("/")
+				mkdir composerDocLibFilePath.split("/").init().join("/")
 
-			File composerDocLibFile = new File(composerDocLibFilePath)
+				File composerDocLibFile = new File(composerDocLibFilePath)
 
-			composerDocLibFile.createNewFile()
+				composerDocLibFile.createNewFile()
+			}
 		}
 	}
 }

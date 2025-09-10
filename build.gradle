@@ -168,7 +168,7 @@ file("ports.env").withInputStream {
 		key, value ->
 
 		if (!value.contains("-")) {
-			return [key, value]
+			return [key, value as Integer]
 		}
 
 		String[] parts = value.split("-")
@@ -187,7 +187,7 @@ file("ports.env").withInputStream {
 
 		execResult.assertNormalExitValue()
 
-		return [key, stdout.toString().trim()]
+		return [key, stdout.toString().trim() as Integer]
 	}
 }
 

@@ -297,7 +297,7 @@ cmd_init() {
 	_verifyLiferayVersion "${liferay_version}"
 
 	_print_step "Creating new worktree"
-	if ! _git worktree add -b "${worktree_name}" "${LEC_WORKSPACES_DIR}/${worktree_name}" master; then
+	if ! _git worktree add -b "${worktree_name}" "${LEC_WORKSPACES_DIR}/${worktree_name}" HEAD; then
 		exit 1
 	fi
 

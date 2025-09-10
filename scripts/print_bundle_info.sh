@@ -1,7 +1,19 @@
 #!/bin/bash
 
 DEPLOY_DIR="$(pwd)/binds/liferay/deploy"
-PROJECT_NAME="$(docker compose ls --quiet)"
+
+if [[ -f .env ]]; then
+	# Try the project name from the .env file
+	PROJECT_NAME="$(grep COMPOSE_PROJECT_NAME .env | sed 's,COMPOSE_PROJECT_NAME=,,g')"
+fi
+if [[ -z ${PROJECT_NAME} ]]; then
+	# Try current directory name, lower-cased
+	PROJECT_NAME="$(echo "${PWD##*/}" | tr "[:upper:]" "[:lower:]")"
+fi
+if [[ -z ${PROJECT_NAME} ]]; then
+	# Use the first project name from docker compose
+	PROJECT_NAME="$(docker compose ls --quiet | head -n 1)"
+fi
 
 if [[ -z "${LIFERAY_VERSION}" ]]; then
 	LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version)"

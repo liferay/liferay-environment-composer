@@ -173,21 +173,16 @@ file("ports.env").withInputStream {
 
 		String[] parts = value.split("-")
 
-		String portLowest = parts[0]
-		String portHighest = parts[1]
+		Integer portLowest = parts[0] as Integer
+		Integer portHighest = parts[1] as Integer
 
-		ByteArrayOutputStream stdout = new ByteArrayOutputStream()
+		Integer availablePort = getFirstAvailablePort(portLowest, portHighest)
 
-		ExecResult execResult = project.exec {
-			args portLowest, portHighest
-			executable "scripts/find_first_available_port.sh"
-			ignoreExitValue true
-			standardOutput stdout
+		if (availablePort == null) {
+			throw new IOException("No free port found in range: ${value}. Please shut down other projects, or expand the port range in the ports.env file.");
 		}
 
-		execResult.assertNormalExitValue()
-
-		return [key, stdout.toString().trim() as Integer]
+		return [key, availablePort as Integer]
 	}
 }
 

@@ -32,7 +32,7 @@ ext {
 			throw new GradleException("Database service not detected")
 		}
 
-		waitForContainer("database", config.dockerContainerDatabase)
+		waitForContainer("database")
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} --batch --execute=\"${sql}\"").split("\n")
@@ -343,23 +343,21 @@ ext {
 	}
 
 	waitForContainer = {
-		String serviceName, String containerName ->
+		String serviceName ->
 
-		String serviceStatus = waitForCommand("docker compose ps ${serviceName} --format '{{.Health}}'").trim()
+		Closure<String> statusClosure = {
+			waitForCommand("docker compose ps ${serviceName} --format '{{.Health}}'").trim()
+		}
 
-		if (Objects.equals(serviceStatus, "healthy")) {
+		if (Objects.equals(statusClosure.call(), "healthy")) {
 			return
 		}
 
 		println "Starting service ${serviceName}"
 		waitForCommand("docker compose up -d ${serviceName}")
 
-		String status = ""
-
-		while (!status.equals("healthy")) {
-			if (status != null) {
-				Thread.sleep(10000)
-			}
+		while (!Objects.equals(statusClosure.call(), "healthy")) {
+			Thread.sleep(10000)
 
 			println "Waiting for service ${serviceName}"
 
@@ -368,8 +366,6 @@ ext {
 			if (logs.length() > 0) {
 				println logs
 			}
-
-			status = waitForCommand("docker inspect --format='{{.State.Health.Status}}' ${containerName}").trim()
 		}
 	}
 }

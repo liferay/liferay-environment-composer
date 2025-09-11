@@ -543,7 +543,7 @@ tasks.register("importDatabaseDumps") {
 
 		println "Initializing database via first start scripts"
 
-		waitForContainer("database", config.dockerContainerDatabase)
+		waitForContainer("database")
 
 		if (config.useDatabaseMySQL) {
 			Map<String, String> oldVariables = [

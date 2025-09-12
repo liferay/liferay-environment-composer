@@ -445,21 +445,23 @@ This will copy the logs, reports, and routes directories to the `./exports/lifer
 
 Creating new workspaces can be tedious, so we have provided a shell script to help automate some repetitive tasks.
 
-To use this shell script, add the following snippet to your `.bashrc` or `.zshrc`:
+To use this shell script, add the following snippet to your `.bashrc` or `.zshrc`, replacing the values with the correct file paths:
 
 ```sh
 #
 # Liferay Environment Composer
 #
 
-# Set the LIFERAY_ENVIRONMENT_COMPOSER_HOME env var
+# This environment variable should be the path to your clone of this repository (or your own fork).
 export LIFERAY_ENVIRONMENT_COMPOSER_HOME="$HOME/Documents/liferay/liferay-environment-composer"
 
 # Source the cli
 [[ -s "$LIFERAY_ENVIRONMENT_COMPOSER_HOME/scripts/cli/shell-source.sh" ]] && source "$LIFERAY_ENVIRONMENT_COMPOSER_HOME/scripts/cli/shell-source.sh"
-```
 
-The `LIFERAY_ENVIRONMENT_COMPOSER_HOME` environment variable should be the path to your clone of this repository (or your own fork).
+# Optional: This environment variable should point to a directory where you want projects created when running `lec init`.
+export LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR="$HOME/Documents/liferay/tickets"
+
+```
 
 This will provide the `lec` script alias and the `lecd` shell function.
 

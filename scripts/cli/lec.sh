@@ -99,6 +99,62 @@ _prompt() {
 }
 
 #
+# Dependencies
+#
+
+_is_program() {
+	local program="${1}"
+
+	command -v "${program}" >/dev/null
+}
+
+_check_dependency() {
+	local dependency="${1}"
+
+	if _is_program "${dependency}"; then
+		return
+	fi
+
+	if ! _confirm "Do you want to try to install dependency ${dependency}?"; then
+		return 1
+	fi
+
+	# Mac or Linux if brew is present
+	if _is_program brew; then
+		brew install "${dependency}"
+
+	# Ubuntu
+	elif _is_program apt; then
+		sudo apt install "${dependency}"
+
+	elif _is_program apt-get; then
+		sudo apt-get install "${dependency}"
+
+	# Fedora
+	elif _is_program dnf; then
+		sudo dnf install "${dependency}"
+
+	# Arch
+	elif _is_program pacman; then
+		sudo pacman -S "${dependency}"
+
+	else
+		return 1
+
+	fi
+}
+
+_check_dependencies() {
+	if ! _check_dependency fzf; then
+		_print_warn "Dependency \"fzf\" is not installed. Please install it following the instructions here: https://junegunn.github.io/fzf/installation/"
+	fi
+
+	if ! _check_dependency jq; then
+		_print_warn "Dependency \"jq\" is not installed. Please install it following the instructions here: https://jqlang.org/download/"
+	fi
+}
+
+#
 # The Git dir of where the current working directory, if any
 #
 
@@ -381,6 +437,8 @@ cmd_update() {
 #
 # GO
 #
+
+_check_dependencies
 
 COMMAND="${1}"
 if [[ -z "${COMMAND}" ]]; then

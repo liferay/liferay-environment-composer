@@ -178,23 +178,13 @@ file('.env').withOutputStream {
 }
 
 dockerCompose {
-	// DEBUG: Set to true to print container startup output to the console
 	captureContainersOutput = true
-
-	// DEBUG: Uncomment to dump the container logs to a directory for inspection
-	// captureContainersOutputToFiles = project.file('containerLogs')
-
 	environment.putAll environmentMap
-
 	projectName = config.namespace
-
-	// DEBUG: Set to false to retain volume data on restart
 	removeVolumes = config.clearVolumeData
-
 	useComposeFiles = config.composeFiles
+	waitForTcpPorts = false
 
 	// DEBUG: Set to true if container startup is failing
 	retainContainersOnStartupFailure = false
-
-	waitForTcpPorts = false
 }

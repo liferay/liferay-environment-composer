@@ -191,10 +191,10 @@ dockerCompose {
 	// DEBUG: Set to false to retain volume data on restart
 	removeVolumes = config.clearVolumeData
 
-	tcpPortsToIgnoreWhenWaiting = [8000, 11311]
-
 	useComposeFiles = config.composeFiles
 
 	// DEBUG: Set to true if container startup is failing
 	retainContainersOnStartupFailure = false
+
+	waitForTcpPorts = false
 }

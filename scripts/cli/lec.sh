@@ -394,6 +394,9 @@ cmd_start() {
 			exit 1
 		fi
 
+		_print_step "Printing published ports"
+		_getServicePorts
+
 		_print_step "Tailing logs"
 		docker compose logs -f
 	)

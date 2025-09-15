@@ -240,6 +240,19 @@ _getComposeProjectName() {
 
 	echo "${CWD_REPO_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
 }
+_getServicePorts() {
+	_checkCWDRepo
+
+	local serviceName="${1}"
+	# shellcheck disable=SC2016
+	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.PublishedPort}}\tlocalhost:{{.TargetPort}}\n{{end}}{{end}}'
+
+	if [[ "${serviceName}" ]]; then
+		docker compose ps "${serviceName}" --format "${template}" | tail -n +3
+	else
+		docker compose ps --format "${template}" | tail -n +3
+	fi
+}
 _getWorktreeDir() {
 	local worktree_name="${1}"
 
@@ -297,6 +310,11 @@ _cmd_gw() {
 }
 _cmd_list() {
 	_listWorktrees
+}
+_cmd_ports() {
+	local serviceName="${1}"
+
+	_getServicePorts "${serviceName}"
 }
 _cmd_setVersion() {
 	local liferay_version

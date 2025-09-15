@@ -1,0 +1,12 @@
+services:
+    mail:
+        container_name: ${NAMESPACE}-mail
+        healthcheck:
+            interval: 10s
+            retries: 10
+            test: nc -z localhost 1025 || exit 1
+            timeout: 5s
+        image: maildev/maildev
+        ports:
+            -   "${MAIL_WEB_PORT}:1080"
+            -   "${MAIL_SMTP_PORT}:1025"

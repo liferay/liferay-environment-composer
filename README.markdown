@@ -40,6 +40,11 @@ To shut down the environment, run `./gradlew stop`.
 - [Configure Elasticsearch ports](#configure-elasticsearch-ports)
 - Supports Liferay clustering OOTB
 
+### Mail features overview
+
+- [Enable mail service](#enable-mail-service)
+- [Configure mail service ports](#configure-mail-service-ports)
+
 ### Webserver features overview
 
 - [Enable NGINX (HTTP)](#enable-nginx-http)
@@ -263,6 +268,30 @@ the `ELASTICSEARCH_TRANSPORT_PORT` respectively in the `ports.env` file.
 ```dotenv
 ELASTICSEARCH_HTTP_PORT=9200-9209
 ELASTICSEARCH_TRANSPORT_PORT=9300-9309
+```
+
+### Mail features
+
+#### Enable the mail service
+
+Set the `lr.docker.environment.service.enabled[mail]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[mail]=true
+```
+
+#### Configure mail service ports
+
+The mail service's web and SMTP ports can be configured by the `MAIL_WEB_PORT` and `MAIL_SMTP_PORT` environment variables
+respectively in the `ports.env` file.
+
+`ports.env`:
+
+```dotenv
+MAIL_WEB_PORT=1080
+MAIL_SMTP_PORT=1025
 ```
 
 ### Webserver Features

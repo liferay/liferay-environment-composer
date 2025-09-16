@@ -155,21 +155,37 @@ _check_dependencies() {
 }
 
 #
-# The Git dir of where the current working directory, if any
+# The root project dir of where the current working directory, if any
 #
 
-CWD_REPO_ROOT="$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)"
+_getProjectRoot() {
+	local dir="${PWD}"
+
+	while [[ -d "${dir}" ]]; do
+		if [[ -d "${dir}/compose-recipes" ]]; then
+			(
+				cd "${dir}" 2>/dev/null || return 1
+
+				echo "${PWD}"
+			)
+
+			return
+		fi
+
+		dir="${dir}/.."
+	done
+
+	return 1
+}
+
+CWD_REPO_ROOT="$(_getProjectRoot)"
 
 #
 # Check to see if the script is called from a Composer project
 #
 
 _checkCWDRepo() {
-	if [[ -z "${CWD_REPO_ROOT}" ]]; then
-		_errorExit "Not inside of a Git repository"
-	fi
-
-	if [[ ! -d "${CWD_REPO_ROOT}/compose-recipes" ]]; then
+	if [[ ! -d "${CWD_REPO_ROOT}" ]]; then
 		_errorExit "Not inside of a Liferay Environment Composer project"
 	fi
 }

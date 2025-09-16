@@ -228,6 +228,9 @@ _listReleases() {
 
 	jq '.[].releaseKey' -r "${RELEASES_JSON_FILE}"
 }
+_listRunningProjects() {
+	docker compose ls --format=json | jq -r '.[] | .ConfigFiles' | sed 's@,@\n@g' | grep compose-recipes | sed 's,/compose-recipes/.*,,g'
+}
 _listWorktrees() {
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'
 }
@@ -326,6 +329,9 @@ _cmd_gw() {
 }
 _cmd_list() {
 	_listWorktrees
+}
+_cmd_listRunning() {
+	_listRunningProjects
 }
 _cmd_ports() {
 	local serviceName="${1}"

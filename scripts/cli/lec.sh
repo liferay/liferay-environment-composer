@@ -178,14 +178,14 @@ _getProjectRoot() {
 	return 1
 }
 
-CWD_REPO_ROOT="$(_getProjectRoot)"
+CWD_PROJECT_ROOT="$(_getProjectRoot)"
 
 #
 # Check to see if the script is called from a Composer project
 #
 
-_checkCWDRepo() {
-	if [[ ! -d "${CWD_REPO_ROOT}" ]]; then
+_checkCWDProject() {
+	if [[ ! -d "${CWD_PROJECT_ROOT}" ]]; then
 		_errorExit "Not inside of a Liferay Environment Composer project"
 	fi
 }
@@ -255,12 +255,12 @@ _verifyCommand() {
 #
 
 _getComposeProjectName() {
-	_checkCWDRepo
+	_checkCWDProject
 
-	echo "${CWD_REPO_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
+	echo "${CWD_PROJECT_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
 }
 _getServicePorts() {
-	_checkCWDRepo
+	_checkCWDProject
 
 	local serviceName="${1}"
 	# shellcheck disable=SC2016
@@ -319,10 +319,10 @@ _cmd_commands() {
 	compgen -c | grep "^_cmd_" | sed "s/^_cmd_//g"
 }
 _cmd_gw() {
-	_checkCWDRepo
+	_checkCWDProject
 
 	(
-		cd "${CWD_REPO_ROOT}" || exit
+		cd "${CWD_PROJECT_ROOT}" || exit
 
 		./gradlew "${@}"
 	)
@@ -341,12 +341,12 @@ _cmd_ports() {
 _cmd_setVersion() {
 	local liferay_version
 
-	_checkCWDRepo
+	_checkCWDProject
 
 	liferay_version="$(_selectLiferayRelease)"
 	_cancelIfEmpty "${liferay_version}"
 
-	_writeLiferayVersion "${CWD_REPO_ROOT}" "${liferay_version}"
+	_writeLiferayVersion "${CWD_PROJECT_ROOT}" "${liferay_version}"
 }
 
 #
@@ -354,10 +354,10 @@ _cmd_setVersion() {
 #
 
 cmd_clean() {
-	_checkCWDRepo
+	_checkCWDProject
 
 	(
-		cd "${CWD_REPO_ROOT}" || exit
+		cd "${CWD_PROJECT_ROOT}" || exit
 
 		_print_step "Stopping environment"
 		./gradlew stop
@@ -406,10 +406,10 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 }
 cmd_start() {
-	_checkCWDRepo
+	_checkCWDProject
 
 	(
-		cd "${CWD_REPO_ROOT}" || exit
+		cd "${CWD_PROJECT_ROOT}" || exit
 
 		_print_step "Starting environment"
 		if ! ./gradlew start; then
@@ -424,10 +424,10 @@ cmd_start() {
 	)
 }
 cmd_stop() {
-	_checkCWDRepo
+	_checkCWDProject
 
 	(
-		cd "${CWD_REPO_ROOT}" || exit
+		cd "${CWD_PROJECT_ROOT}" || exit
 
 		_print_step "Stopping environment"
 		./gradlew stop

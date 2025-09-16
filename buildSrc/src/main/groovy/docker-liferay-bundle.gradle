@@ -2,6 +2,7 @@ import com.liferay.docker.workspace.environments.Util
 
 import de.undercouch.gradle.tasks.download.Download
 
+import groovy.json.JsonSlurper
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
 
@@ -287,13 +288,19 @@ tasks.register("listAdminUsers") {
 		config.useDatabase
 	}
 
+	JsonSlurper jsonSlurper = new JsonSlurper()
+
+	String networkPorts = waitForCommand("docker inspect ${config.namespace}-liferay --format '{{ json .NetworkSettings.Ports }}'")
+
+	String tcp8080Port = jsonSlurper.parseText(networkPorts)["8080/tcp"][0]["HostPort"]
+
 	Closure<Void> listAdminUsersForCompany = {
 		String companyId, String hostname, String webId, String schema ->
 
 		List results = executeSQLQuery("select screenName, emailAddress from User_ where companyId = ${companyId} and userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", schema)
 
-		println "\nhttp://${hostname}:8080/c/portal/login"
-		println "http://${hostname}:8080/?p_p_id=com_liferay_login_web_portlet_LoginPortlet&p_p_lifecycle=0&p_p_state=exclusive&p_p_mode=view&_com_liferay_login_web_portlet_LoginPortlet_mvcRenderCommandName=%2Flogin%2Flogin&saveLastPath=false"
+		println "\nhttp://${hostname}:${tcp8080Port}/c/portal/login"
+		println "http://${hostname}:${tcp8080Port}/?p_p_id=com_liferay_login_web_portlet_LoginPortlet&p_p_lifecycle=0&p_p_state=exclusive&p_p_mode=view&_com_liferay_login_web_portlet_LoginPortlet_mvcRenderCommandName=%2Flogin%2Flogin&saveLastPath=false"
 		println getDatabaseAccessCommand(schema)
 
 		if (results.isEmpty()) {

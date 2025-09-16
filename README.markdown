@@ -261,7 +261,7 @@ lr.docker.environment.service.enabled[elasticsearch]=true
 #### Configure Elasticsearch ports
 
 The Elasticsearch HTTP and transport ports can be configured by the `ELASTICSEARCH_HTTP_PORT` and
-the `ELASTICSEARCH_TRANSPORT_PORT` respectively in the `ports.env` file.
+the `ELASTICSEARCH_TRANSPORT_PORT` environment variables respectively in the `ports.env` file.
 
 `ports.env`:
 

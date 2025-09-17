@@ -90,6 +90,14 @@ class Config {
 			this.dataDirectory = dataDirectoryProperty
 		}
 
+		String documentLibraryDirectoryProperty = project.findProperty("lr.docker.environment.document.library.path")
+
+		if (documentLibraryDirectoryProperty != null && documentLibraryDirectoryProperty.length() > 0) {
+			this.documentLibraryDirectory = documentLibraryDirectoryProperty
+
+			this.useExternalDocumentLibrary = true
+		}
+
 		String glowrootEnabledProperty = project.findProperty("lr.docker.environment.glowroot.enabled")
 
 		if (glowrootEnabledProperty != null) {
@@ -283,6 +291,7 @@ class Config {
 	public String dockerContainerDatabase = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
+	public String documentLibraryDirectory = ""
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false
@@ -300,6 +309,7 @@ class Config {
 	public boolean useDatabaseMariaDB = false
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
+	public boolean useExternalDocumentLibrary = false
 	public boolean useLiferay = false
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false

@@ -264,7 +264,7 @@ _getServicePorts() {
 
 	local serviceName="${1}"
 	# shellcheck disable=SC2016
-	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.PublishedPort}}\tlocalhost:{{.TargetPort}}\n{{end}}{{end}}'
+	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.TargetPort}}\tlocalhost:{{.PublishedPort}}\n{{end}}{{end}}'
 
 	if [[ "${serviceName}" ]]; then
 		docker compose ps "${serviceName}" --format "${template}" | tail -n +3

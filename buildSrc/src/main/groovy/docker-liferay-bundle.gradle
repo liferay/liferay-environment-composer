@@ -3,6 +3,7 @@ import com.liferay.docker.workspace.environments.Util
 import de.undercouch.gradle.tasks.download.Download
 
 import groovy.json.JsonSlurper
+
 import groovy.xml.XmlSlurper
 import groovy.xml.slurpersupport.GPathResult
 
@@ -288,14 +289,14 @@ tasks.register("listAdminUsers") {
 		config.useDatabase
 	}
 
-	JsonSlurper jsonSlurper = new JsonSlurper()
-
-	String networkPorts = waitForCommand("docker inspect ${config.namespace}-liferay --format '{{ json .NetworkSettings.Ports }}'")
-
-	String tcp8080Port = jsonSlurper.parseText(networkPorts)["8080/tcp"][0]["HostPort"]
-
 	Closure<Void> listAdminUsersForCompany = {
 		String companyId, String hostname, String webId, String schema ->
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		String networkPorts = waitForCommand("docker inspect ${config.namespace}-liferay --format '{{ json .NetworkSettings.Ports }}'")
+
+		String tcp8080Port = jsonSlurper.parseText(networkPorts)["8080/tcp"][0]["HostPort"]
 
 		List results = executeSQLQuery("select screenName, emailAddress from User_ where companyId = ${companyId} and userId in (select userId from Users_Roles where roleId in (select roleId from Role_ where name = 'Administrator'))", schema)
 

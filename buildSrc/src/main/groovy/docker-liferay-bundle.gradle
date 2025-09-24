@@ -27,16 +27,31 @@ Closure<Boolean> isValidLicenseFile = {
 		return false
 	}
 
+	String invalidLicenseReason = null
+
 	XmlSlurper xmlSlurper = new XmlSlurper()
 
 	GPathResult gPathResult = xmlSlurper.parse(licenseFile)
+
+	if (config.useClustering) {
+		String licenseType = gPathResult["license-type"].text()
+
+		if (["developer", "limited", "trial"].contains(licenseType)) {
+			invalidLicenseReason = "Clustering is enabled, but ${licenseType} license file ${licenseFile.absolutePath} cannot be used in a clustered environment"
+		}
+	}
+
 	String expirationDateText = gPathResult["expiration-date"].text()
 
-	if (new Date(expirationDateText).after(new Date())) {
+	if (new Date(expirationDateText).before(new Date())) {
+		invalidLicenseReason = "License file ${licenseFile.absolutePath} expired on ${expirationDateText}"
+	}
+
+	if (invalidLicenseReason == null) {
 		return true
 	}
 
-	println "License file ${licenseFile.absolutePath} expired on ${expirationDateText}"
+	println invalidLicenseReason
 
 	licenseFile.delete()
 
@@ -91,7 +106,7 @@ Closure<String> getLatestImageNameLocal = {
 Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	String imageName, boolean pullImage = false ->
 
-	if ((imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
+	if ((config.useClustering || imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
 		return null
 	}
 
@@ -166,6 +181,10 @@ tasks.register("checkForLiferayLicense") {
 		}
 
 		if (Util.isEmpty(licenseXmlFileCollection)) {
+			if (config.useClustering) {
+				throw new GradleException("Please add a non-expired license that allows for clustering to configs/common/osgi/modules/")
+			}
+
 			throw new GradleException("Please add a non-expired license to configs/common/osgi/modules/")
 		}
 	}

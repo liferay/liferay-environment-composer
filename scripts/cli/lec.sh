@@ -379,6 +379,11 @@ _cmd_setVersion() {
 #
 
 cmd_clean() {
+	cd "$(dirname ${0})"
+	_print_step "Removing manually deleted worktrees"
+	git worktree prune
+	cd -
+
 	_checkCWDProject
 
 	(

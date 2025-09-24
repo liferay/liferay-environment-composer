@@ -227,8 +227,23 @@ _checkReleasesJsonFile() {
 # Helper functions to list information
 #
 
-_listCommands() {
-	compgen -c | grep "^cmd_" | sed "s/^cmd_//g"
+_listFunctions() {
+	local prefix="${1}"
+
+	compgen -A function "${prefix}"
+}
+
+_listPrefixedFunctions() {
+	local prefix="${1:?Prefix required}"
+
+	_listFunctions "${prefix}" | sed "s/^${prefix}//g"
+}
+
+_listPrivateCommands() {
+	_listPrefixedFunctions "_cmd_"
+}
+_listPublicCommands() {
+	_listPrefixedFunctions "cmd_"
 }
 _listReleases() {
 	_checkReleasesJsonFile
@@ -249,12 +264,12 @@ _listWorktrees() {
 _getClosestCommand() {
 	local command="${1}"
 
-	_listCommands | fzf --bind="load:accept" --exit-0 --height 30% --reverse --select-1 --query "${command}"
+	_listPublicCommands | fzf --bind="load:accept" --exit-0 --height 30% --reverse --select-1 --query "${command}"
 }
 _verifyCommand() {
 	local command="${1}"
 
-	_listCommands | grep -q "^${command}$"
+	_listPublicCommands | grep -q "^${command}$"
 }
 
 #
@@ -317,13 +332,13 @@ _cmd_commands() {
 
 	_bold "Public Commands"
 	echo
-	_listCommands
+	_listPublicCommands
 
 	echo
 
 	_bold "Private Commands"
 	echo
-	compgen -c | grep "^_cmd_" | sed "s/^_cmd_//g"
+	_listPrivateCommands
 }
 _cmd_gw() {
 	_checkCWDProject

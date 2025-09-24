@@ -349,6 +349,9 @@ _cmd_gw() {
 		./gradlew "${@}"
 	)
 }
+_cmd_fn() {
+	"${1}" "${@:2}"
+}
 _cmd_list() {
 	_listWorktrees
 }

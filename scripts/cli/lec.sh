@@ -194,12 +194,19 @@ _checkCWDProject() {
 # Download releases.json file if it is missing or out of date
 #
 
-RELEASES_JSON_FILE="$HOME/.liferay/workspace/releases.json"
+LIFERAY_WORKSPACE_HOME="$HOME/.liferay/workspace"
+
+RELEASES_JSON_FILE="${LIFERAY_WORKSPACE_HOME}/releases.json"
+
 _checkReleasesJsonFile() {
 	local curl_cmd
 	local etag_status_code
-	local releases_json_etag_file="$HOME/.liferay/workspace/releases-json.etag"
+	local releases_json_etag_file="${LIFERAY_WORKSPACE_HOME}/releases-json.etag"
 	local releases_json_url="https://releases-cdn.liferay.com/releases.json"
+
+	if [[ ! -d "${LIFERAY_WORKSPACE_HOME}" ]]; then
+		mkdir -p "${LIFERAY_WORKSPACE_HOME}"
+	fi
 
 	curl_cmd=(curl --silent --output "${RELEASES_JSON_FILE}" --etag-save "${releases_json_etag_file}" "${releases_json_url}")
 

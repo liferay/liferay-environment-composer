@@ -403,7 +403,7 @@ cmd_init() {
 	local worktree_name
 
 	if [[ -z "${ticket}" ]]; then
-		_prompt "ticket number: " ticket
+		_prompt "Ticket number: " ticket
 	fi
 	_cancelIfEmpty "${ticket}"
 

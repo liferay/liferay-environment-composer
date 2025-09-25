@@ -106,7 +106,7 @@ Closure<String> getLatestImageNameLocal = {
 Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	String imageName, boolean pullImage = false ->
 
-	if ((config.useClustering || imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
+	if (config.useClustering || (imageName == null) || !(imageName.contains(".q") || imageName.contains("latest"))) {
 		return null
 	}
 

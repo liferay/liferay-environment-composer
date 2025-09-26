@@ -394,6 +394,36 @@ cmd_clean() {
 		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
 	)
 }
+cmd_importDLStructure() {
+	_checkCWDProject
+
+	local sourceDir="${1}"
+	local targetDir="${CWD_PROJECT_ROOT}/configs/common/data/document_library"
+
+	if [[ ! -d "${sourceDir}" ]]; then
+		_print_error "Need a source directory to copy from"
+
+		_printHelpAndExit
+	fi
+
+	if [[ -d "${targetDir}" ]] && _confirm "Remove existing ${targetDir}?"; then
+		rm -rf "${targetDir}"
+	fi
+
+	_print_step "Copying file structure from ${sourceDir}"
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		if ! ./gradlew importDocumentLibraryStructure -PsourceDir="${sourceDir}" --console=plain --quiet --stacktrace; then
+			return 1
+		fi
+
+		echo ""
+		_print_step "File structure copied to ${targetDir}"
+	)
+
+}
 cmd_init() {
 	local ticket="${1}"
 	local liferay_version="${2}"

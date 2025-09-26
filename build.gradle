@@ -55,13 +55,6 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 }
 
 tasks.register("importDocumentLibraryStructure") {
-	onlyIf("using the Liferay service") {
-		config.useLiferay
-	}
-	onlyIf("using an external document library") {
-		config.useExternalDocumentLibrary
-	}
-
 	doLast {
 		File documentLibraryDirectory = new File(config.documentLibraryDirectory)
 

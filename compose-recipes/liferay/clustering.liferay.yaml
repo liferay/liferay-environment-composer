@@ -2,6 +2,8 @@ services:
     liferay:
         environment:
             -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_ENABLED=true
+        volumes:
+            -   liferay-dl:/opt/liferay/data/document_library
     liferay-cluster-node:
         depends_on:
             liferay:
@@ -23,3 +25,7 @@ services:
             -   "${LIFERAY_DEBUG_PORT}:8000"
             -   "${LIFERAY_PORT}:8080"
             -   "${LIFERAY_GOGO_SHELL_PORT}:11311"
+        volumes:
+            -   liferay-dl:/opt/liferay/data/document_library
+volumes:
+    liferay-dl:

@@ -56,17 +56,19 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 
 tasks.register("importDocumentLibraryStructure") {
 	doLast {
-		File documentLibraryDirectory = new File(config.documentLibraryDirectory)
+		project.fileTree(project.getProperty("sourceDir")).visit {
+			if (it.isDirectory()) {
+				return
+			}
 
-		documentLibraryDirectory.eachFileRecurse (FileType.FILES) {
-			file -> {
-				String composerDocLibFilePath = file.toString().replaceAll(config.documentLibraryDirectory, project.file("configs/common/data/document_library").toString())
+			File newFile = project.file("configs/common/data/document_library/${it.relativePath}")
 
-				mkdir composerDocLibFilePath.split("/").init().join("/")
+			if (!newFile.parentFile.exists()) {
+				newFile.parentFile.mkdirs()
+			}
 
-				File composerDocLibFile = new File(composerDocLibFilePath)
-
-				composerDocLibFile.createNewFile()
+			if (!newFile.exists()) {
+				newFile.createNewFile()
 			}
 		}
 	}

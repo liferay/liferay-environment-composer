@@ -64,11 +64,13 @@ _printHelpAndExit() {
 		  lec <command>
 
 		$(_bold COMMANDS:)
-		  init [ticket] [version]    Create a new Composer project
-		  start                      Start a Composer project
-		  stop                       Stop a Composer project
-		  clean                      Stop a Composer project and remove Docker volumes
-		  update                     Check for updates to Composer and lec
+		  init [ticket] [version]          Create a new Composer project
+		  start                            Start a Composer project
+		  stop                             Stop a Composer project
+		  clean                            Stop a Composer project and remove Docker volumes
+		  update                           Check for updates to Composer and lec
+
+		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
 
 		$(_bold JUMP TO A PROJECT:)
 		  lecd [project name]

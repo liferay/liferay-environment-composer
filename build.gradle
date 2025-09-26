@@ -54,7 +54,7 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/container-data"
 }
 
-tasks.register("importDocumentLibrary") {
+tasks.register("importDocumentLibraryStructure") {
 	onlyIf("using the Liferay service") {
 		config.useLiferay
 	}

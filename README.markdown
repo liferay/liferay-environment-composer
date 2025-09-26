@@ -159,6 +159,16 @@ Document library files for method #1:
 ./configs/common/data/document_library
 ```
 
+##### If you receive a very large Document Library
+
+If you receive a very large Document Library and do not need the actual file contents, you may want to copy the file structure only. The `lec` script provides the `lec importDLStructure` command to assist with this:
+
+```sh
+lec importDLStructure <source_directory>
+```
+
+The source directory's _file structure only_ will be copied into `./configs/common/data/document_library`.
+
 #### Deploy license files
 
 Add a license files to `./configs/common/osgi/modules`.

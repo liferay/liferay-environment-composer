@@ -1,4 +1,8 @@
 services:
+    data-helper:
+        volumes:
+            -   sqlserver:/container-data/sqlserver
+
     database:
         build: ./compose-recipes/sqlserver
         container_name: ${NAMESPACE}-database-sqlserver
@@ -21,14 +25,8 @@ services:
         ports:
             -   "1433:1433"
         volumes:
-            -   read_only: true
-                source: data-volume
-                target: /var/opt/mssql/backups
-                type: volume
-                volume:
-                    subpath: dumps
-            -   source: data-volume
-                target: /var/opt/mssql/data
-                type: volume
-                volume:
-                    subpath: container-data/database
+            -   dumps:/var/opt/mssql/backups
+            -   sqlserver:/var/opt/mssql/data
+
+volumes:
+    sqlserver:

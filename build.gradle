@@ -54,6 +54,31 @@ tasks.register("exportContainerData", DockerCopyFileFromContainer) {
 	remotePath = "/container-data"
 }
 
+tasks.register("importDocumentLibrary") {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using an external document library") {
+		config.useExternalDocumentLibrary
+	}
+
+	doLast {
+		File documentLibraryDirectory = new File(config.documentLibraryDirectory)
+
+		documentLibraryDirectory.eachFileRecurse (FileType.FILES) {
+			file -> {
+				String composerDocLibFilePath = file.toString().replaceAll(config.documentLibraryDirectory, project.file("configs/common/data/document_library").toString())
+
+				mkdir composerDocLibFilePath.split("/").init().join("/")
+
+				File composerDocLibFile = new File(composerDocLibFilePath)
+
+				composerDocLibFile.createNewFile()
+			}
+		}
+	}
+}
+
 tasks.register("shareWorkspace", Zip) {
 	archiveFileName = provider {
 		"workspace_${config.namespace}_${timestamp}.zip"

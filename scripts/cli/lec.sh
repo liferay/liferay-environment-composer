@@ -107,9 +107,9 @@ _is_program() {
 
 	command -v "${program}" >/dev/null
 }
-
 _check_dependency() {
 	local dependency="${1}"
+	local altName="${2}"
 
 	if _is_program "${dependency}"; then
 		return
@@ -118,6 +118,17 @@ _check_dependency() {
 	if ! _confirm "Do you want to try to install dependency ${dependency}?"; then
 		return 1
 	fi
+
+	if _install_dependency "${dependency}"; then
+		return
+	fi
+
+	if [[ "${altName}" ]]; then
+		_install_dependency "${altName}"
+	fi
+}
+_install_dependency() {
+	local dependency="${1}"
 
 	# Mac or Linux if brew is present
 	if _is_program brew; then
@@ -145,6 +156,10 @@ _check_dependency() {
 }
 
 _check_dependencies() {
+	if ! _check_dependency fd fd-find; then
+		_print_warn "Dependency \"fd\" is not installed. Please install it following the instructions here: https://github.com/sharkdp/fd?tab=readme-ov-file#installation"
+	fi
+
 	if ! _check_dependency fzf; then
 		_print_warn "Dependency \"fzf\" is not installed. Please install it following the instructions here: https://junegunn.github.io/fzf/installation/"
 	fi

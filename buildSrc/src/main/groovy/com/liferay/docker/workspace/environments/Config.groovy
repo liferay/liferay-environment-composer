@@ -194,6 +194,7 @@ class Config {
 		if (this.services.contains("sqlserver")) {
 			this.useDatabase = true
 			this.useDatabaseSQLServer = true
+			this.dockerContainerDatabase = "${this.namespace}-database-sqlserver"
 		}
 
 		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {

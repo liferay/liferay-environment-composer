@@ -191,6 +191,12 @@ class Config {
 			this.dockerContainerDatabase = "${this.namespace}-database-postgres"
 		}
 
+		if (this.services.contains("sqlserver")) {
+			this.useDatabase = true
+			this.useDatabaseSQLServer = true
+			this.dockerContainerDatabase = "${this.namespace}-database-sqlserver"
+		}
+
 		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
 			throw new GradleException("Both HTTP and HTTPS are enabled for the webserver service. Only one protocol can be active at a time.")
 		}
@@ -300,6 +306,7 @@ class Config {
 	public boolean useDatabaseMariaDB = false
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
+	public boolean useDatabaseSQLServer = false
 	public boolean useLiferay = false
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false

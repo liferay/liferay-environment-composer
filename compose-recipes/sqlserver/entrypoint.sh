@@ -11,7 +11,7 @@ _has_backup_file() {
 _has_database_files() {
 	local database_name=${1}
 
-	if [[ $(ls /var/opt/mssql/data | grep ${database_name}) ]]; then
+	if [[ $(find /var/opt/mssql/backups -type f -iname "${database_name}.*") ]]; then
 		echo true
 	fi
 }

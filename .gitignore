@@ -1,6 +1,7 @@
 **/*.iml
 **/*.so
 **/*db2jcc4.jar
+**/*mssql-jdbc-12.10.1.jre11.jar
 **/*dxp-license-*.xml
 **/*hotfix*.zip
 **/.classpath

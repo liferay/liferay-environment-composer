@@ -192,27 +192,15 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
-tasks.register("prepareDB2JDBCDriver", Copy) {
+tasks.register("prepareJDBCDriver", Copy) {
 	onlyIf("using the Liferay service") {
 		config.useLiferay
 	}
-	onlyIf("using the DB2 database") {
-		config.useDatabaseDB2
+	onlyIf("not using MySQL or PostgreSQL") {
+		config.useDatabaseDB2 || config.useDatabaseSQLServer
 	}
 
-	from configurations.db2
-	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
-}
-
-tasks.register("prepareSQLServerJDBCDriver", Copy) {
-	onlyIf("using the Liferay service") {
-		config.useLiferay
-	}
-	onlyIf("using the SQL Server database") {
-		config.useDatabaseSQLServer
-	}
-
-	from configurations.sqlserver
+	from configurations.(config.databaseType)
 	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
 }
 

@@ -169,29 +169,34 @@ class Config {
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
 		if (this.services.contains("db2")) {
+			this.databaseType = "db2"
 			this.useDatabase = true
 			this.useDatabaseDB2 = true
 			this.dockerContainerDatabase = "${this.namespace}-database-db2"
 		}
 
 		if (this.services.contains("mariadb")) {
+			this.databaseType = "db2"
 			this.useDatabase = true
 			this.useDatabaseMariaDB = true
 		}
 
 		if (this.services.contains("mysql")) {
+			this.databaseType = "mysql"
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
 			this.dockerContainerDatabase = "${this.namespace}-database-mysql"
 		}
 
 		if (this.services.contains("postgres")) {
+			this.databaseType = "postgres"
 			this.useDatabase = true
 			this.useDatabasePostgreSQL = true
 			this.dockerContainerDatabase = "${this.namespace}-database-postgres"
 		}
 
 		if (this.services.contains("sqlserver")) {
+			this.databaseType = "sqlserver"
 			this.useDatabase = true
 			this.useDatabaseSQLServer = true
 			this.dockerContainerDatabase = "${this.namespace}-database-sqlserver"
@@ -283,6 +288,7 @@ class Config {
 	public List<Map<String, String>> companyVirtualHosts = null
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
+	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null

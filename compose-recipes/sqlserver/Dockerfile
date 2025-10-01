@@ -10,6 +10,7 @@ RUN chown mssql:mssql /startup_log.txt
 COPY entrypoint.sh /init/
 COPY init.sql /init/
 COPY reinit.sql /init
+COPY restore.sql /init
 
 RUN chown -R mssql:mssql /init && \
     chmod a+x /init/entrypoint.sh

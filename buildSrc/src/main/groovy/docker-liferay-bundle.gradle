@@ -200,8 +200,10 @@ tasks.register("prepareJDBCDriver", Copy) {
 		config.useDatabaseDB2 || config.useDatabaseSQLServer
 	}
 
-	from configurations.(config.databaseType)
-	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+	if (config.databaseType) {
+		from configurations.(config.databaseType)
+		into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+	}
 }
 
 tasks.register("validateHotfixURLs") {

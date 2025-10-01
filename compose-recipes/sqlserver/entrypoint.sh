@@ -2,6 +2,12 @@
 
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
+_has_backup_file() {
+	if [[ $(find /var/opt/mssql/backups -type f -iname "*.bak") ]]; then
+		echo true
+	fi
+}
+
 _has_database_files() {
 	local database_name=${1}
 
@@ -24,6 +30,16 @@ create_database() {
 
 	if [[ $(_is_database_present ${database_name}) ]]; then
 		echo "Database ${database_name} is present; skipping database creation"
+	elif [[ $(_has_backup_file) ]]; then
+		echo "Database backup found; restoring database ${database_name}..."
+
+		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
+
+		local backup_file=$(find /opt/var/mssql/backups -type f -iname "*.bak")
+
+		sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
+
+		${_sqlcmd} -i /init/restore.sql
 	elif [[ $(_has_database_files ${database_name}) ]]; then
 		echo "Database files found; reattaching database ${database_name}..."
 

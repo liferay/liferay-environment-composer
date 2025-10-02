@@ -50,7 +50,7 @@ ext {
 			return toResultRows(results, /,/)
 		}
 
-		if (config.useDatabaseDB2) {
+		if (config.useDatabaseDB2 || config.useDatabaseSQLServer) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
 
 			results.removeLast()
@@ -98,7 +98,12 @@ ext {
 			return config.companyVirtualHosts
 		}
 
-		config.companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		if (config.useDatabaseSQLServer) {
+			config.companyVirtualHosts = executeSQLQuery("select VirtualHost.companyId, hostname, webId from VirtualHost inner join Company on (VirtualHost.companyId = Company.companyId) where layoutSetId = 0", config.databaseName)
+		}
+		else {
+			config.companyVirtualHosts = executeSQLQuery("select companyId, hostname, webId from VirtualHost inner join Company using (companyId) where layoutSetId = 0", config.databaseName)
+		}
 
 		return config.companyVirtualHosts
 	}
@@ -133,6 +138,10 @@ ext {
 				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
 				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2"
 			].join("\n")
+		}
+
+		if (config.useDatabaseSQLServer) {
+			return "docker compose exec -it database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -P Liferay123 -d ${config.databaseName} -Q"
 		}
 	}
 

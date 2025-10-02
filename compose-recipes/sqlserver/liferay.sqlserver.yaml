@@ -1,0 +1,10 @@
+services:
+    liferay:
+        depends_on:
+            database:
+                condition: service_healthy
+        environment:
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=com.microsoft.sqlserver.jdbc.SQLServerDriver
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=Liferay123
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:sqlserver://database:1433;databaseName=lportal;Encrypt=True;TrustServerCertificate=True
+            -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME=sa

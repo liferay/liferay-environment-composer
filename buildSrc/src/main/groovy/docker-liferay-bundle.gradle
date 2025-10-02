@@ -192,18 +192,20 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
+Configuration dbDriverConfiguration = configurations.findByName(config.databaseType)
+
 tasks.register("prepareJDBCDriver", Copy) {
 	onlyIf("using the Liferay service") {
 		config.useLiferay
 	}
-	onlyIf("not using MySQL or PostgreSQL") {
-		config.useDatabaseDB2 || config.useDatabaseSQLServer
+	onlyIf("there is a database driver to install") {
+		dbDriverConfiguration != null
 	}
 
-	if (config.databaseType) {
-		from configurations.(config.databaseType)
-		into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+	from {
+		dbDriverConfiguration
 	}
+	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
 }
 
 tasks.register("validateHotfixURLs") {

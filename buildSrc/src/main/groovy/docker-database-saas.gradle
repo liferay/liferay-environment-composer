@@ -59,22 +59,22 @@ ext {
 			return
 		}
 
-		if (config.defaultCompanyVirtualHost == null) {
-			println "Unable to copy configurations from LXC repository, because the company default virtual host is unknown"
-
-			return
-		}
-
-		String expectedWebId = config.defaultCompanyVirtualHost["webId"]
-		String expectedHostName = config.defaultCompanyVirtualHost["hostname"]
-
-		if (expectedHostName.endsWith(".localhost")) {
-			expectedHostName = expectedHostName.substring(0, expectedHostName.length() - ".localhost".length())
-		}
-
 		File environmentFolder = null
 
 		if (config.lxcEnvironmentName == null) {
+			if (config.defaultCompanyVirtualHost == null) {
+				println "Unable to copy configurations from LXC repository, because the company default virtual host is unknown"
+
+				return
+			}
+
+			String expectedWebId = config.defaultCompanyVirtualHost["webId"]
+			String expectedHostName = config.defaultCompanyVirtualHost["hostname"]
+
+			if (expectedHostName.endsWith(".localhost")) {
+				expectedHostName = expectedHostName.substring(0, expectedHostName.length() - ".localhost".length())
+			}
+
 			List<File> environmentFolders = fileTree("${config.lxcRepositoryPath}/liferay/configs") {
 				"**/portal-env.properties"
 			}.filter {
@@ -95,15 +95,15 @@ ext {
 			if (environmentFolder != null) {
 				config.lxcEnvironmentName = environmentFolder.name
 			}
+
+			if (config.lxcEnvironmentName == null) {
+				println "Unable to copy configurations from ${config.lxcRepositoryPath}, because there is no metadata for LXC environment company.default.web.id=${expectedWebId}, company.default.virtual.host.name=${expectedHostName}"
+
+				return
+			}
 		}
 		else {
 			environmentFolder = new File(config.lxcRepositoryPath, "liferay/configs/${config.lxcEnvironmentName}")
-		}
-
-		if (config.lxcEnvironmentName == null) {
-			println "Unable to copy configurations from ${config.lxcRepositoryPath}, because there is no metadata for LXC environment company.default.web.id=${expectedWebId}, company.default.virtual.host.name=${expectedHostName}"
-
-			return
 		}
 
 		if (!environmentFolder.exists()) {
@@ -367,6 +367,12 @@ ext {
 		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
 
 		println "Added .localhost to the end of all virtual host names that were not localhost"
+	}
+}
+
+tasks.register("copyLiferayLXCRepositoryConfigurations") {
+	doFirst {
+		copyLiferayLXCRepositoryConfigurations();
 	}
 }
 

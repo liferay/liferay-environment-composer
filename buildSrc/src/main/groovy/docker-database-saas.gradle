@@ -122,7 +122,7 @@ ext {
 
 		List<String> includeAndOverrideFileNames = ["portal-liferay-online-database-partition.properties"]
 
-		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "portal-env.properties", "configs/common/properties/lxc-portal-env-${environment}.properties")) {
+		if (copyLiferayLXCRepositoryConfiguration(environmentFolder, "portal-env.properties", "common/properties/lxc-portal-env-${environment}.properties")) {
 			includeAndOverrideFileNames.add("./properties/lxc-portal-env-${environment}.properties")
 
 			println "Copied ${environment}/portal-env.properties from ${config.lxcRepositoryPath}"

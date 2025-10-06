@@ -494,11 +494,10 @@ cmd_stop() {
 	)
 }
 cmd_update() {
-	local current_branch
+	local branches="$(_git branch | sed "s,\*,,g")"
+	local latest_tag
 	local remote
 	local upstream_repo_owner=liferay
-
-	current_branch="$(_git branch --show-current)"
 
 	remote="$(_git remote -v | grep "\b${upstream_repo_owner}/liferay-environment-composer\b" | grep -F '(fetch)' | awk '{print $1}' | head -n1)"
 	if [[ -z "${remote}" ]]; then
@@ -525,16 +524,17 @@ cmd_update() {
 
 	_print_step "Updating Liferay Environment Composer from remote \"${remote}\"..."
 
-	_git fetch "${remote}" master
+	_git fetch "${remote}" --tags
 
-	if ! _git rebase "${remote}/master" master; then
-		_errorExit "Could not update master branch at ${LEC_REPO_ROOT}"
+	latest_tag=$(_git tag | sort -V | tail -1)
+
+	if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
+		_print_step "Creating a new branch from tag ${latest_tag}"
+		_git branch ${latest_tag} tags/${latest_tag}
 	fi
 
-	if [[ "${current_branch}" != master ]]; then
-		_print_step "Returning to original branch"
-		_git checkout "${current_branch}"
-	fi
+	_print_step "Checking out branch ${latest_tag}"
+	_git checkout ${latest_tag}
 }
 
 #

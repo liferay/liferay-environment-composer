@@ -498,7 +498,7 @@ cmd_update() {
 	local latest_tag
 	local remote
 	local upstream_repo_owner=liferay
-	local use_snapshot_flag="${1}"
+	local unstable_flag="${1}"
 
 	remote="$(_git remote -v | grep "\b${upstream_repo_owner}/liferay-environment-composer\b" | grep -F '(fetch)' | awk '{print $1}' | head -n1)"
 	if [[ -z "${remote}" ]]; then
@@ -525,7 +525,7 @@ cmd_update() {
 
 	_print_step "Updating Liferay Environment Composer from remote \"${remote}\"..."
 
-	if [[ "${use_snapshot_flag}" == "--use-snapshot" ]]; then
+	if [[ "${unstable_flag}" == "--unstable" ]]; then
 		_git fetch "${remote}" master
 
 		if ! _git rebase "${remote}/master" master; then

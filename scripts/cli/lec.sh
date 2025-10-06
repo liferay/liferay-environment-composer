@@ -532,7 +532,7 @@ cmd_update() {
 			_errorExit "Could not update master branch at ${LEC_REPO_ROOT}"
 		fi
 
-		_print_step "Checking out branch master"
+		_print_step "Checking out master branch"
 		_git checkout master
 	else
 		_git fetch "${remote}" --tags
@@ -540,11 +540,11 @@ cmd_update() {
 		latest_tag=$(_git tag | sort -V | tail -1)
 
 		if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
-			_print_step "Creating a new branch from tag ${latest_tag}"
+			_print_step "Creating a new branch from tag \"${latest_tag}\""
 			_git branch ${latest_tag} tags/${latest_tag}
 		fi
 
-		_print_step "Checking out branch ${latest_tag}"
+		_print_step "Checking out branch \"${latest_tag}\""
 		_git checkout ${latest_tag}
 	fi
 }

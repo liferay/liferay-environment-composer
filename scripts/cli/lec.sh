@@ -537,7 +537,7 @@ cmd_update() {
 	else
 		_git fetch "${remote}" --tags
 
-		latest_tag=$(_git tag | sort -V | tail -1)
+		latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
 
 		tag_branch="release-${latest_tag}"
 

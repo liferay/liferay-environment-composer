@@ -543,11 +543,11 @@ cmd_update() {
 
 		if ! _git branch --format='%(refname:short)' | grep -q -e "^${tag_branch}$"; then
 			_print_step "Creating a new branch from tag \"${latest_tag}\""
-			_git branch ${tag_branch} tags/${latest_tag}
+			_git branch "${tag_branch}" "tags/${latest_tag}"
 		fi
 
 		_print_step "Checking out branch \"${latest_tag}\""
-		_git checkout ${tag_branch}
+		_git checkout "${tag_branch}"
 	fi
 }
 

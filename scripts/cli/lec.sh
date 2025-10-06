@@ -498,6 +498,7 @@ cmd_update() {
 	local latest_tag
 	local remote
 	local upstream_repo_owner=liferay
+	local use_snapshot_flag="${1}"
 
 	remote="$(_git remote -v | grep "\b${upstream_repo_owner}/liferay-environment-composer\b" | grep -F '(fetch)' | awk '{print $1}' | head -n1)"
 	if [[ -z "${remote}" ]]; then
@@ -524,17 +525,28 @@ cmd_update() {
 
 	_print_step "Updating Liferay Environment Composer from remote \"${remote}\"..."
 
-	_git fetch "${remote}" --tags
+	if [[ "${use_snapshot_flag}" == "--use-snapshot" ]]; then
+		_git fetch "${remote}" master
 
-	latest_tag=$(_git tag | sort -V | tail -1)
+		if ! _git rebase "${remote}/master" master; then
+			_errorExit "Could not update master branch at ${LEC_REPO_ROOT}"
+		fi
 
-	if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
-		_print_step "Creating a new branch from tag ${latest_tag}"
-		_git branch ${latest_tag} tags/${latest_tag}
+		_print_step "Checking out branch master"
+		_git checkout master
+	else
+		_git fetch "${remote}" --tags
+
+		latest_tag=$(_git tag | sort -V | tail -1)
+
+		if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
+			_print_step "Creating a new branch from tag ${latest_tag}"
+			_git branch ${latest_tag} tags/${latest_tag}
+		fi
+
+		_print_step "Checking out branch ${latest_tag}"
+		_git checkout ${latest_tag}
 	fi
-
-	_print_step "Checking out branch ${latest_tag}"
-	_git checkout ${latest_tag}
 }
 
 #

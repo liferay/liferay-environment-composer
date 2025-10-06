@@ -494,7 +494,6 @@ cmd_stop() {
 	)
 }
 cmd_update() {
-	local branches="$(_git branch | sed "s,\*,,g")"
 	local latest_tag
 	local remote
 	local tag_branch
@@ -542,7 +541,7 @@ cmd_update() {
 
 		tag_branch="release-${latest_tag}"
 
-		if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
+		if ! git branch | sed "s,\*,,g" | awk '{$1=$1};1' | grep -e ^${tag_branch}$ -q; then
 			_print_step "Creating a new branch from tag \"${latest_tag}\""
 			_git branch ${tag_branch} tags/${latest_tag}
 		fi

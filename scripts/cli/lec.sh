@@ -541,7 +541,7 @@ cmd_update() {
 
 		tag_branch="release-${latest_tag}"
 
-		if ! git branch | sed "s,\*,,g" | awk '{$1=$1};1' | grep -e ^${tag_branch}$ -q; then
+		if ! _git branch --format='%(refname:short)' | grep -q -e "^${tag_branch}$"; then
 			_print_step "Creating a new branch from tag \"${latest_tag}\""
 			_git branch ${tag_branch} tags/${latest_tag}
 		fi

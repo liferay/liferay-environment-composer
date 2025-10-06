@@ -59,6 +59,14 @@ ext {
 			return
 		}
 
+		File lcpJsonFile = new File(config.lxcRepositoryPath, "liferay/LCP.json")
+
+		if (!lcpJsonFile.exists()) {
+			println "Unable to copy configurations from LXC repository, because ${config.lxcRepositoryPath} is not the liferay-lxc repository"
+
+			return
+		}
+
 		File environmentFolder = null
 
 		if (config.lxcEnvironmentName == null) {
@@ -110,6 +118,27 @@ ext {
 			println "Unable to copy configurations from ${config.lxcRepositoryPath}, because ${environmentFolder.absolutePath} does not exist"
 
 			return
+		}
+
+		JsonSlurper jsonSlurper = new JsonSlurper()
+
+		Map<String, String> environmentVariables = jsonSlurper.parse(lcpJsonFile)["environments"][config.lxcEnvironmentName]
+
+		String jdbcURL = environmentVariables["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"]
+
+		if (jdbcURL != null && jdbcURL.startsWith("jdbc:postgresql://")) {
+			config.useDatabasePostgreSQL = true
+
+			updateGradleLocalProperties([
+				"lr.docker.environment.service.enabled[postgres]": "true"
+			])
+		}
+		else {
+			config.useDatabaseMySQL = true
+
+			updateGradleLocalProperties([
+				"lr.docker.environment.service.enabled[mysql]": "true"
+			])
 		}
 
 		if (!config.databasePartitioningEnabled) {

@@ -534,21 +534,23 @@ cmd_update() {
 
 		_print_step "Checking out master branch"
 		_git checkout master
-	else
-		_git fetch "${remote}" --tags
 
-		latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
-
-		tag_branch="release-${latest_tag}"
-
-		if ! _git branch --format='%(refname:short)' | grep -q -e "^${tag_branch}$"; then
-			_print_step "Creating a new branch from tag \"${latest_tag}\""
-			_git branch "${tag_branch}" "tags/${latest_tag}"
-		fi
-
-		_print_step "Checking out branch \"${latest_tag}\""
-		_git checkout "${tag_branch}"
+		return
 	fi
+
+	_git fetch "${remote}" --tags
+
+	latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
+
+	tag_branch="release-${latest_tag}"
+
+	if ! _git branch --format='%(refname:short)' | grep -q -e "^${tag_branch}$"; then
+		_print_step "Creating a new branch from tag \"${latest_tag}\""
+		_git branch "${tag_branch}" "tags/${latest_tag}"
+	fi
+
+	_print_step "Checking out branch \"${latest_tag}\""
+	_git checkout "${tag_branch}"
 }
 
 #

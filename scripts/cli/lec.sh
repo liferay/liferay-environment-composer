@@ -7,6 +7,10 @@ if [[ -z "${LEC_WORKSPACES_DIR}" ]]; then
 	LEC_WORKSPACES_DIR="${LEC_REPO_ROOT}/../lec-workspaces"
 fi
 
+if [ "" == "${LXC_REPOSITORY_PATH}" ] && [ -d "${HOME}/dev/projects/liferay-lxc" ]; then
+	LXC_REPOSITORY_PATH="${HOME}/dev/projects/liferay-lxc"
+fi
+
 #
 # Git helper functions
 #
@@ -288,6 +292,13 @@ _listReleases() {
 _listRunningProjects() {
 	docker compose ls --format=json | jq -r '.[] | .ConfigFiles' | sed 's@,@\n@g' | grep compose-recipes | sed 's,/compose-recipes/.*,,g' | sort -u
 }
+_listSaaSEnvironments() {
+	if [ ! -d "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/" ]; then
+		return 0
+	fi
+
+	ls -1 "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/" | grep '\.json$' | sed 's/\.json$//g'
+}
 _listWorktrees() {
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'
 }
@@ -363,14 +374,23 @@ _removeWorktree() {
 	_print_success "Project ${worktree_name} removed"
 }
 _selectLiferayRelease() {
-	_listReleases | _select "Choose a Liferay version"
+	(
+		_listReleases
+		_listSaaSEnvironments
+	) | fzf --height=50% --reverse
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
 
-	if ! _listReleases | grep -q "${liferay_version}"; then
-		_errorExit "'${liferay_version}' is not a valid Liferay version"
+	if test -f "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/${liferay_version}.json"; then
+		return 0
 	fi
+
+	if _listReleases | grep -q "${liferay_version}"; then
+		return 0
+	fi
+
+	_errorExit "'${liferay_version}' is not a valid Liferay version"
 }
 _writeLiferayVersion() {
 	local worktree_dir="${1}"
@@ -379,10 +399,18 @@ _writeLiferayVersion() {
 	(
 		cd "${worktree_dir}" || exit
 
-		sed -E -i.bak "s/^liferay.workspace.product=.*$/liferay.workspace.product=${liferay_version}/g" gradle.properties
-		rm gradle.properties.bak
+		if [ -f "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/${liferay_version}.json" ]; then
+			sed -E -i.bak "s/^lr.docker.environment.lxc.environment.name=.*$/lr.docker.environment.lxc.environment.name=${liferay_version}/g" gradle.properties
+			rm gradle.properties.bak
 
-		echo "Liferay version set to ${liferay_version} in gradle.properties"
+			echo "LXC environment set to ${liferay_version} in gradle.properties"
+			blade gw copyLiferayLXCRepositoryConfigurations
+		else
+			sed -E -i.bak "s/^liferay.workspace.product=.*$/liferay.workspace.product=${liferay_version}/g" gradle.properties
+			rm gradle.properties.bak
+
+			echo "Liferay version set to ${liferay_version} in gradle.properties"
+		fi
 	)
 }
 

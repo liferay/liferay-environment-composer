@@ -497,6 +497,7 @@ cmd_update() {
 	local branches="$(_git branch | sed "s,\*,,g")"
 	local latest_tag
 	local remote
+	local tag_branch
 	local upstream_repo_owner=liferay
 	local unstable_flag="${1}"
 
@@ -539,13 +540,15 @@ cmd_update() {
 
 		latest_tag=$(_git tag | sort -V | tail -1)
 
+		tag_branch="release-${latest_tag}"
+
 		if [[ ! "${branches}" =~ "${latest_tag}" ]]; then
 			_print_step "Creating a new branch from tag \"${latest_tag}\""
-			_git branch ${latest_tag} tags/${latest_tag}
+			_git branch ${tag_branch} tags/${latest_tag}
 		fi
 
 		_print_step "Checking out branch \"${latest_tag}\""
-		_git checkout ${latest_tag}
+		_git checkout ${tag_branch}
 	fi
 }
 

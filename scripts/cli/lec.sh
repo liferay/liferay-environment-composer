@@ -68,7 +68,7 @@ _printHelpAndExit() {
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
-		  update                           Check for updates to Composer and lec
+		  update                           Check for updates to Composer and lec. Updates to the latest release tag by default; use "--unstable" to update to latest master changes
 
 		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
 

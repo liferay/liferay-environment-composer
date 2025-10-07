@@ -76,12 +76,12 @@ _errorExit() {
 }
 _printHelpAndExit() {
 	cat <<-EOF
-		$(_bold Liferay Environment Composer CLI)
+		${C_BOLD}Liferay Environment Composer CLI${C_RESET}
 
-		$(_bold USAGE:)
+		${C_BOLD}USAGE:${C_RESET}
 		  lec <command>
 
-		$(_bold COMMANDS:)
+		${C_BOLD}COMMANDS:${C_RESET}
 		  init [ticket] [version]          Create a new Composer project
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
@@ -90,7 +90,7 @@ _printHelpAndExit() {
 
 		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
 
-		$(_bold JUMP TO A PROJECT:)
+		${C_BOLD}JUMP TO A PROJECT:${C_RESET}
 		  lecd [project name]
 
 	EOF
@@ -104,7 +104,7 @@ _printHelpAndExit() {
 _confirm() {
 	local message="${*}"
 
-	printf "${C_BOLD}%s (y/N): ${C_NC}" "${message}"
+	printf "${C_BOLD}%s (y/N): ${C_RESET}" "${message}"
 	read -r -n1
 
 	echo
@@ -114,7 +114,7 @@ _confirm() {
 	fi
 }
 _prompt() {
-	printf "${C_BOLD}%s${C_NC}" "${1:?Provide prompt text}"
+	printf "${C_BOLD}%s${C_RESET}" "${1:?Provide prompt text}"
 	read -r "${2:?Need a variable to write response to}"
 }
 
@@ -348,16 +348,10 @@ _writeLiferayVersion() {
 #
 
 _cmd_commands() {
-	echo
-
-	_bold "Public Commands"
-	echo
+	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Public Commands:"
 	_listPublicCommands
 
-	echo
-
-	_bold "Private Commands"
-	echo
+	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Private Commands:"
 	_listPrivateCommands
 }
 _cmd_gw() {

@@ -455,7 +455,7 @@ cmd_init() {
 
 	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
 	if [[ "${existing_worktree}" ]]; then
-		_errorExit "Worktree $worktree_name already exists at: ${existing_worktree}"
+		_errorExit "Worktree ${worktree_name} already exists at: ${existing_worktree}"
 	fi
 
 	if [[ -z "${liferay_version}" ]]; then

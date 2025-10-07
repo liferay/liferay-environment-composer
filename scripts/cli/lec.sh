@@ -117,6 +117,11 @@ _prompt() {
 	printf "${C_BOLD}%s${C_RESET}" "${1:?Provide prompt text}"
 	read -r "${2:?Need a variable to write response to}"
 }
+_select() {
+	local prompt_message="${*}"
+
+	fzf --color="dark,scrollbar:-1:bold" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse
+}
 
 #
 # Dependencies

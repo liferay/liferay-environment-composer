@@ -86,6 +86,7 @@ _printHelpAndExit() {
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
+		  remove                           Completely tear down and remove a Composer project
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 
 		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
@@ -484,6 +485,32 @@ cmd_init() {
 
 	_print_step "Writing Liferay version"
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
+}
+cmd_remove() {
+	local worktree
+	worktree="$(_selectWorktree)"
+	_cancelIfEmpty "${worktree}"
+
+	local worktree_name="${worktree##*/}"
+
+	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
+		_cancelIfEmpty ""
+	fi
+
+	_print_step "Shutting down project and removing Docker volumes..."
+	(
+		cd "${worktree}" || exit 1
+
+		./gradlew stop -Plr.docker.environment.clear.volume.data=true
+	)
+
+	_print_step "Removing project dir..."
+	_git worktree remove --force "${worktree_name}"
+
+	_print_step "Removing Git branch..."
+	_git branch -D "${worktree_name}"
+
+	_print_success "Project ${worktree_name} removed"
 }
 cmd_start() {
 	_checkCWDProject

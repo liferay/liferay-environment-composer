@@ -325,7 +325,7 @@ _getWorktreeDir() {
 	_listWorktrees | grep "/${worktree_name}$"
 }
 _selectLiferayRelease() {
-	_listReleases | fzf --height=50% --reverse
+	_listReleases | _select "Choose a Liferay version"
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"

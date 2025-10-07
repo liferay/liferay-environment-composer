@@ -19,27 +19,45 @@ _git() {
 # Color and printing functions
 #
 
-C_BLUE="\033[36m"
-C_BOLD="\033[1m"
-C_NC="\033[0m"
-C_RED="\033[31m"
-C_YELLOW="\033[33m"
+C_BLUE=""
+C_BOLD=""
+C_GREEN=""
+C_NC=""
+C_RED=""
+C_RESET=""
+C_YELLOW=""
 
-_bold() {
-	# escape format: \e[{codes}m
-	# reset = 0
-	# bold = 1
-	# printf "\e[1m%s\e[0m" "${*}"
-	printf "${C_BOLD}%s${C_NC}" "${*}"
+if [[ -z "${LEC_COLORS_DISABLED}" ]] && tput setaf 1 >/dev/null 2>&1; then
+	C_BLUE=$(tput setaf 6)
+	C_BOLD=$(tput bold)
+	C_GREEN=$(tput setaf 2)
+	C_NC=$(tput op)
+	C_RED=$(tput setaf 1)
+	C_RESET=$(tput sgr0)
+	C_YELLOW=$(tput setaf 3)
+fi
+
+_print() {
+	local color="${1}"
+	shift
+
+	printf "${C_BOLD}${color}>>>${C_NC} %s${C_RESET}\n" "${*}"
 }
+
 _print_error() {
-	printf "${C_BOLD}${C_RED}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+	_print "${C_RED}" "${*}"
 }
+
 _print_step() {
-	printf "${C_BOLD}${C_BLUE}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+	_print "${C_BLUE}" "${*}"
 }
+
+_print_success() {
+	_print "${C_GREEN}" "${*}"
+}
+
 _print_warn() {
-	printf "${C_BOLD}${C_YELLOW}>>>${C_NC} ${C_BOLD}%s${C_NC}\n" "${*}"
+	_print "${C_YELLOW}" "${*}"
 }
 
 #

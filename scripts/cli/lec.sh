@@ -494,6 +494,7 @@ cmd_stop() {
 	)
 }
 cmd_update() {
+	local current_tag
 	local latest_tag
 	local remote
 	local tag_branch
@@ -540,7 +541,14 @@ cmd_update() {
 
 	_git fetch "${remote}" --tags
 
+	current_tag=$(_git describe --tags 2>/dev/null)
 	latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
+
+	if [[ "${current_tag}" == "${latest_tag}" ]]; then
+		_print_step "Current version ${current_tag} is up to date."
+
+		return
+	fi
 
 	tag_branch="release-${latest_tag}"
 

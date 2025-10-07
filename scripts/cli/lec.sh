@@ -327,6 +327,9 @@ _getWorktreeDir() {
 _selectLiferayRelease() {
 	_listReleases | _select "Choose a Liferay version"
 }
+_selectWorktree() {
+	_listWorktrees | _select "Choose a project"
+}
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
 

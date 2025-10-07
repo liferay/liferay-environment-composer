@@ -331,15 +331,20 @@ ext {
 			println ""
 			println releaseInfoDate
 
-			Map<String, String> releaseInfo = getReleaseInfo(waitForCommand("git show ${commit}:${descriptorPath}", lxcRepositoryFolder)).each {
-				Map.Entry<String, String> entry ->
+			try {
+				Map<String, String> releaseInfo = getReleaseInfo(waitForCommand("git show ${commit}:${descriptorPath}", lxcRepositoryFolder)).each {
+					Map.Entry<String, String> entry ->
 
-				println entry
+					println entry
+				}
+
+				if (latestReleaseInfo == null) {
+					latestReleaseInfo = releaseInfo
+					latestReleaseInfoDate = releaseInfoDate
+				}
 			}
-
-			if (latestReleaseInfo == null) {
-				latestReleaseInfo = releaseInfo
-				latestReleaseInfoDate = releaseInfoDate
+			catch (Exception exception) {
+				println "Could not retrieve the file ${descriptorPath} at commit ${commit}, skipping"
 			}
 		}
 

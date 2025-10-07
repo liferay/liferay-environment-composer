@@ -570,7 +570,9 @@ cmd_update() {
 		_git branch "${tag_branch}" "tags/${latest_tag}"
 	fi
 
-	_git checkout "${tag_branch}"
+	if ! _git checkout "${tag_branch}"; then
+		_errorExit "Could not checkout out updated Git brannch, please make sure the main repository at ${C_YELLOW}${LEC_REPO_ROOT}${C_NC} does not contain any changes."
+	fi
 
 	_print_success "Updated to newer version ${C_BLUE}${latest_tag}${C_NC}"
 }

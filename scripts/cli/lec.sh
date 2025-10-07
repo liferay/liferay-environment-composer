@@ -536,7 +536,7 @@ cmd_update() {
 		exit 1
 	fi
 
-	_print_step "Updating Liferay Environment Composer from remote \"${remote}\"..."
+	_print_step "Checking for updates..."
 
 	if [[ "${unstable_flag}" == "--unstable" ]]; then
 		_git fetch "${remote}" master
@@ -557,20 +557,22 @@ cmd_update() {
 	latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
 
 	if [[ "${current_tag}" == "${latest_tag}" ]]; then
-		_print_step "Current version ${current_tag} is up to date."
+		_print_success "Current version ${C_BLUE}${current_tag}${C_NC} is up to date"
 
 		return
 	fi
 
 	tag_branch="release-${latest_tag}"
 
+	_print_step "Updating to newer version ${C_BLUE}${latest_tag}${C_NC}..."
+
 	if ! _git branch --format='%(refname:short)' | grep -q -e "^${tag_branch}$"; then
-		_print_step "Creating a new branch from tag \"${latest_tag}\""
 		_git branch "${tag_branch}" "tags/${latest_tag}"
 	fi
 
-	_print_step "Checking out branch \"${latest_tag}\""
 	_git checkout "${tag_branch}"
+
+	_print_success "Updated to newer version ${C_BLUE}${latest_tag}${C_NC}"
 }
 
 #

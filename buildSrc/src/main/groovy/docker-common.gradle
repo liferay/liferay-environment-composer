@@ -57,6 +57,10 @@ ext {
 		if (config.useDatabaseDB2 || config.useDatabaseSQLServer) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
 
+			if (results.size() <= 1) {
+				return Collections.emptyMap()
+			}
+
 			results.removeLast()
 			results.remove(1)
 

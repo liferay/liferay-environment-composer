@@ -22,6 +22,10 @@ ext {
 
 		println waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest du -sh /target/${targetName}")
 
+		if (config.useDatabaseSQLServer) {
+			waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest chown 10001:10001 /target/${targetName}")
+		}
+
 		println "Copied file ${sourcePath} to ${volumeName}"
 	}
 

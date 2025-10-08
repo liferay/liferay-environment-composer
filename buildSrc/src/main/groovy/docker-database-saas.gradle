@@ -311,7 +311,7 @@ ext {
 		Map<String, String> latestReleaseInfo = null
 		String latestReleaseInfoDate = null
 
-		waitForCommand("git log -5 --pretty='%H %cd' --date=format-local:'%Y-%m-%d %H:%M:%S %Z' -- ${descriptorPath}", lxcRepositoryFolder).eachLine {
+		waitForCommand("git log -5 --pretty='%H %cd' --date=format-local:'%Y-%m-%d %H:%M:%S %Z' --find-renames=100% -- ${descriptorPath}", lxcRepositoryFolder).eachLine {
 			String line ->
 
 			int pos = line.indexOf(" ")

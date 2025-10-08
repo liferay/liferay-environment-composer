@@ -457,6 +457,7 @@ tasks.register("copyDatabaseDumpsToDumpsVolume") {
 		waitForCommand("docker compose create database")
 
 		fileTree("dumps") {
+			include "**/*.bak"
 			include "**/*.sql"
 			include "**/*.sql.gz"
 			include "**/*.gz"

@@ -119,7 +119,7 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 			return null
 		}
 
-		println "Docker image ${imageName} is not available, retrieving via docker pull (this may take awhile)"
+		println "Checking image ${imageName} for a valid license file to copy, retrieving via docker pull (this may take awhile)"
 
 		waitForCommand("docker pull ${imageName}", null, true)
 

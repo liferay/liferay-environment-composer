@@ -35,7 +35,7 @@ create_database() {
 
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
 
-		local backup_file=$(find /opt/var/mssql/backups -type f -iname "*.bak")
+		local backup_file=$(find /var/opt/mssql/backups -type f -iname "*.bak")
 
 		sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
 

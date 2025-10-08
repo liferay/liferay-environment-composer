@@ -30,7 +30,11 @@ create_database() {
 
 	if [[ $(_is_database_present ${database_name}) ]]; then
 		echo "Database ${database_name} is present; skipping database creation"
-	elif [[ $(_has_backup_file) ]]; then
+
+		return
+	fi
+
+	if [[ $(_has_backup_file) ]]; then
 		echo "Database backup found; restoring database ${database_name}..."
 
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
@@ -40,19 +44,25 @@ create_database() {
 		sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
 
 		${_sqlcmd} -i /init/restore.sql
-	elif [[ $(_has_database_files ${database_name}) ]]; then
+
+		return
+	fi
+
+	if [[ $(_has_database_files ${database_name}) ]]; then
 		echo "Database files found; reattaching database ${database_name}..."
 
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
 
 		${_sqlcmd} -i /init/reinit.sql
-	else
-		echo "Could not find database ${database_name}; creating database..."
 
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
-
-		${_sqlcmd} -i /init/init.sql
+		return
 	fi
+
+	echo "Could not find database ${database_name}; creating database..."
+
+	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
+
+	${_sqlcmd} -i /init/init.sql
 }
 
 main() {

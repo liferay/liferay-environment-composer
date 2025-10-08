@@ -323,14 +323,17 @@ ext {
 	}
 
 	waitForCommand = {
-		String command, File cwd = null ->
+		String command, File cwd = null, boolean streamOutput = false ->
 
-		ByteArrayOutputStream stdout = new ByteArrayOutputStream()
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()
 
 		ExecResult execResult = project.exec {
 			commandLine "bash", "-c", command
 			ignoreExitValue true
-			standardOutput stdout
+
+			if (streamOutput == false) {
+				standardOutput byteArrayOutputStream
+			}
 
 			if (cwd != null) {
 				workingDir cwd
@@ -339,7 +342,7 @@ ext {
 
 		execResult.assertNormalExitValue()
 
-		return stdout.toString().trim()
+		return byteArrayOutputStream.toString().trim()
 	}
 
 	waitForContainer = {

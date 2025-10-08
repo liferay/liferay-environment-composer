@@ -119,7 +119,7 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 
 		println "Docker image ${imageName} is not available, retrieving via docker pull (this may take awhile)"
 
-		waitForCommand("docker pull ${imageName}")
+		waitForCommand("docker pull ${imageName}", null, true)
 
 		latestImageName = getLatestImageNameLocal(imageName)
 

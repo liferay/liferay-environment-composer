@@ -29,13 +29,13 @@ create_database() {
 	local database_name=${1}
 
 	if [[ $(_is_database_present ${database_name}) ]]; then
-		echo "Database ${database_name} is present; skipping database creation"
+		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
 
 		return
 	fi
 
 	if [[ $(_has_backup_file) ]]; then
-		echo "Database backup found; restoring database ${database_name}..."
+		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
 
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
 
@@ -58,7 +58,7 @@ create_database() {
 		return
 	fi
 
-	echo "Could not find database ${database_name}; creating database..."
+	echo "[entrypoint] Could not find database ${database_name}; creating database..."
 
 	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
 

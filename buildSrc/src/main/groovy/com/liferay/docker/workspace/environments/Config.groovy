@@ -176,7 +176,7 @@ class Config {
 		}
 
 		if (this.services.contains("mariadb")) {
-			this.databaseType = "db2"
+			this.databaseType = "mariadb"
 			this.useDatabase = true
 			this.useDatabaseMariaDB = true
 			this.dockerContainerDatabase = "${this.namespace}-database-mariadb"

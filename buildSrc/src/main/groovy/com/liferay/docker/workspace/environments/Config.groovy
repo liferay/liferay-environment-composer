@@ -172,35 +172,30 @@ class Config {
 			this.databaseType = "db2"
 			this.useDatabase = true
 			this.useDatabaseDB2 = true
-			this.dockerContainerDatabase = "${this.namespace}-database-db2"
 		}
 
 		if (this.services.contains("mariadb")) {
 			this.databaseType = "mariadb"
 			this.useDatabase = true
 			this.useDatabaseMariaDB = true
-			this.dockerContainerDatabase = "${this.namespace}-database-mariadb"
 		}
 
 		if (this.services.contains("mysql")) {
 			this.databaseType = "mysql"
 			this.useDatabase = true
 			this.useDatabaseMySQL = true
-			this.dockerContainerDatabase = "${this.namespace}-database-mysql"
 		}
 
 		if (this.services.contains("postgres")) {
 			this.databaseType = "postgres"
 			this.useDatabase = true
 			this.useDatabasePostgreSQL = true
-			this.dockerContainerDatabase = "${this.namespace}-database-postgres"
 		}
 
 		if (this.services.contains("sqlserver")) {
 			this.databaseType = "sqlserver"
 			this.useDatabase = true
 			this.useDatabaseSQLServer = true
-			this.dockerContainerDatabase = "${this.namespace}-database-sqlserver"
 		}
 
 		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
@@ -293,7 +288,6 @@ class Config {
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
-	public String dockerContainerDatabase = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
 	public boolean glowrootEnabled = false

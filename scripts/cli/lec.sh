@@ -122,7 +122,7 @@ _prompt() {
 _select() {
 	local prompt_message="${*}"
 
-	fzf --color="dark,scrollbar:-1:bold" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse
+	fzf --color="dark" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse
 }
 
 #

@@ -30,6 +30,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable MySQL 8.4](#enable-mysql-84)
 - [Enable PostgreSQL 16.3](#enable-postgresql-163)
 - [Enable DB2 11.5](#enable-db2-115)
+- [Enable MariaDB 10.6](#enable-mariadb-106)
 - [Enable Microsoft SQL Server 2022](#enable-microsoft-sql-server-2022)
 - [Import a database dump](#import-a-database-dump)
 - [Enable database partitioning (MySQL and PostgreSQL only)](#enable-database-partitioning-mysql-and-postgresql-only)
@@ -238,6 +239,16 @@ Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` i
 
 ```properties
 lr.docker.environment.service.enabled[db2]=true
+```
+
+#### Enable MariaDB 10.6
+
+Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[mariadb]=true
 ```
 
 #### Enable Microsoft SQL Server 2022

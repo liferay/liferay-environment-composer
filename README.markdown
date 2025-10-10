@@ -542,6 +542,8 @@ lec init # No args
 lec init LPP-12345 # Pass in the LPP ticket number
 
 lec init LPP-12345 dxp-2025.q3.0 # Pass in the LPP ticket number and the Liferay version
+
+lec init LPP-12345 abc1prd # Pass in the LPP ticket number and the SaaS environment name
 ```
 
 Start the workspace:

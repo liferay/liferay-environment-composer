@@ -88,6 +88,7 @@ _printHelpAndExit() {
 		  clean                            Stop a Composer project and remove Docker volumes
 		  export                           Export container data for a Composer project
 		  remove                           Completely tear down and remove a Composer project
+		  share                            Save a Composer workspace for sharing
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                          Prints the current version of lec
 
@@ -530,6 +531,21 @@ cmd_remove() {
 	_git branch -D "${worktree_name}"
 
 	_print_success "Project ${worktree_name} removed"
+}
+cmd_share(){
+	_checkCWDProject
+
+	_print_step "Zipping up workspace..."
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		if ! ./gradlew shareWorkspace; then
+			exit 1
+		fi
+
+		_print_success "Workspace saved"
+	)
 }
 cmd_start() {
 	_checkCWDProject

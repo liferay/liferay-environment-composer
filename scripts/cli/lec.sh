@@ -86,7 +86,9 @@ _printHelpAndExit() {
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
+		  export                           Export container data for a Composer project
 		  remove                           Completely tear down and remove a Composer project
+		  share                            Save a Composer workspace for sharing
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                          Prints the current version of lec
 
@@ -418,6 +420,23 @@ cmd_clean() {
 		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
 	)
 }
+cmd_export() {
+	_checkCWDProject
+
+	_print_step "Exporting container data..."
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		if ! ./gradlew exportContainerData; then
+			exit 1
+		fi
+
+		local exportedDataRelativeDir=$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")
+
+		_print_success "Container data exported to ${CWD_PROJECT_ROOT}/${exportedDataRelativeDir}"
+	)
+}
 cmd_importDLStructure() {
 	_checkCWDProject
 
@@ -512,6 +531,21 @@ cmd_remove() {
 	_git branch -D "${worktree_name}"
 
 	_print_success "Project ${worktree_name} removed"
+}
+cmd_share(){
+	_checkCWDProject
+
+	_print_step "Zipping up workspace..."
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		if ! ./gradlew shareWorkspace; then
+			exit 1
+		fi
+
+		_print_success "Workspace saved"
+	)
 }
 cmd_start() {
 	_checkCWDProject

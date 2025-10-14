@@ -389,73 +389,83 @@ _cmd_ports() {
 }
 _cmd_pr() {
 	# A script to help create high-quality pull requests with an AI-generated summary
-	# that you can review and edit.
+	# and a preliminary checklist analysis.
 
 	echo "🤖 Let's create a high-quality pull request!"
 
 	# --- 1. Get the code changes ---
-	TARGET_BRANCH="master" # <-- THIS LINE IS UPDATED
+	TARGET_BRANCH="master"
 	GIT_DIFF=$(git diff $TARGET_BRANCH...HEAD)
 
 	if [ -z "$GIT_DIFF" ]; then
-		echo "⚠️ No changes detected between your branch and '$TARGET_BRANCH'. Please commit your changes."
-		exit 1
+	  echo "⚠️ No changes detected between your branch and '$TARGET_BRANCH'. Please commit your changes."
+	  exit 1
 	fi
 
-	# --- 2. Ask Gemini to summarize the changes ---
-	echo "🧠 Asking Gemini to generate a summary of your changes..."
+	# --- 2. Ask Gemini to perform a detailed analysis ---
+	echo "🧠 Asking Gemini to analyze your changes and generate a PR description... (this might take a moment)"
 
-	PROMPT="Based on the following git diff, please write a concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes. The tone should be for a pull request description. Here is the diff:\n\n$GIT_DIFF"
+	# This new, more detailed prompt asks the AI to act as a reviewer.
+	# It requests both a summary and a checklist analysis based on the provided diff.
+	PROMPT="Act as a senior software engineer reviewing a pull request. Based on the following git diff, provide two sections:
+	1. A concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes.
+	2. A checklist answering the following questions based *only* on the provided code changes. For each question, provide a brief explanation for your answer.
 
-	# Call the gemini CLI
+	**Checklist Questions:**
+	- **Tests:** Does this change include tests? If not, why might that be?
+	- **Accessibility (a11y):** Are there any changes that could impact UI accessibility?
+	- **Custom CSS:** Does this change introduce new or modified CSS, SCSS, or CSS-in-JS?
+	- **Breaking Changes:** Is there any indication of a breaking change (e.g., modified function signatures, API endpoint contracts)?
+	- **Cross-Team Impact:** Do the file paths or code changes suggest an impact on other teams' functionalities?
+	- **Performance:** Are there any obvious performance implications (e.g., new loops, database queries)?
+	- **Security:** Does the code appear to follow secure coding patterns, or are there potential vulnerabilities?
+
+	Here is the git diff:
+	$GIT_DIFF"
+
+	# Call the gemini CLI with the new prompt
 	AI_SUMMARY=$(gemini "$PROMPT")
 
 	if [ -z "$AI_SUMMARY" ]; then
-		echo "❌ Could not generate a summary from Gemini. You will start with a blank description."
-		AI_SUMMARY=""
+	  echo "❌ Could not generate a summary from Gemini. You will start with a blank description."
+	  AI_SUMMARY=""
 	fi
 
 	# --- 3. Review and Edit Step ---
-	# Create a temporary file to hold the PR body
 	BODY_FILE=$(mktemp)
-	trap 'rm -f "$BODY_FILE"' EXIT # This ensures the temp file is deleted when the script exits
+	trap 'rm -f "$BODY_FILE"' EXIT
 
-	# Write the AI summary into the temp file
 	echo -e "$AI_SUMMARY" > "$BODY_FILE"
 
-	echo "✅ AI summary generated:"
+	echo "✅ AI analysis complete:"
 	echo "--------------------------------------------------"
 	cat "$BODY_FILE"
 	echo "--------------------------------------------------"
 
-	# Ask the user for action. Loop until a valid choice is made.
+	# Ask the user for action
 	while true; do
-		read -r -p "👉 Press 'e' to edit, 'c' to continue as-is, or 'f' to start fresh: " choice
-		case "$choice" in
-			e|E )
-				# Open the user's default editor to edit the file.
-				${EDITOR:-vim} "$BODY_FILE"
-				break
-				;;
-			c|C )
-				# Continue without editing
-				echo "✅ Using the generated summary as-is."
-				break
-				;;
-			f|F )
-				# Start fresh by clearing the file
-				> "$BODY_FILE"
-				echo "🗑️ Cleared summary. The PR description will be based on your chosen template."
-				break
-				;;
-			* )
-				echo "Invalid choice. Please try again."
-				;;
-		esac
+	  read -r -p "👉 Press 'e' to edit, 'c' to continue as-is, or 'f' to start fresh: " choice
+	  case "$choice" in
+	    e|E )
+	      ${EDITOR:-vim} "$BODY_FILE"
+	      break
+	      ;;
+	    c|C )
+	      echo "✅ Using the generated analysis as-is."
+	      break
+	      ;;
+	    f|F )
+	      true > "$BODY_FILE"
+	      echo "🗑️ Cleared analysis. The PR description will be based on your chosen template."
+	      break
+	      ;;
+	    * )
+	      echo "Invalid choice. Please try again."
+	      ;;
+	  esac
 	done
 
 	# --- 4. Create the pull request using gh ---
-	# We use --body-file to pass the contents of our (potentially edited) temp file.
 	echo "🚀 Opening GitHub CLI to create the pull request..."
 	gh pr create --body-file "$BODY_FILE"
 

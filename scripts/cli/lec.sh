@@ -533,6 +533,8 @@ cmd_remove() {
 	_print_success "Project ${worktree_name} removed"
 }
 cmd_share(){
+	local exportFlag="${1}"
+
 	_checkCWDProject
 
 	_print_step "Zipping up workspace..."
@@ -542,6 +544,10 @@ cmd_share(){
 
 		if ! ./gradlew shareWorkspace; then
 			exit 1
+		fi
+
+		if [[ "${exportFlag}" == "--export" ]]; then
+			cmd_exportData
 		fi
 
 		_print_success "Workspace saved"

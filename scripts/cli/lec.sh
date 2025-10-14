@@ -388,8 +388,10 @@ _cmd_ports() {
 	_getServicePorts "${serviceName}"
 }
 _cmd_pr() {
-	# A script to help create high-quality pull requests with an AI-generated summary
-	# and a preliminary checklist analysis.
+	#!/bin/bash
+
+	# A script to help create high-quality pull requests with a smart, context-aware
+	# summary and checklist analysis.
 
 	echo "🤖 Let's create a high-quality pull request!"
 
@@ -402,14 +404,15 @@ _cmd_pr() {
 	  exit 1
 	fi
 
-	# --- 2. Ask Gemini to perform a detailed analysis ---
+	# --- 2. Ask Gemini to perform a smart analysis ---
 	echo "🧠 Asking Gemini to analyze your changes and generate a PR description... (this might take a moment)"
 
-	# This new, more detailed prompt asks the AI to act as a reviewer.
-	# It requests both a summary and a checklist analysis based on the provided diff.
+	# This prompt is updated to be more concise for non-applicable sections.
 	PROMPT="Act as a senior software engineer reviewing a pull request. Based on the following git diff, provide two sections:
-	1. A concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes.
-	2. A checklist answering the following questions based *only* on the provided code changes. For each question, provide a brief explanation for your answer.
+	1.  A concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes.
+	2.  A checklist answering the following questions based *only* on the provided code changes.
+
+	**Important Rule:** If a question is obviously not applicable to the diff (e.g., no frontend files touched for the 'Accessibility' question), state so briefly (e.g., \"Not applicable as this is a backend-only change.\"). Only provide a detailed explanation for questions that are relevant to the changes.
 
 	**Checklist Questions:**
 	- **Tests:** Does this change include tests? If not, why might that be?

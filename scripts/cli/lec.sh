@@ -412,7 +412,7 @@ _cmd_pr() {
 	# Call the gemini CLI.
 	# Note: The exact command might vary based on your tool.
 	# This assumes the 'gemini' command is installed and authenticated.
-	AI_SUMMARY=$(gemini text -p "$PROMPT")
+	AI_SUMMARY=$(gemini "$PROMPT")
 
 	if [ -z "$AI_SUMMARY" ]; then
 	  echo "❌ Could not generate a summary from Gemini. Proceeding without one."

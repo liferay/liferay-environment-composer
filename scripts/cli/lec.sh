@@ -88,7 +88,7 @@ _printHelpAndExit() {
 		  clean                            Stop a Composer project and remove Docker volumes
 		  exportData                       Export container data for a Composer project
 		  remove                           Completely tear down and remove a Composer project
-		  share                            Save a Composer workspace for sharing
+		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                          Prints the current version of lec
 

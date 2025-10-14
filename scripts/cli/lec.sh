@@ -408,13 +408,13 @@ _cmd_pr() {
 	echo "🧠 Asking Gemini to analyze your changes and generate a PR description... (this might take a moment)"
 
 	# This prompt is updated to be more concise for non-applicable sections.
-	PROMPT="Act as a senior software engineer reviewing a pull request. Based on the following git diff, provide two sections:
-	1.  A concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes.
-	2.  A checklist answering the following questions based *only* on the provided code changes.
+	PROMPT="Act as a senior software engineer reviewing a pull request. Based on the following git diff, provide the following sections:
 
-	**Important Rule:** If a question is obviously not applicable to the diff (e.g., no frontend files touched for the 'Accessibility' question), state so briefly (e.g., \"Not applicable as this is a backend-only change.\"). Only provide a detailed explanation for questions that are relevant to the changes.
+	**Summary:**
+	A concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes.
 
-	**Checklist Questions:**
+	**Checklist:**
+	A checklist answering the following questions based *only* on the provided code changes. Only provide a detailed explanation for questions that are relevant to the changes.
 	- **Tests:** Does this change include tests? If not, why might that be?
 	- **Accessibility (a11y):** Are there any changes that could impact UI accessibility?
 	- **Custom CSS:** Does this change introduce new or modified CSS, SCSS, or CSS-in-JS?
@@ -422,6 +422,9 @@ _cmd_pr() {
 	- **Cross-Team Impact:** Do the file paths or code changes suggest an impact on other teams' functionalities?
 	- **Performance:** Are there any obvious performance implications (e.g., new loops, database queries)?
 	- **Security:** Does the code appear to follow secure coding patterns, or are there potential vulnerabilities?
+
+	**Omitted:**
+	For any questions from the checklist that are not applicable to the changes, list them in this section.
 
 	Here is the git diff:
 	$GIT_DIFF"

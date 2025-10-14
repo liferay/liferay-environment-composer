@@ -388,46 +388,78 @@ _cmd_ports() {
 	_getServicePorts "${serviceName}"
 }
 _cmd_pr() {
-	# A script to help create high-quality pull requests with an AI-generated summary.
+	# A script to help create high-quality pull requests with an AI-generated summary
+	# that you can review and edit.
 
 	echo "🤖 Let's create a high-quality pull request!"
 
 	# --- 1. Get the code changes ---
-	# We compare the current branch with the 'main' branch.
-	# You might need to change 'main' to 'master' or your default branch.
-	TARGET_BRANCH="master"
+	TARGET_BRANCH="master" # <-- THIS LINE IS UPDATED
 	GIT_DIFF=$(git diff $TARGET_BRANCH...HEAD)
 
 	if [ -z "$GIT_DIFF" ]; then
-	  echo "⚠️ No changes detected between your branch and '$TARGET_BRANCH'. Please commit your changes."
-	  exit 1
+		echo "⚠️ No changes detected between your branch and '$TARGET_BRANCH'. Please commit your changes."
+		exit 1
 	fi
 
 	# --- 2. Ask Gemini to summarize the changes ---
-	echo "🧠 Asking Gemini to generate a summary of your changes... (this may take a moment)"
+	echo "🧠 Asking Gemini to generate a summary of your changes..."
 
-	# The prompt for the AI. It's engineered to produce a clean, bulleted list.
 	PROMPT="Based on the following git diff, please write a concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes. The tone should be for a pull request description. Here is the diff:\n\n$GIT_DIFF"
 
-	# Call the gemini CLI.
-	# Note: The exact command might vary based on your tool.
-	# This assumes the 'gemini' command is installed and authenticated.
+	# Call the gemini CLI
 	AI_SUMMARY=$(gemini "$PROMPT")
 
 	if [ -z "$AI_SUMMARY" ]; then
-	  echo "❌ Could not generate a summary from Gemini. Proceeding without one."
-	  AI_SUMMARY=""
+		echo "❌ Could not generate a summary from Gemini. You will start with a blank description."
+		AI_SUMMARY=""
 	fi
 
-	echo "✅ Summary generated!"
+	# --- 3. Review and Edit Step ---
+	# Create a temporary file to hold the PR body
+	BODY_FILE=$(mktemp)
+	trap 'rm -f "$BODY_FILE"' EXIT # This ensures the temp file is deleted when the script exits
 
-	# --- 3. Create the pull request using gh ---
-	# We use the `--body` flag to pass in our generated summary.
-	# gh will still use the templates, but it will place this summary at the top.
+	# Write the AI summary into the temp file
+	echo -e "$AI_SUMMARY" > "$BODY_FILE"
+
+	echo "✅ AI summary generated:"
+	echo "--------------------------------------------------"
+	cat "$BODY_FILE"
+	echo "--------------------------------------------------"
+
+	# Ask the user for action. Loop until a valid choice is made.
+	while true; do
+		read -r -p "👉 Press 'e' to edit, 'c' to continue as-is, or 'f' to start fresh: " choice
+		case "$choice" in
+			e|E )
+				# Open the user's default editor to edit the file.
+				${EDITOR:-vim} "$BODY_FILE"
+				break
+				;;
+			c|C )
+				# Continue without editing
+				echo "✅ Using the generated summary as-is."
+				break
+				;;
+			f|F )
+				# Start fresh by clearing the file
+				> "$BODY_FILE"
+				echo "🗑️ Cleared summary. The PR description will be based on your chosen template."
+				break
+				;;
+			* )
+				echo "Invalid choice. Please try again."
+				;;
+		esac
+	done
+
+	# --- 4. Create the pull request using gh ---
+	# We use --body-file to pass the contents of our (potentially edited) temp file.
 	echo "🚀 Opening GitHub CLI to create the pull request..."
-	gh pr create --body "$AI_SUMMARY"
+	gh pr create --body-file "$BODY_FILE"
 
-	echo "🎉 Done! Your pull request is being created."
+	echo "🎉 Done!"
 }
 _cmd_setVersion() {
 	local liferay_version

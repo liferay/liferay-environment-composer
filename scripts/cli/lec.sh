@@ -86,7 +86,7 @@ _printHelpAndExit() {
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
-		  export                           Export container data for a Composer project
+		  exportData                       Export container data for a Composer project
 		  remove                           Completely tear down and remove a Composer project
 		  share                            Save a Composer workspace for sharing
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
@@ -420,7 +420,7 @@ cmd_clean() {
 		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
 	)
 }
-cmd_export() {
+cmd_exportData() {
 	_checkCWDProject
 
 	_print_step "Exporting container data..."

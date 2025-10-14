@@ -387,6 +387,48 @@ _cmd_ports() {
 
 	_getServicePorts "${serviceName}"
 }
+_cmd_pr() {
+	# A script to help create high-quality pull requests with an AI-generated summary.
+
+	echo "🤖 Let's create a high-quality pull request!"
+
+	# --- 1. Get the code changes ---
+	# We compare the current branch with the 'main' branch.
+	# You might need to change 'main' to 'master' or your default branch.
+	TARGET_BRANCH="master"
+	GIT_DIFF=$(git diff $TARGET_BRANCH...HEAD)
+
+	if [ -z "$GIT_DIFF" ]; then
+	  echo "⚠️ No changes detected between your branch and '$TARGET_BRANCH'. Please commit your changes."
+	  exit 1
+	fi
+
+	# --- 2. Ask Gemini to summarize the changes ---
+	echo "🧠 Asking Gemini to generate a summary of your changes... (this may take a moment)"
+
+	# The prompt for the AI. It's engineered to produce a clean, bulleted list.
+	PROMPT="Based on the following git diff, please write a concise, one-sentence summary of the overall change, followed by a bulleted list of the key technical changes. The tone should be for a pull request description. Here is the diff:\n\n$GIT_DIFF"
+
+	# Call the gemini CLI.
+	# Note: The exact command might vary based on your tool.
+	# This assumes the 'gemini' command is installed and authenticated.
+	AI_SUMMARY=$(gemini text -p "$PROMPT")
+
+	if [ -z "$AI_SUMMARY" ]; then
+	  echo "❌ Could not generate a summary from Gemini. Proceeding without one."
+	  AI_SUMMARY=""
+	fi
+
+	echo "✅ Summary generated!"
+
+	# --- 3. Create the pull request using gh ---
+	# We use the `--body` flag to pass in our generated summary.
+	# gh will still use the templates, but it will place this summary at the top.
+	echo "🚀 Opening GitHub CLI to create the pull request..."
+	gh pr create --body "$AI_SUMMARY"
+
+	echo "🎉 Done! Your pull request is being created."
+}
 _cmd_setVersion() {
 	local liferay_version
 

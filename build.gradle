@@ -122,38 +122,42 @@ tasks.register("importDocumentLibraryStructure") {
 	}
 }
 
-tasks.register("shareWorkspace", Zip) {
-	archiveFileName = provider {
-		"workspace_${config.namespace}_${timestamp}.zip"
-	}
-
-	destinationDirectory = file 'shared_workspaces'
-
+tasks.register("shareWorkspace") {
 	doLast {
-		logger.lifecycle "\nWorkspace zip: ${archiveFile.get()}\n"
-	}
+		String fileListFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.txt"
+		String archiveFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.zip"
 
-	exclude ".gitkeep"
-	exclude ".gitignore"
-	exclude ".git"
-	exclude ".gradle"
-	exclude "binds"
-	exclude "dumps/*"
-	exclude "shared_workspaces"
-	exclude {
-		FileTreeElement fileTreeElement ->
+		file(fileListFileName).text = fileTree('.') {
+			exclude ".gitkeep"
+			exclude ".gitignore"
+			exclude ".git"
+			exclude ".gradle"
+			exclude "binds"
+			exclude "buildSrc/build"
+			exclude "buildSrc/.gradle"
+			exclude "dumps/*"
+			exclude "shared_workspaces"
+			exclude {
+				FileTreeElement fileTreeElement ->
 
-		fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
-		!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
-	}
+				fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
+				!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
+			}
 
-	from '.'
+			include "${config.dataDirectory}/**"
+			include "**/*"
+		}.files.collect {
+			File file ->
 
-	include "${config.dataDirectory}/**"
-	include "**/*"
+			project.relativePath(file)
+		}.join("\n")
 
-	outputs.upToDateWhen {
-		false
+		try {
+			waitForCommand("7z a -bsp2 ${archiveFileName} -i@${fileListFileName}")
+		}
+		finally {
+			file(fileListFileName).delete()
+		}
 	}
 }
 

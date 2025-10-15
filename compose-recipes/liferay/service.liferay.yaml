@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   liferay:/container-data/liferay
     liferay:
         container_name: ${NAMESPACE}-liferay
         env_file:

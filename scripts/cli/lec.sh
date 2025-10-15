@@ -494,7 +494,7 @@ cmd_init() {
 	_cancelIfEmpty "${liferay_version}"
 	_verifyLiferayVersion "${liferay_version}"
 
-	if [ "" != "$(_git for-each-ref refs/heads/${worktree_name})" ]; then
+	if _git rev-parse --verify --quiet "refs/heads/${worktree_name}" >/dev/null; then
 		_print_step "Deleting stale branch ${worktree_name}"
 		if ! _git branch -D "${worktree_name}"; then
 			exit 1

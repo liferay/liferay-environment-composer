@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   mysql:/container-data/mysql
     database:
         build:
             args:

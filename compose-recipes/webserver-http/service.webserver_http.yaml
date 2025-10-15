@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   webserver-http:/container-data/webserver-http
     webserver:
         build: ./compose-recipes/webserver-http
         container_name: ${NAMESPACE}-webserver-http

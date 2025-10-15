@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   elasticsearch:/container-data/elasticsearch
     elasticsearch:
         build: ./compose-recipes/elasticsearch
         container_name: ${NAMESPACE}-elasticsearch

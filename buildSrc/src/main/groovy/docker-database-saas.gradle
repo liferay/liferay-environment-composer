@@ -493,19 +493,21 @@ tasks.register("copyDatabaseDumpsToDumpsVolume") {
 
 			println dumpFile
 
-			String oldPath = dumpFile.absolutePath
-			String newPath = null
+			if (config.useDatabaseMariaDB || config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
+				String oldPath = dumpFile.absolutePath
+				String newPath = null
 
-			if (dumpFile.name.endsWith(".gz") && !dumpFile.name.endsWith(".sql.gz")) {
-				newPath = "${oldPath.substring(0, oldPath.length() - 3)}.sql.gz"
-			}
-			else if (!dumpFile.name.contains(".")) {
-				newPath = "${dumpFile.absolutePath}.sql"
-			}
+				if (dumpFile.name.endsWith(".gz") && !dumpFile.name.endsWith(".sql.gz")) {
+					newPath = "${oldPath.substring(0, oldPath.length() - 3)}.sql.gz"
+				}
+				else if (!dumpFile.name.contains(".")) {
+					newPath = "${dumpFile.absolutePath}.sql"
+				}
 
-			if (newPath != null) {
-				dumpFile.renameTo(newPath)
-				dumpFile = file(newPath)
+				if (newPath != null) {
+					dumpFile.renameTo(newPath)
+					dumpFile = file(newPath)
+				}
 			}
 
 			addToVolume(dumpsVolumeName, dumpFile)

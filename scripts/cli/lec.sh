@@ -432,7 +432,8 @@ cmd_exportData() {
 			exit 1
 		fi
 
-		local exportedDataRelativeDir=$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")
+		local exportedDataRelativeDir
+		exportedDataRelativeDir=$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")
 
 		_print_success "Container data exported to ${CWD_PROJECT_ROOT}/${exportedDataRelativeDir}"
 	)

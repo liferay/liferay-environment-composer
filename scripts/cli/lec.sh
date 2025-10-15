@@ -474,6 +474,13 @@ cmd_init() {
 	_cancelIfEmpty "${liferay_version}"
 	_verifyLiferayVersion "${liferay_version}"
 
+	if [ "" != "$(_git for-each-ref refs/heads/${worktree_name})" ]; then
+		_print_step "Deleting stale branch ${worktree_name}"
+		if ! _git branch -D "${worktree_name}"; then
+			exit 1
+		fi
+	fi
+
 	_print_step "Creating new worktree"
 	if ! _git worktree add -b "${worktree_name}" "${LEC_WORKSPACES_DIR}/${worktree_name}" HEAD; then
 		exit 1

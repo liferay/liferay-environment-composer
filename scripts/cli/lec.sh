@@ -540,7 +540,7 @@ cmd_remove() {
 
 	_print_success "Project ${worktree_name} removed"
 }
-cmd_share(){
+cmd_share() {
 	local exportFlag="${1}"
 
 	_checkCWDProject

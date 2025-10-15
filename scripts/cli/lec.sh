@@ -428,7 +428,7 @@ cmd_exportData() {
 	(
 		cd "${CWD_PROJECT_ROOT}" || exit
 
-		if ! ./gradlew exportContainerData; then
+		if ! ./gradlew exportContainerData --quiet; then
 			exit 1
 		fi
 
@@ -537,16 +537,20 @@ cmd_share(){
 
 	_checkCWDProject
 
-	_print_step "Zipping up workspace..."
-
 	(
 		cd "${CWD_PROJECT_ROOT}" || exit
 
 		if [[ "${exportFlag}" == "--export" ]]; then
-			cmd_exportData
+			_print_step "Exporting container data..."
+
+			if ! ./gradlew exportContainerData --quiet; then
+				exit 1
+			fi
 		fi
 
-		if ! ./gradlew shareWorkspace; then
+		_print_step "Zipping up workspace..."
+
+		if ! ./gradlew shareWorkspace | grep "Workspace zip"; then
 			exit 1
 		fi
 

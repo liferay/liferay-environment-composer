@@ -340,7 +340,7 @@ ext {
 	}
 
 	waitForCommand = {
-		String command, File cwd = null, boolean streamOutput = false ->
+		String command, File cwd = null, OutputStream outputStream = null ->
 
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()
 
@@ -348,7 +348,10 @@ ext {
 			commandLine "bash", "-c", command
 			ignoreExitValue true
 
-			if (streamOutput == false) {
+			if (outputStream != null) {
+				standardOutput outputStream
+			}
+			else {
 				standardOutput byteArrayOutputStream
 			}
 

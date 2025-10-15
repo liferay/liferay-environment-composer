@@ -125,7 +125,7 @@ tasks.register("importDocumentLibraryStructure") {
 tasks.register("shareWorkspace") {
 	doLast {
 		String fileListFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.txt"
-		String archiveFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.zip"
+		String archiveFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.7z"
 
 		file(fileListFileName).text = fileTree('.') {
 			exclude ".gitkeep"
@@ -153,7 +153,7 @@ tasks.register("shareWorkspace") {
 		}.join("\n")
 
 		try {
-			waitForCommand("7z a -bsp2 ${archiveFileName} -i@${fileListFileName}")
+			waitForCommand("7z a -m0=lzma2 -mx=1 -bsp2 ${archiveFileName} -i@${fileListFileName}")
 		}
 		finally {
 			file(fileListFileName).delete()

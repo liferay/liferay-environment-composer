@@ -1,1 +1,17 @@
 **/.gitkeep
+.github/
+.gradle/
+build/
+buildSrc/
+data/
+dumps/
+exported_data/
+build.gradle
+gradle.properties
+gradle-local.properties
+gradlew
+gradlew.bat
+README.markdown
+settings.gradle
+source-formatter-suppressions.xml
+source-formatter.properties

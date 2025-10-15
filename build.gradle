@@ -125,7 +125,7 @@ tasks.register("stop") {
 
 buildDockerImage {
 	doFirst {
-		waitForCommand("docker pull ${gradle.liferayWorkspace.dockerImageLiferay}", null, true)
+		waitForCommand("docker pull ${gradle.liferayWorkspace.dockerImageLiferay}", null, System.out)
 	}
 
 	onlyIf("using the Liferay service") {

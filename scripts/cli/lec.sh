@@ -542,12 +542,12 @@ cmd_share(){
 	(
 		cd "${CWD_PROJECT_ROOT}" || exit
 
-		if ! ./gradlew shareWorkspace; then
-			exit 1
-		fi
-
 		if [[ "${exportFlag}" == "--export" ]]; then
 			cmd_exportData
+		fi
+
+		if ! ./gradlew shareWorkspace; then
+			exit 1
 		fi
 
 		_print_success "Workspace saved"

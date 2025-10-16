@@ -299,7 +299,7 @@ _listSaaSEnvironments() {
 		return 0
 	fi
 
-	ls -1 "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/" | grep '\.json$' | sed 's/\.json$//g'
+	find "${LXC_REPOSITORY_PATH}/automation/environment-descriptors" -name '*.json' | sed -E 's,^.*/([^/]*).json$,\1,g'
 }
 _listWorktrees() {
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'

@@ -421,15 +421,13 @@ _writeLiferayVersion() {
 	(
 		cd "${worktree_dir}" || exit
 
-		if [ -f "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/${liferay_version}.json" ]; then
-			sed -E -i.bak "s/^#?lr.docker.environment.lxc.environment.name=.*$/lr.docker.environment.lxc.environment.name=${liferay_version}/g" gradle.properties
-			rm gradle.properties.bak
+		if _isLXCVersion "${liferay_version}"; then
+			_writeProperty "lr.docker.environment.lxc.environment.name" "${liferay_version}" gradle.properties
 
 			echo "LXC environment set to ${liferay_version} in gradle.properties"
-			blade gw copyLiferayLXCRepositoryConfigurations
+			_gradle copyLiferayLXCRepositoryConfigurations
 		else
-			sed -E -i.bak "s/^liferay.workspace.product=.*$/liferay.workspace.product=${liferay_version}/g" gradle.properties
-			rm gradle.properties.bak
+			_writeProperty "liferay.workspace.product" "${liferay_version}" gradle.properties
 
 			echo "Liferay version set to ${liferay_version} in gradle.properties"
 		fi

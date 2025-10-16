@@ -126,15 +126,17 @@ _prompt() {
 	read -r "${2:?Need a variable to write response to}"
 }
 _select() {
-	local prompt_message="${*}"
+	local prompt_message="${1}"
+	shift
 
-	fzf --color="dark" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse
+	fzf --color="dark" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse "${@}"
 }
 
 _selectMultiple() {
-	local prompt_message="${*}"
+	local prompt_message="${1}"
+	shift
 
-	fzf --color="dark" --height=50% --info="inline" --multi --marker="*" --prompt "${prompt_message} > " --reverse
+	fzf --color="dark" --height=50% --info="inline" --multi --marker="*" --prompt "${prompt_message} > " --reverse "${@}"
 }
 
 #

@@ -328,6 +328,34 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
+_removeWorktree() {
+	local worktree="${1:?Worktree directory required}"
+
+	if [[ ! -d "${worktree}" ]]; then
+		_errorExit "${worktree} is not a directory"
+	fi
+
+	local worktree_name="${worktree##*/}"
+
+	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
+		return
+	fi
+
+	_print_step "Shutting down project and removing Docker volumes..."
+	(
+		cd "${worktree}" || exit 1
+
+		./gradlew stop -Plr.docker.environment.clear.volume.data=true
+	)
+
+	_print_step "Removing project dir..."
+	_git worktree remove --force "${worktree_name}"
+
+	_print_step "Removing Git branch..."
+	_git branch -D "${worktree_name}"
+
+	_print_success "Project ${worktree_name} removed"
+}
 _selectLiferayRelease() {
 	_listReleases | _select "Choose a Liferay version"
 }
@@ -519,26 +547,7 @@ cmd_remove() {
 	worktree="$(_selectWorktree)"
 	_cancelIfEmpty "${worktree}"
 
-	local worktree_name="${worktree##*/}"
-
-	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
-		_cancelIfEmpty ""
-	fi
-
-	_print_step "Shutting down project and removing Docker volumes..."
-	(
-		cd "${worktree}" || exit 1
-
-		./gradlew stop -Plr.docker.environment.clear.volume.data=true
-	)
-
-	_print_step "Removing project dir..."
-	_git worktree remove --force "${worktree_name}"
-
-	_print_step "Removing Git branch..."
-	_git branch -D "${worktree_name}"
-
-	_print_success "Project ${worktree_name} removed"
+	_removeWorktree "${worktree}"
 }
 cmd_share() {
 	local exportFlag="${1}"

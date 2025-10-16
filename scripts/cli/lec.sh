@@ -347,6 +347,15 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
+_gradle() {
+	_checkCWDProject
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		./gradlew "${@}"
+	)
+}
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
 
@@ -428,13 +437,7 @@ _cmd_commands() {
 	_listPrivateCommands
 }
 _cmd_gw() {
-	_checkCWDProject
-
-	(
-		cd "${CWD_PROJECT_ROOT}" || exit
-
-		./gradlew "${@}"
-	)
+	_gradle "${@}"
 }
 _cmd_fn() {
 	"${1}" "${@:2}"

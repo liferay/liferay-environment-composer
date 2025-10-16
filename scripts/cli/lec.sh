@@ -7,8 +7,12 @@ if [[ -z "${LEC_WORKSPACES_DIR}" ]]; then
 	LEC_WORKSPACES_DIR="${LEC_REPO_ROOT}/../lec-workspaces"
 fi
 
-if [ "" == "${LXC_REPOSITORY_PATH}" ] && [ -d "${HOME}/dev/projects/liferay-lxc" ]; then
+LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR=""
+if [ ! -d "${LXC_REPOSITORY_PATH}" ] && [ -d "${HOME}/dev/projects/liferay-lxc" ]; then
 	LXC_REPOSITORY_PATH="${HOME}/dev/projects/liferay-lxc"
+fi
+if [[ -d "${LXC_REPOSITORY_PATH}" ]]; then
+	LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR="${LXC_REPOSITORY_PATH}/automation/environment-descriptors"
 fi
 
 #
@@ -295,11 +299,11 @@ _listRunningProjects() {
 	docker compose ls --format=json | jq -r '.[] | .ConfigFiles' | sed 's@,@\n@g' | grep compose-recipes | sed 's,/compose-recipes/.*,,g' | sort -u
 }
 _listSaaSEnvironments() {
-	if [ ! -d "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/" ]; then
+	if [ ! -d "${LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR}" ]; then
 		return 0
 	fi
 
-	find "${LXC_REPOSITORY_PATH}/automation/environment-descriptors" -name '*.json' | sed -E 's,^.*/([^/]*).json$,\1,g'
+	find "${LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR}" -name '*.json' | sed -E 's,^.*/([^/]*).json$,\1,g'
 }
 _listWorktrees() {
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'
@@ -390,10 +394,17 @@ _selectLiferayRelease() {
 		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}     :: ,g"
 	) | _select "Select a Liferay release or LXC ID" --delimiter=": " --accept-nth=2
 }
+_isLXCVersion() {
+	local lxc_version="${1}"
+
+	if [[ ! -f "${LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR}/${lxc_version}.json" ]]; then
+		return 1
+	fi
+}
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
 
-	if test -f "${LXC_REPOSITORY_PATH}/automation/environment-descriptors/${liferay_version}.json"; then
+	if _isLXCVersion "${liferay_version}"; then
 		return 0
 	fi
 

@@ -377,9 +377,9 @@ _removeWorktree() {
 }
 _selectLiferayRelease() {
 	(
-		_listReleases
-		_listSaaSEnvironments
-	) | fzf --height=50% --reverse
+		_listReleases | sed "s,^,${C_GREEN}Release${C_NC} :: ,g"
+		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}     :: ,g"
+	) | _select "Select a Liferay release or LXC ID" --delimiter=": " --accept-nth=2
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"

@@ -606,10 +606,11 @@ cmd_init() {
 	worktree_dir="$(_getWorktreeDir "${worktree_name}")"
 
 	echo
-	echo "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
-
 	_print_step "Writing Liferay version"
+
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
+
+	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
 }
 cmd_remove() {
 	local worktree

@@ -429,10 +429,16 @@ _writeLiferayVersion() {
 
 			echo "LXC environment set to ${liferay_version} in gradle.properties"
 			_gradle copyLiferayLXCRepositoryConfigurations
-		else
+
+			return
+		fi
+
+		if _isReleaseVersion "${liferay_version}"; then
 			_writeProperty "liferay.workspace.product" "${liferay_version}" gradle.properties
 
 			echo "Liferay version set to ${liferay_version} in gradle.properties"
+
+			return
 		fi
 	)
 }

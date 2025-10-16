@@ -397,9 +397,12 @@ _selectLiferayRelease() {
 _isLXCVersion() {
 	local lxc_version="${1}"
 
-	if [[ ! -f "${LEC_LXC_ENVIRONMENT_DESCRIPTORS_DIR}/${lxc_version}.json" ]]; then
-		return 1
-	fi
+	_listSaaSEnvironments | grep -q "^${lxc_version}$"
+}
+_isReleaseVersion() {
+	local liferay_version="${1}"
+
+	_listReleases | grep -q "^${liferay_version}$"
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
@@ -408,7 +411,7 @@ _verifyLiferayVersion() {
 		return 0
 	fi
 
-	if _listReleases | grep -q "${liferay_version}"; then
+	if _isReleaseVersion "${liferay_version}"; then
 		return 0
 	fi
 

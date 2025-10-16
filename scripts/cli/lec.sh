@@ -127,6 +127,12 @@ _select() {
 	fzf --color="dark" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse
 }
 
+_selectMultiple() {
+	local prompt_message="${*}"
+
+	fzf --color="dark" --height=50% --info="inline" --multi --marker="*" --prompt "${prompt_message} > " --reverse
+}
+
 #
 # Dependencies
 #
@@ -416,6 +422,16 @@ _cmd_ports() {
 	local serviceName="${1}"
 
 	_getServicePorts "${serviceName}"
+}
+_cmd_remove2() {
+	local worktrees
+	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+	_cancelIfEmpty "${worktrees}"
+
+	for worktree in ${worktrees}; do
+		_removeWorktree "${worktree}"
+		echo
+	done
 }
 _cmd_setVersion() {
 	local liferay_version

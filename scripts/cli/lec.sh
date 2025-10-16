@@ -435,6 +435,18 @@ _writeLiferayVersion() {
 		fi
 	)
 }
+_writeProperty() {
+	local key="${1:?Need a key}"
+	local value="${2:?Need a value}"
+	local file="${3}"
+
+	if [[ ! -f "${file}" ]]; then
+		_errorExit "${file} is not a valid file"
+	fi
+
+	sed -E -i.bak "s/^#?${key}=.*$/${key}=${value}/g" "${file}"
+	rm "${file}.bak"
+}
 
 #
 # PRIVATE COMMAND DEFINITIONS

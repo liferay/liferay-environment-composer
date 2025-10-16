@@ -347,15 +347,6 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
-_gradle() {
-	_checkCWDProject
-
-	(
-		cd "${CWD_PROJECT_ROOT}" || exit
-
-		./gradlew "${@}"
-	)
-}
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
 
@@ -424,7 +415,7 @@ _writeLiferayVersion() {
 			_writeProperty "lr.docker.environment.lxc.environment.name" "${liferay_version}" gradle.properties
 
 			echo "LXC environment set to ${liferay_version} in gradle.properties"
-			_gradle copyLiferayLXCRepositoryConfigurations
+			./gradlew copyLiferayLXCRepositoryConfigurations
 
 			return
 		fi
@@ -463,7 +454,13 @@ _cmd_commands() {
 	_listPrivateCommands | sed 's,^,  ,g'
 }
 _cmd_gw() {
-	_gradle "${@}"
+	_checkCWDProject
+
+	(
+		cd "${CWD_PROJECT_ROOT}" || exit
+
+		./gradlew "${@}"
+	)
 }
 _cmd_fn() {
 	"${1}" "${@:2}"

@@ -452,10 +452,10 @@ _writeProperty() {
 
 _cmd_commands() {
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Public Commands:"
-	_listPublicCommands
+	_listPublicCommands | sed 's,^,  ,g'
 
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Private Commands:"
-	_listPrivateCommands
+	_listPrivateCommands | sed 's,^,  ,g'
 }
 _cmd_gw() {
 	_gradle "${@}"

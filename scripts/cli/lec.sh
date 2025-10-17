@@ -379,7 +379,7 @@ _selectLiferayRelease() {
 	(
 		_listReleases | sed "s,^,${C_GREEN}Release${C_NC} :: ,g"
 		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}     :: ,g"
-	) | _select "Select a Liferay release or LXC ID" --delimiter=": " --accept-nth=2
+	) | _select "Select a Liferay release or LXC ID" | awk -F ':: ' '{print $2}'
 }
 _isLXCVersion() {
 	local lxc_version="${1}"

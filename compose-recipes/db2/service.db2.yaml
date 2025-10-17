@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   db2:/container-data/db2
     database:
         build: ./compose-recipes/db2
         container_name: ${NAMESPACE}-database-db2

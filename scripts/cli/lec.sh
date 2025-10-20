@@ -207,10 +207,6 @@ _check_dependency() {
 }
 
 _check_dependencies() {
-	if ! _check_dependency fzf; then
-		_print_warn "Dependency \"fzf\" is not installed. Please install it following the instructions here: https://junegunn.github.io/fzf/installation/"
-	fi
-
 	if ! _check_dependency jq; then
 		_print_warn "Dependency \"jq\" is not installed. Please install it following the instructions here: https://jqlang.org/download/"
 	fi

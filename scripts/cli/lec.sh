@@ -150,14 +150,14 @@ _select() {
 	local prompt_message="${1}"
 	shift
 
-	fzf --color="dark" --height=50% --info="inline" --prompt "${prompt_message} > " --reverse "${@}"
+	_fzf --prompt "${prompt_message} > " "${@}"
 }
 
 _selectMultiple() {
 	local prompt_message="${1}"
 	shift
 
-	fzf --color="dark" --height=50% --info="inline" --multi --marker="*" --prompt "${prompt_message} > " --reverse "${@}"
+	_fzf --multi --marker="*" --prompt "${prompt_message} > " "${@}"
 }
 
 #
@@ -333,7 +333,7 @@ _listWorktrees() {
 _getClosestCommand() {
 	local command="${1}"
 
-	_listPublicCommands | fzf --bind="load:accept" --exit-0 --height 30% --reverse --select-1 --query "${command}"
+	_listPublicCommands | _fzf --bind="load:accept" --exit-0 --select-1 --query "${command}"
 }
 _verifyCommand() {
 	local command="${1}"

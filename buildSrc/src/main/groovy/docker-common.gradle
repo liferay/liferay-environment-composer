@@ -360,6 +360,10 @@ ext {
 			}
 		}
 
+		if (config.useDatabaseDB2 && (stdout.toString().contains("SQL0100W") || stdout.toString().contains("0 record(s) selected"))) {
+			return stdout.toString().trim()
+		}
+
 		execResult.assertNormalExitValue()
 
 		return byteArrayOutputStream.toString().trim()

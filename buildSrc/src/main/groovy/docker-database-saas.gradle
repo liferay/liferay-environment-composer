@@ -175,7 +175,12 @@ ext {
 	disableUserObjectValidations = {
 		String schema ->
 
-		executeSQLQuery("update ObjectValidationRule set active_ = 'false' where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
+		if (config.useDatabaseSQLServer) {
+			executeSQLQuery("update ObjectValidationRule set active_ = 'false' where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
+		}
+		else {
+			executeSQLQuery("update ObjectValidationRule set active_ = false where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
+		}
 
 		println "Disabled object validation users for User system object in schema ${schema}"
 	}
@@ -253,7 +258,12 @@ ext {
 
 		sanitizePortalPreferenceValues(schema, sanitizedPreferences)
 
-		executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = 'false'", schema)
+		if (config.useDatabaseSQLServer) {
+			executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = 'false'", schema)
+		}
+		else {
+			executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = false", schema)
+		}
 
 		println "Sanitized known POP and SMTP configurations in schema ${schema}"
 	}

@@ -3,7 +3,10 @@ services:
         volumes:
             -   postgres:/container-data/postgres
     database:
-        build: ./compose-recipes/postgres
+        build:
+            args:
+                POSTGRES_VERSION: ${POSTGRES_VERSION}
+            context: ./compose-recipes/postgres
         container_name: ${NAMESPACE}-database-postgres
         deploy:
             resources:

@@ -1,4 +1,6 @@
-FROM mcr.microsoft.com/mssql/server:2022-CU21-ubuntu-22.04
+ARG SQLSERVER_VERSION=2022-CU21-ubuntu-22.04
+
+FROM mcr.microsoft.com/mssql/server:${SQLSERVER_VERSION}
 
 USER root
 

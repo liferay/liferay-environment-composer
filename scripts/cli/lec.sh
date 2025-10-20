@@ -393,10 +393,16 @@ _removeWorktree() {
 	_print_success "Project ${worktree_name} removed"
 }
 _selectLiferayRelease() {
+	local promptMessage="Select a Liferay release"
+
+	if [ -d "${LXC_REPOSITORY_PATH}" ]; then
+		promptMessage="${promptMessage} or LXC ID"
+	fi
+
 	(
 		_listReleases | sed "s,^,${C_GREEN}Release${C_NC} :: ,g"
 		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}     :: ,g"
-	) | _select "Select a Liferay release or LXC ID" | awk -F ':: ' '{print $2}'
+	) | _select "${promptMessage}" | awk -F ':: ' '{print $2}'
 }
 _isLXCVersion() {
 	local lxc_version="${1}"

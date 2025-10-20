@@ -12,6 +12,24 @@ if [ ! -d "${LXC_REPOSITORY_PATH}" ] && [ -d "${HOME}/dev/projects/liferay-lxc" 
 fi
 
 #
+# Helper function for fzf
+#
+
+_fzf () {
+	if [[ -x "${LEC_REPO_ROOT}/scripts/cli/dependencies/fzf" ]]; then
+		"${LEC_REPO_ROOT}/scripts/cli/dependencies/fzf" "${@}"
+
+		return
+	fi
+
+	if ! _check_dependency fzf; then
+		_print_warn "Dependency \"fzf\" is not installed. Please install it following the instructions here: https://junegunn.github.io/fzf/installation/"
+	fi
+
+	fzf "${@}"
+}
+
+#
 # Git helper functions
 #
 

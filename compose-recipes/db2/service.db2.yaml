@@ -3,7 +3,10 @@ services:
         volumes:
             -   db2:/container-data/db2
     database:
-        build: ./compose-recipes/db2
+        build:
+            args:
+                DB2_VERSION: ${DB2_VERSION}
+            context: ./compose-recipes/db2
         container_name: ${NAMESPACE}-database-db2
         environment:
             -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}

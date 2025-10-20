@@ -198,6 +198,16 @@ file("ports.env").withInputStream {
 	environmentMap.putAll ports
 }
 
+file("versions.env").withInputStream {
+	versionsFile ->
+
+	Properties versions = new Properties()
+
+	versions.load(versionsFile)
+
+	environmentMap.putAll versions
+}
+
 file('.env').withOutputStream {
 	BufferedOutputStream envFileOutputStream ->
 

@@ -1,4 +1,6 @@
-FROM postgres:16.3
+ARG POSTGRES_VERSION=16.3
+
+FROM postgres:${POSTGRES_VERSION}
 
 # Create a log file and give ownership to postgres
 

@@ -1,4 +1,6 @@
-FROM mariadb:10.6.22-jammy
+ARG MARIADB_VERSION=10.6.22-jammy
+
+FROM mariadb:${MARIADB_VERSION}
 
 RUN touch /startup_log.txt
 RUN chown mysql:mysql /startup_log.txt

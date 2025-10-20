@@ -3,7 +3,10 @@ services:
         volumes:
             -   mysql:/container-data/mysql
     database:
-        build: ./compose-recipes/mysql
+        build:
+            args:
+                MYSQL_VERSION: ${MYSQL_VERSION}
+            context: ./compose-recipes/mysql
         container_name: ${NAMESPACE}-database-mysql
         environment:
             -   MYSQL_ALLOW_EMPTY_PASSWORD=1

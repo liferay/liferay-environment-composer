@@ -333,7 +333,7 @@ _listWorktrees() {
 _getClosestCommand() {
 	local command="${1}"
 
-	_listPublicCommands | _fzf --bind="load:accept" --exit-0 --select-1 --query "${command}"
+	_listPublicCommands | _fzf --filter "${command}"
 }
 _verifyCommand() {
 	local command="${1}"

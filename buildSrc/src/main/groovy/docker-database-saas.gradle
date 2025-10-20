@@ -281,7 +281,14 @@ ext {
 	truncateTables = {
 		String tableNamePattern, String schema ->
 
-		List<Map<String, String>> tableNames = executeSQLQuery("select TABLE_NAME from information_schema.TABLES WHERE TABLE_SCHEMA = '${schema}' and TABLE_NAME like '${tableNamePattern}' OR TABLE_NAME like '${tableNamePattern.toLowerCase()}'", schema)
+		List<Map<String, String>> tableNames
+
+		if (config.useDatabaseDB2) {
+			tableNames = executeSQLQuery("select TABLE_NAME from sysibm.tables WHERE TABLE_CATALOG = '" + schema.toUpperCase() + "' and TABLE_NAME like '${tableNamePattern}' OR TABLE_NAME like '${tableNamePattern.toLowerCase()}'", schema)
+		}
+		else {
+			tableNames = executeSQLQuery("select TABLE_NAME from information_schema.TABLES WHERE TABLE_SCHEMA = '${schema}' and TABLE_NAME like '${tableNamePattern}' OR TABLE_NAME like '${tableNamePattern.toLowerCase()}'", schema)
+		}
 
 		tableNames.each {
 			Map<String, String> resultRow ->

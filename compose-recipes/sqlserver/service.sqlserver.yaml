@@ -3,7 +3,10 @@ services:
         volumes:
             -   sqlserver:/container-data/sqlserver
     database:
-        build: ./compose-recipes/sqlserver
+        build:
+            args:
+                SQLSERVER_VERSION: ${SQLSERVER_VERSION}
+            context: ./compose-recipes/sqlserver
         container_name: ${NAMESPACE}-database-sqlserver
         deploy:
             resources:

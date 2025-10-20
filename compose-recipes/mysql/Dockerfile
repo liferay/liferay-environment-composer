@@ -1,4 +1,6 @@
-FROM mysql:8.4.5-oracle
+ARG MYSQL_VERSION=8.4.5-oracle
+
+FROM mysql:${MYSQL_VERSION}
 
 RUN touch /startup_log.txt
 RUN chown mysql:mysql /startup_log.txt

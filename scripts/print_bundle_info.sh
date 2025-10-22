@@ -1,7 +1,5 @@
 #!/bin/bash
 
-DEPLOY_DIR="$(pwd)/binds/liferay/deploy"
-
 if [[ -f .env ]]; then
 	# Try the project name from the .env file
 	PROJECT_NAME="$(grep COMPOSE_PROJECT_NAME .env | sed 's,COMPOSE_PROJECT_NAME=,,g')"
@@ -46,7 +44,7 @@ if [[ "${LIFERAY_VERSION}" ]]; then
 fi
 
 sed \
-	-e "s,{{DEPLOY_DIR}},${DEPLOY_DIR},g" \
+	-e "s,{{PROJECT_NAME}},${PROJECT_NAME},g" \
 	./templates/scripts/deploy_part.build.gradle.template
 
 echo ""

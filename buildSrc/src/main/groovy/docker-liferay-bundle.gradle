@@ -311,6 +311,9 @@ tasks.register("listAdminUsers") {
 	onlyIf("using an external database") {
 		config.useDatabase
 	}
+	onlyIf("database is not empty") {
+		!Util.isEmpty(project.fileTree("dumps")) || !Util.isEmpty(project.fileTree(config.dataDirectory)) || config.useLiferay
+	}
 
 	Closure<Void> listAdminUsersForCompany = {
 		String companyId, String hostname, String webId, String schema ->

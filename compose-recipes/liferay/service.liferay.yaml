@@ -1,6 +1,7 @@
 services:
     data-helper:
         volumes:
+            -   glowroot:/container-data/glowroot
             -   liferay:/container-data/liferay
     liferay:
         container_name: ${NAMESPACE}-liferay
@@ -23,6 +24,8 @@ services:
             -   "${LIFERAY_GOGO_SHELL_PORT}:11311"
             -   "${LIFERAY_PORT}:8080"
         volumes:
+            -   glowroot:/opt/liferay/glowroot/data
             -   liferay:/opt/liferay/data
 volumes:
+    glowroot:
     liferay:

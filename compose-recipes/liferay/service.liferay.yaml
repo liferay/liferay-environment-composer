@@ -23,7 +23,6 @@ services:
             -   "${LIFERAY_GOGO_SHELL_PORT}:11311"
             -   "${LIFERAY_PORT}:8080"
         volumes:
-            -   ./binds/liferay/deploy:/mnt/liferay/deploy
             -   liferay:/opt/liferay/data
 volumes:
     liferay:

@@ -122,7 +122,7 @@ ext {
 
 		JsonSlurper jsonSlurper = new JsonSlurper()
 
-		Map<String, String> environmentVariables = jsonSlurper.parse(lcpJsonFile)["environments"][config.lxcEnvironmentName]
+		Map<String, String> environmentVariables = jsonSlurper.parse(lcpJsonFile)["environments"][config.lxcEnvironmentName]["env"]
 
 		String jdbcURL = environmentVariables["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"]
 

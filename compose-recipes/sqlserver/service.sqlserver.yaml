@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   sqlserver:/container-data/sqlserver
     database:
         build: ./compose-recipes/sqlserver
         container_name: ${NAMESPACE}-database-sqlserver

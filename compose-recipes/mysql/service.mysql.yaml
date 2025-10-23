@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   mysql:/container-data/mysql
     database:
         build: ./compose-recipes/mysql
         container_name: ${NAMESPACE}-database-mysql

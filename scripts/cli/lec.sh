@@ -365,6 +365,12 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
+_list_running_projects() {
+	_listRunningProjects
+}
+_list_worktrees() {
+	_listWorktrees
+}
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
 
@@ -518,12 +524,6 @@ _cmd_gw() {
 }
 _cmd_fn() {
 	"${1}" "${@:2}"
-}
-_cmd_listRunning() {
-	_listRunningProjects
-}
-_cmd_listWorktrees() {
-	_listWorktrees
 }
 _cmd_ports() {
 	local serviceName="${1}"

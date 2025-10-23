@@ -112,6 +112,7 @@ _printHelpAndExit() {
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
 		  exportData                       Export container data for a Composer project
+		  listReleases                     Lists all dxp and portal releases
 		  remove                           Completely tear down and remove one or more Composer projects
 		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
@@ -654,6 +655,11 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
+}
+cmd_listReleases() {
+	_print_step "Listing all releases..."
+
+	_listReleases
 }
 cmd_remove() {
 	local worktrees

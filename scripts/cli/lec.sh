@@ -112,7 +112,7 @@ _printHelpAndExit() {
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
 		  exportData                       Export container data for a Composer project
-		  listReleases                     Lists all dxp and portal releases
+		  list [resource]                  List resources of a specified type
 		  remove                           Completely tear down and remove one or more Composer projects
 		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
@@ -656,10 +656,37 @@ cmd_init() {
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
 }
-cmd_listReleases() {
-	_print_step "Listing all releases..."
+cmd_list() {
+	local closest_resource
+	local resource="${1}"
+	local valid_resources=(releases worktrees)
 
-	_listReleases
+	if [[ ! "${valid_resources[@]}" =~ "${resource}" ]]; then
+		closest_resource=$(echo "${valid_resources[@]}" | sed "s, ,\\n,g" | _fzf --filter "${resource}" | head -n 1)
+
+		if [[ "${closest_resource}" != "" ]]; then
+			_print_error "'${resource}' is not a valid option. Did you mean '${closest_resource}'?"
+		fi
+	fi
+
+	case ${resource} in
+		"releases")
+			_print_step "Listing all valid releases..."
+
+			_listReleases
+			;;
+		"")
+			_print_step "Possible resources to list"
+
+			echo ${valid_resources[@]} | sed "s, ,\\n,g"
+			;;
+		*)
+			if [[ "${closest_resource}" == "" ]]; then
+				_print_error "Not a valid resource; please provide a valid resource"
+			fi
+
+			;;
+	esac
 }
 cmd_remove() {
 	local worktrees

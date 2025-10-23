@@ -365,8 +365,14 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
+_list_releases() {
+	_listReleases
+}
 _list_running_projects() {
 	_listRunningProjects
+}
+_list_saas_environments() {
+	_listSaaSEnvironments
 }
 _list_worktrees() {
 	_listWorktrees

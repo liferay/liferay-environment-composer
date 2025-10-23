@@ -9,6 +9,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 ext {
+	FALSE_SQL_VALUE = config.useDatabaseSQLServer ? "'false'" : "false"
 	SSO_CONFIGS = [".ldap.", ".multi.factor.authentication.", ".saml.", ".openid."]
 	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
 
@@ -175,12 +176,7 @@ ext {
 	disableUserObjectValidations = {
 		String schema ->
 
-		if (config.useDatabaseSQLServer) {
-			executeSQLQuery("update ObjectValidationRule set active_ = 'false' where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
-		}
-		else {
-			executeSQLQuery("update ObjectValidationRule set active_ = false where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
-		}
+		executeSQLQuery("update ObjectValidationRule set active_ = ${FALSE_SQL_VALUE} where objectDefinitionId in (select objectDefinitionId from ObjectDefinition where externalReferenceCode = 'L_USER')", schema)
 
 		println "Disabled object validation users for User system object in schema ${schema}"
 	}
@@ -258,12 +254,7 @@ ext {
 
 		sanitizePortalPreferenceValues(schema, sanitizedPreferences)
 
-		if (config.useDatabaseSQLServer) {
-			executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = 'false'", schema)
-		}
-		else {
-			executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = false", schema)
-		}
+		executeSQLQuery("update MBMailingList set inServerName = 'fake-pop3-host', outServerName = 'fake-smtp-host', inPassword = 'fake-pop3-password', outPassword = 'fake-smtp-password', active_ = ${FALSE_SQL_VALUE}", schema)
 
 		println "Sanitized known POP and SMTP configurations in schema ${schema}"
 	}

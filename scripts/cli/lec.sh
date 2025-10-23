@@ -519,7 +519,7 @@ _cmd_gw() {
 _cmd_fn() {
 	"${1}" "${@:2}"
 }
-_cmd_list() {
+_cmd_listWorktrees() {
 	_listWorktrees
 }
 _cmd_listRunning() {

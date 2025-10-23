@@ -662,7 +662,7 @@ cmd_init() {
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
 }
-cmd_list() {
+_cmd_list() {
 	local closest_resource
 	local resource="${1}"
 	local valid_resources=(releases worktrees)

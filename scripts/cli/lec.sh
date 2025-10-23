@@ -534,7 +534,7 @@ _cmd_gw() {
 _cmd_list() {
 	local closest_resource
 	local resource="${1}"
-	local valid_resources=(releases worktrees)
+	local valid_resources=$(_listFunctions _list_ | sed "s,_list_,,g")
 
 	if [[ ! "${valid_resources[@]}" =~ "${resource}" ]]; then
 		closest_resource=$(echo "${valid_resources[@]}" | sed "s, ,\\n,g" | _fzf --filter "${resource}" | head -n 1)
@@ -544,11 +544,15 @@ _cmd_list() {
 		fi
 	fi
 
-	case ${resource} in
-		"releases")
-			_print_step "Listing all valid releases..."
+	shopt -s extglob
 
-			_listReleases
+	local valid_resources_pattern="@($(echo ${valid_resources[@]} | sed "s, ,\|,g"))"
+
+	case ${resource} in
+		${valid_resources_pattern})
+			_print_step "Listing all ${resource//_/ }..."
+
+			_list_${resource}
 			;;
 		"")
 			_print_step "Possible resources to list"

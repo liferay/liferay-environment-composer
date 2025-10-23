@@ -519,6 +519,9 @@ _cmd_commands() {
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Private Commands:"
 	_listPrivateCommands | sed 's,^,  ,g'
 }
+_cmd_fn() {
+	"${1}" "${@:2}"
+}
 _cmd_gw() {
 	_checkCWDProject
 
@@ -528,8 +531,37 @@ _cmd_gw() {
 		./gradlew "${@}"
 	)
 }
-_cmd_fn() {
-	"${1}" "${@:2}"
+_cmd_list() {
+	local closest_resource
+	local resource="${1}"
+	local valid_resources=(releases worktrees)
+
+	if [[ ! "${valid_resources[@]}" =~ "${resource}" ]]; then
+		closest_resource=$(echo "${valid_resources[@]}" | sed "s, ,\\n,g" | _fzf --filter "${resource}" | head -n 1)
+
+		if [[ "${closest_resource}" != "" ]]; then
+			_print_error "'${resource}' is not a valid option. Did you mean '${closest_resource}'?"
+		fi
+	fi
+
+	case ${resource} in
+		"releases")
+			_print_step "Listing all valid releases..."
+
+			_listReleases
+			;;
+		"")
+			_print_step "Possible resources to list"
+
+			echo ${valid_resources[@]} | sed "s, ,\\n,g"
+			;;
+		*)
+			if [[ "${closest_resource}" == "" ]]; then
+				_print_error "Not a valid resource; please provide a valid resource"
+			fi
+
+			;;
+	esac
 }
 _cmd_ports() {
 	local serviceName="${1}"
@@ -661,38 +693,6 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
-}
-_cmd_list() {
-	local closest_resource
-	local resource="${1}"
-	local valid_resources=(releases worktrees)
-
-	if [[ ! "${valid_resources[@]}" =~ "${resource}" ]]; then
-		closest_resource=$(echo "${valid_resources[@]}" | sed "s, ,\\n,g" | _fzf --filter "${resource}" | head -n 1)
-
-		if [[ "${closest_resource}" != "" ]]; then
-			_print_error "'${resource}' is not a valid option. Did you mean '${closest_resource}'?"
-		fi
-	fi
-
-	case ${resource} in
-		"releases")
-			_print_step "Listing all valid releases..."
-
-			_listReleases
-			;;
-		"")
-			_print_step "Possible resources to list"
-
-			echo ${valid_resources[@]} | sed "s, ,\\n,g"
-			;;
-		*)
-			if [[ "${closest_resource}" == "" ]]; then
-				_print_error "Not a valid resource; please provide a valid resource"
-			fi
-
-			;;
-	esac
 }
 cmd_remove() {
 	local worktrees

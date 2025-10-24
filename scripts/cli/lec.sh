@@ -337,6 +337,11 @@ _verifyCommand() {
 
 	_listPublicCommands | grep -q "^${command}$"
 }
+_verifyListResource() {
+	local resource="${1}"
+
+	_listPrefixedFunctions _list_ | grep -wq "${resource}"
+}
 
 #
 # General helper functions
@@ -534,9 +539,6 @@ _cmd_gw() {
 _cmd_list() {
 	local closest_resource
 	local resource="${1}"
-	local valid_resources
-	
-	valid_resources=$(_listPrefixedFunctions _list_)
 
 	if [[ ${resource} == "" ]]; then
 		_print_step "Listing valid resources..."
@@ -546,10 +548,10 @@ _cmd_list() {
 		exit
 	fi
 
-	if ! echo -e "${valid_resources}" | grep -wq "${resource}"; then
+	if ! _verifyListResource "${resource}"; then
 		closest_resource=$(_listPrefixedFunctions _list_| _fzf --filter "${resource}" | head -n 1)
 
-		if echo -e "${valid_resources}" | grep -wq "${closest_resource}" && _confirm "Resource \"${resource}\" is unknown; use closest resource \"${closest_resource}\" instead?"; then
+		if _verifyListResource "${closest_resource}" && _confirm "Resource \"${resource}\" is unknown; use closest resource \"${closest_resource}\" instead?"; then
 			resource=${closest_resource}
 		else
 			_print_error "Resource \"${resource}\" is invalid. Listing valid resources..."

@@ -534,38 +534,35 @@ _cmd_gw() {
 _cmd_list() {
 	local closest_resource
 	local resource="${1}"
-	local valid_resources=$(_listFunctions _list_ | sed "s,_list_,,g")
+	local valid_resources
+	
+	valid_resources=$(_listPrefixedFunctions _list_)
 
-	if [[ ! "${valid_resources[@]}" =~ "${resource}" ]]; then
-		closest_resource=$(echo "${valid_resources[@]}" | sed "s, ,\\n,g" | _fzf --filter "${resource}" | head -n 1)
+	if [[ ${resource} == "" ]]; then
+		_print_step "Listing valid resources..."
 
-		if [[ "${closest_resource}" != "" ]]; then
-			_print_error "'${resource}' is not a valid option. Did you mean '${closest_resource}'?"
+		_listPrefixedFunctions _list_
+
+		exit
+	fi
+
+	if ! echo -e "${valid_resources}" | grep -wq "${resource}"; then
+		closest_resource=$(_listPrefixedFunctions _list_| _fzf --filter "${resource}" | head -n 1)
+
+		if echo -e "${valid_resources}" | grep -wq "${closest_resource}" && _confirm "Resource \"${resource}\" is unknown; use closest resource \"${closest_resource}\" instead?"; then
+			resource=${closest_resource}
+		else
+			_print_error "Resource \"${resource}\" is invalid. Listing valid resources..."
+
+			_listPrefixedFunctions _list_
+
+			exit
 		fi
 	fi
 
-	shopt -s extglob
+	_print_step "Listing all ${resource//_/ }"
 
-	local valid_resources_pattern="@($(echo ${valid_resources[@]} | sed "s, ,\|,g"))"
-
-	case ${resource} in
-		${valid_resources_pattern})
-			_print_step "Listing all ${resource//_/ }..."
-
-			_list_${resource}
-			;;
-		"")
-			_print_step "Possible resources to list"
-
-			echo ${valid_resources[@]} | sed "s, ,\\n,g"
-			;;
-		*)
-			if [[ "${closest_resource}" == "" ]]; then
-				_print_error "Not a valid resource; please provide a valid resource"
-			fi
-
-			;;
-	esac
+	_list_"${resource}"
 }
 _cmd_ports() {
 	local serviceName="${1}"

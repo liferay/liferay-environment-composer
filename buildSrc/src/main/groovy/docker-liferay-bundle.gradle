@@ -269,22 +269,73 @@ tasks.register("deleteStaleHotfixes") {
 	}
 }
 
-tasks.register("prepareHotfixes", Download) {
-	onlyIf("there are hotfix URLs") {
-		!config.hotfixURLs.isEmpty()
+tasks.register("prepareHotfixesGCP") {
+	onlyIf("there are GCP hotfix URLs") {
+		!config.hotfixURLs.findAll { String hotfixURL ->
+			hotfixURL.startsWith("gs://")
+		}.isEmpty()
 	}
 	onlyIf("using the Liferay service") {
 		config.useLiferay
 	}
 
-	dependsOn validateHotfixURLs
-	finalizedBy deleteStaleHotfixes
+	mustRunAfter validateHotfixURLs
+
+	doFirst {
+		try {
+			waitForCommand("gcloud auth print-access-token")
+		}
+		catch (Exception e) {
+			waitForCommand("gcloud auth login")
+		}
+
+		project.file("configs/common/patching").mkdirs()
+
+		config.hotfixURLs.findAll { String hotfixURL ->
+			if (!hotfixURL.startsWith("gs://")) {
+				return false
+			}
+
+			Path path = Paths.get(new URI(hotfixURL).path)
+			String hotfixName = path.getName(path.nameCount - 1).toString()
+
+			return !file("configs/common/patching/${hotfixName}").exists();
+		}.forEach {
+			String hotfixURL ->
+			waitForCommand("gcloud storage cp ${hotfixURL} configs/common/patching/")
+		}
+	}
+}
+
+tasks.register("prepareHotfixesNonGCP", Download) {
+	onlyIf("there are non-GCP hotfix URLs") {
+		!config.hotfixURLs.findAll { String hotfixURL ->
+			!hotfixURL.startsWith("gs://")
+		}.isEmpty()
+	}
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+
+	mustRunAfter validateHotfixURLs
 
 	dest project.layout.dir(project.provider {project.file("configs/common/patching")})
 
 	overwrite false
 
-	src config.hotfixURLs
+	src config.hotfixURLs.findAll {
+		String hotfixURL ->
+		!hotfixURL.startsWith("gs://")
+	}
+}
+
+tasks.register("prepareHotfixes") {
+	dependsOn validateHotfixURLs
+
+	dependsOn prepareHotfixesGCP
+	dependsOn prepareHotfixesNonGCP
+
+	finalizedBy deleteStaleHotfixes
 }
 
 tasks.register("fixWorkspaceProduct") {

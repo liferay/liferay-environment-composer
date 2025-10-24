@@ -99,7 +99,12 @@ class Config {
 		List hotfixURLs = this.toList(project.findProperty("lr.docker.environment.hotfix.urls"))
 
 		if (!hotfixURLs.isEmpty()) {
-			this.hotfixURLs = hotfixURLs
+			this.hotfixURLs = hotfixURLs.collect { String hotfixURL ->
+				if (hotfixURL.startsWith("https://storage.cloud.google.com/")) {
+					return "gs://${hotfixURL.substring("https://storage.cloud.google.com/".length())}"
+				}
+				return hotfixURL
+			}
 		}
 
 		String arch = System.getProperty("os.arch")

@@ -271,9 +271,7 @@ tasks.register("deleteStaleHotfixes") {
 
 tasks.register("prepareHotfixesGCP") {
 	onlyIf("there are GCP hotfix URLs") {
-		!config.hotfixURLs.findAll { String hotfixURL ->
-			hotfixURL.startsWith("gs://")
-		}.isEmpty()
+		!config.gcpHotfixURLs.isEmpty()
 	}
 	onlyIf("using the Liferay service") {
 		config.useLiferay
@@ -291,11 +289,7 @@ tasks.register("prepareHotfixesGCP") {
 
 		project.file("configs/common/patching").mkdirs()
 
-		config.hotfixURLs.findAll { String hotfixURL ->
-			if (!hotfixURL.startsWith("gs://")) {
-				return false
-			}
-
+		config.gcpHotfixURLs.findAll { String hotfixURL ->
 			Path path = Paths.get(new URI(hotfixURL).path)
 			String hotfixName = path.getName(path.nameCount - 1).toString()
 
@@ -309,9 +303,7 @@ tasks.register("prepareHotfixesGCP") {
 
 tasks.register("prepareHotfixesNonGCP", Download) {
 	onlyIf("there are non-GCP hotfix URLs") {
-		!config.hotfixURLs.findAll { String hotfixURL ->
-			!hotfixURL.startsWith("gs://")
-		}.isEmpty()
+		!config.hotfixURLs.isEmpty()
 	}
 	onlyIf("using the Liferay service") {
 		config.useLiferay
@@ -323,10 +315,7 @@ tasks.register("prepareHotfixesNonGCP", Download) {
 
 	overwrite false
 
-	src config.hotfixURLs.findAll {
-		String hotfixURL ->
-		!hotfixURL.startsWith("gs://")
-	}
+	src config.hotfixURLs
 }
 
 tasks.register("prepareHotfixes") {

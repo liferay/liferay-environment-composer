@@ -373,10 +373,10 @@ _getWorktreeDir() {
 _list_releases() {
 	_listReleases
 }
-_list_running_projects() {
+_list_runningProjects() {
 	_listRunningProjects
 }
-_list_saas_environments() {
+_list_saasEnvironments() {
 	_listSaaSEnvironments
 }
 _list_worktrees() {

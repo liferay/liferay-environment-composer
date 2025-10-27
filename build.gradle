@@ -44,7 +44,7 @@ tasks.register("exportContainerData") {
 			}
 
 			println "Creating backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
-			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${hostPath}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
+			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${file(hostPath).getAbsolutePath()}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
 			println "Created backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
 		}
 

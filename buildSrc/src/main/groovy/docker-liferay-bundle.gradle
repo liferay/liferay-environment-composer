@@ -291,11 +291,13 @@ tasks.register("prepareHotfixesGCP") {
 
 		config.gcpHotfixURLs.findAll { String hotfixURL ->
 			Path path = Paths.get(new URI(hotfixURL).path)
+
 			String hotfixName = path.getName(path.nameCount - 1).toString()
 
 			return !file("configs/common/patching/${hotfixName}").exists();
 		}.forEach {
 			String hotfixURL ->
+
 			waitForCommand("gcloud storage cp ${hotfixURL} configs/common/patching/")
 		}
 	}

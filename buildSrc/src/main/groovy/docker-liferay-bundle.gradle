@@ -321,6 +321,10 @@ tasks.register("prepareHotfixesNonGCP", Download) {
 }
 
 tasks.register("prepareHotfixes") {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+
 	dependsOn validateHotfixURLs
 
 	dependsOn prepareHotfixesGCP

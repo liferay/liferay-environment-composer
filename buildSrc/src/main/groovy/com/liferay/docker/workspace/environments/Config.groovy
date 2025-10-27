@@ -99,12 +99,22 @@ class Config {
 		List hotfixURLs = this.toList(project.findProperty("lr.docker.environment.hotfix.urls"))
 
 		if (!hotfixURLs.isEmpty()) {
-			this.hotfixURLs = hotfixURLs.collect { String hotfixURL ->
+			Map<String, List<String>> hotfixURLsMap = hotfixURLs.collect {
+				String hotfixURL ->
+
 				if (hotfixURL.startsWith("https://storage.cloud.google.com/")) {
 					return "gs://${hotfixURL.substring("https://storage.cloud.google.com/".length())}"
 				}
+
 				return hotfixURL
+			}.groupBy {
+				String hotfixURL ->
+
+				hotfixURL.startsWith("gs://")
 			}
+
+			this.gcpHotfixURLs = hotfixURLsMap[true] ?: []
+			this.hotfixURLs = hotfixURLsMap[false] ?: []
 		}
 
 		String arch = System.getProperty("os.arch")
@@ -295,6 +305,7 @@ class Config {
 	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
+	public List<String> gcpHotfixURLs = new ArrayList<String>()
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean isARM = false

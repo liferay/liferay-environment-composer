@@ -200,7 +200,7 @@ ext {
 	}
 
 	getExistingVolumeNames = {
-		String volumeNameLines = waitForCommand("docker volume ls --filter 'name=${config.namespace}_' --format '{{ .Name }}'")
+		String volumeNameLines = waitForCommand("docker volume ls --filter 'name=^${config.namespace}_' --format '{{ .Name }}'")
 
 		return volumeNameLines.isEmpty() ? [] : volumeNameLines.split("\n")
 	}

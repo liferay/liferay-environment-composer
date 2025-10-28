@@ -729,7 +729,7 @@ cmd_share() {
 
 		_print_step "Zipping up workspace..."
 
-		if ! ./gradlew shareWorkspace | grep "Workspace zip"; then
+		if ! ./gradlew shareWorkspace | grep -E "Workspace zip|workspace archive"; then
 			exit 1
 		fi
 

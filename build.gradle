@@ -161,6 +161,8 @@ tasks.register("shareWorkspace") {
 		finally {
 			fileListFile.delete()
 		}
+
+		println "New workspace archive file: ${archiveFileName}"
 	}
 }
 

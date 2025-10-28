@@ -18,7 +18,7 @@ fi
 # shellcheck disable=SC2034
 export FZF_DEFAULT_OPTS="--ansi --color='dark' --height='50'% --info='inline' --reverse"
 
-_fzf () {
+_fzf() {
 	if [[ -x "${LEC_REPO_ROOT}/scripts/cli/dependencies/fzf" ]]; then
 		"${LEC_REPO_ROOT}/scripts/cli/dependencies/fzf" "${@}"
 

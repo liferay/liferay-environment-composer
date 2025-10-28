@@ -128,6 +128,8 @@ tasks.register("shareWorkspace") {
 
 		File fileListFile = file(fileListFileName)
 
+		fileListFile.parentFile.mkdirs()
+
 		fileListFile.text = fileTree('.') {
 			exclude ".gitkeep"
 			exclude ".gitignore"

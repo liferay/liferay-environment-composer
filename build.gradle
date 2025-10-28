@@ -126,7 +126,9 @@ tasks.register("shareWorkspace") {
 		String fileListFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.txt"
 		String archiveFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.7z"
 
-		file(fileListFileName).text = fileTree('.') {
+		File fileListFile = file(fileListFileName)
+
+		fileListFile.text = fileTree('.') {
 			exclude ".gitkeep"
 			exclude ".gitignore"
 			exclude ".git"
@@ -155,7 +157,7 @@ tasks.register("shareWorkspace") {
 			waitForCommand("7z a -m0=lzma2 -mx=1 -bsp2 ${archiveFileName} -i@${fileListFileName}")
 		}
 		finally {
-			file(fileListFileName).delete()
+			fileListFile.delete()
 		}
 	}
 }

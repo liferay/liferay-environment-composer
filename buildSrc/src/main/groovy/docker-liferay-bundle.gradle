@@ -291,18 +291,10 @@ tasks.register("prepareHotfixesGCP") {
 			waitForCommand("gcloud auth login")
 		}
 
-		project.file("configs/common/patching").mkdirs()
-
-		config.gcpHotfixURLs.findAll { String hotfixURL ->
-			Path path = Paths.get(new URI(hotfixURL).path)
-
-			String hotfixName = path.getName(path.nameCount - 1).toString()
-
-			return !file("configs/common/patching/${hotfixName}").exists();
-		}.forEach {
+		config.gcpHotfixURLs.forEach {
 			String hotfixURL ->
 
-			waitForCommand("gcloud storage cp ${hotfixURL} configs/common/patching/")
+			waitForCommand("gcloud storage cp --no-clobber ${hotfixURL} configs/common/patching/")
 		}
 	}
 }

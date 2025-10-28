@@ -280,6 +280,10 @@ tasks.register("prepareHotfixesGCP") {
 	mustRunAfter validateHotfixURLs
 
 	doFirst {
+		if (!isProgramInstalled("gcloud")) {
+			throw new GradleException("The gcloud CLI must be installed in order to download hotfixes from GCP. Follow the install instructions at https://docs.cloud.google.com/sdk/docs/install.")
+		}
+
 		try {
 			waitForCommand("gcloud auth print-access-token")
 		}

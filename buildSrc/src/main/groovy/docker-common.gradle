@@ -339,6 +339,19 @@ ext {
 		}
 	}
 
+	isProgramInstalled = {
+		String program ->
+
+		try {
+			waitForCommand "command -v ${program}"
+
+			return true
+		}
+		catch (Exception exception) {
+			return false
+		}
+	}
+
 	waitForCommand = {
 		String command, File cwd = null, OutputStream outputStream = null ->
 

@@ -47,7 +47,6 @@ tasks.register("exportContainerData") {
 
 			println "Creating backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
 			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportDir.absolutePath}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
-			println "Created backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
 		}
 
 		updateGradleLocalProperties(["lr.docker.environment.data.directory" : hostPath])
@@ -96,8 +95,6 @@ tasks.register("importContainerData") {
 			else {
 				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${backupFile.absolutePath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
 			}
-
-			println "Restored backup of volume ${volumeName} using ${backupFile.absolutePath}"
 
 			println waitForCommand("docker run --rm -v ${volumeName}:/${volumeName} busybox:latest du -sh /${volumeName}/")
 		}

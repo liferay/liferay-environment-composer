@@ -75,6 +75,7 @@ To shut down the environment, run `./gradlew stop`.
 
 - [Build a custom Liferay image with custom modules and configs included](#build-a-custom-liferay-image-with-custom-modules-and-configs-included)
 - [Start up and shut down the Docker Compose containers](#start-up-and-shut-down-the-docker-compose-containers)
+- [Customize versions of Docker Images](#customize-versions-of-docker-images)
 
 ### Gradle tasks overview
 
@@ -467,6 +468,22 @@ lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKi
 This will zip up the workspace as-is, including the declared data folder, into a shareable `zip` file. The zipped workspace will be timestamped and placed in the `./shared_workspaces` directory. It will omit unnecessary files such as the `.gradle` and `.git` directories, as well as other exported data folders and shared workspaces in the `exported_data` and `shared_workspaces` directories.
 
 The shared workspace should be immediately usable by simply unzipping the archive, `cd` to the unzipped folder, and starting up with `./gradlew start`.
+
+### Docker Features
+
+#### Customize versions of Docker Images
+
+You can change the versions of any of the Docker Images in the `versions.env` file. Each variable in this file defines a Docker Image version to pull, however not necessarily every version will work out of the box, so extra configuration may be needed.
+
+`versions.env`:
+
+```dotenv
+DB2_VERSION=11.5.9.0
+MARIADB_VERSION=10.6.22-jammy
+MYSQL_VERSION=8.4.5-oracle
+POSTGRES_VERSION=16.3
+SQLSERVER_VERSION=2022-CU21-ubuntu-22.04
+```
 
 ### Gradle tasks
 

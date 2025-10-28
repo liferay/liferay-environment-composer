@@ -32,11 +32,19 @@ String timestamp = formatter.format(now)
 
 tasks.register("exportContainerData") {
 	doFirst {
+		List<String> existingVolumeNames = getExistingVolumeNames()
+
+		if (existingVolumeNames.isEmpty()) {
+			println "There is no data to export. Skipping."
+
+			return
+		}
+
 		File exportDir = file("exported_data/data_${config.namespace}_${timestamp}")
 
 		String hostPath = projectDir.relativePath(exportDir)
 
-		getExistingVolumeNames().each {
+		existingVolumeNames.each {
 			String volumeName ->
 
 			String backupFileName = "${volumeName.substring(config.namespace.length() + 1)}.tar"

@@ -238,7 +238,9 @@ tasks.register("validateHotfixURLs") {
 
 tasks.register("deleteStaleHotfixes") {
 	doFirst {
-		Set<String> hotfixNames = config.hotfixURLs.collect {
+		List<String> hotfixURLs = config.gcpHotfixURLs + config.hotfixURLs
+
+		Set<String> hotfixNames = hotfixURLs.collect {
 			Path path = Paths.get(new URI(it).path)
 			return path.getName(path.nameCount - 1).toString()
 		}.toSet()

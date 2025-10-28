@@ -32,7 +32,9 @@ String timestamp = formatter.format(now)
 
 tasks.register("exportContainerData") {
 	doFirst {
-		String hostPath = projectDir.relativePath(file("exported_data/data_${config.namespace}_${timestamp}"))
+		File exportDir = file("exported_data/data_${config.namespace}_${timestamp}")
+
+		String hostPath = projectDir.relativePath(exportDir)
 
 		getExistingVolumeNames().each {
 			String volumeName ->
@@ -44,7 +46,7 @@ tasks.register("exportContainerData") {
 			}
 
 			println "Creating backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
-			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${hostPath}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
+			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportDir.absolutePath}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
 			println "Created backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
 		}
 

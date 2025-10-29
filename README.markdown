@@ -75,7 +75,7 @@ To shut down the environment, run `./gradlew stop`.
 
 - [Build a custom Liferay image with custom modules and configs included](#build-a-custom-liferay-image-with-custom-modules-and-configs-included)
 - [Start up and shut down the Docker Compose containers](#start-up-and-shut-down-the-docker-compose-containers)
-- [Customize versions of Docker Images](#customize-versions-of-docker-images)
+- [Customize Docker image versions](#customize-docker-image-versions)
 
 ### Gradle tasks overview
 
@@ -471,9 +471,9 @@ The shared workspace should be immediately usable by simply unzipping the archiv
 
 ### Docker Features
 
-#### Customize versions of Docker Images
+#### Customize Docker image versions
 
-You can change the versions of any of the Docker Images in the `versions.env` file. Each variable in this file defines a Docker Image version to pull, however not necessarily every version will work out of the box, so extra configuration may be needed.
+You can change Docker image versions for several services in the `versions.env` file. Most version have not been tested, so extra configuration may be needed when changing versions to get them working.
 
 `versions.env`:
 

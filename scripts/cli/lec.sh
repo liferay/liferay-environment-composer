@@ -495,7 +495,7 @@ _writeProperty() {
 		_errorExit "${file} is not a valid file"
 	fi
 
-	sed -E -i.bak "s/^#?${key}=.*$/${key}=${value}/g" "${file}"
+	sed -E -i.bak "s,^#?${key}=.*$,${key}=${value//,/\,},g" "${file}"
 	rm "${file}.bak"
 }
 

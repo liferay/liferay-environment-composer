@@ -412,6 +412,15 @@ _isLXCVersion() {
 
 	_listSaaSEnvironments | grep -q "^${lxc_version}$"
 }
+_isMasterVersion() {
+	local liferay_version="${1}"
+
+	if [[ "${liferay_version}" == "master" ]]; then
+		return 0
+	fi
+
+	return 1
+}
 _isReleaseVersion() {
 	local liferay_version="${1}"
 
@@ -421,6 +430,10 @@ _verifyLiferayVersion() {
 	local liferay_version="${1}"
 
 	if _isLXCVersion "${liferay_version}"; then
+		return 0
+	fi
+
+	if _isMasterVersion "${liferay_version}"; then
 		return 0
 	fi
 

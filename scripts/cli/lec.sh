@@ -399,10 +399,13 @@ _selectLiferayRelease() {
 		promptMessage="${promptMessage} or LXC ID"
 	fi
 
+	local delimiter=" :: "
+
 	(
-		_listReleases | sed "s,^,${C_GREEN}Release${C_NC} :: ,g"
-		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}     :: ,g"
-	) | _select "${promptMessage}" | awk -F ':: ' '{print $2}'
+		echo "${C_YELLOW}Nightly${C_NC}${delimiter}master"
+		_listReleases | sed "s,^,${C_GREEN}Release${C_NC}${delimiter},g"
+		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}    ${delimiter},g"
+	) | _select "${promptMessage}" | awk -F "${delimiter}" '{print $2}'
 }
 _isLXCVersion() {
 	local lxc_version="${1}"

@@ -540,7 +540,7 @@ _cmd_list() {
 	local closest_resource
 	local resource="${1}"
 
-	if [[ ${resource} == "" ]]; then
+	if [[ -z "${resource}"]]; then
 		_print_step "Listing valid resources..."
 
 		_listPrefixedFunctions _list_

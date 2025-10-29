@@ -534,7 +534,12 @@ _cmd_remove2() {
 	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
 	_cancelIfEmpty "${worktrees}"
 
+	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
+
+	_confirm "Are you sure you want to remove them? This cannot be undone."
+
 	for worktree in ${worktrees}; do
+		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
 		_removeWorktree "${worktree}"
 		echo
 	done

@@ -399,6 +399,17 @@ ext {
 		return latestReleaseInfoDate
 	}
 
+	updateLXCRepository = {
+		File lxcRepositoryFolder = file(config.lxcRepositoryPath)
+
+		String repoURL = "git@github.com:liferay/liferay-lxc.git"
+
+		if (waitForCommand("git remote -v", lxcRepositoryFolder).readLines().any { it.contains(repoURL) }) {
+			println "Updating the liferay-lxc repo..."
+			waitForCommand("git pull --rebase ${repoURL} master", lxcRepositoryFolder)
+		}
+	}
+
 	updateVirtualHosts = {
 		executeSQLQuery("update VirtualHost set hostname = concat(hostname, '.localhost') where hostname <> 'localhost' and hostname not like '%.localhost'", config.databaseName)
 
@@ -407,6 +418,8 @@ ext {
 }
 
 tasks.register("copyLiferayLXCRepositoryConfigurations") {
+	dependsOn ":updateLXCRepository"
+
 	doFirst {
 		copyLiferayLXCRepositoryConfigurations();
 	}
@@ -609,6 +622,24 @@ tasks.register("importDatabaseDumps") {
 		println "Attempting to update database for local development"
 
 		updateDatabaseForLocalDevelopment()
+	}
+}
+
+tasks.register("updateLXCRepository") {
+	onlyIf("LXC repo is configured") {
+		if (config.lxcRepositoryPath == null) {
+			return false
+		}
+
+		if (config.lxcRepositoryPath == "") {
+			return false
+		}
+
+		return file(config.lxcRepositoryPath).exists()
+	}
+
+	doFirst {
+		updateLXCRepository()
 	}
 }
 

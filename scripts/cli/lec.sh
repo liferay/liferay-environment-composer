@@ -638,16 +638,19 @@ cmd_init() {
 
 	worktree_name="lec-${ticket}"
 
-	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
-	if [[ "${existing_worktree}" ]]; then
-		_errorExit "Worktree ${worktree_name} already exists at: ${existing_worktree}"
-	fi
-
 	if [[ -z "${liferay_version}" ]]; then
 		liferay_version="$(_selectLiferayRelease)"
 	fi
 	_cancelIfEmpty "${liferay_version}"
 	_verifyLiferayVersion "${liferay_version}"
+
+	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
+
+	if [[ "${existing_worktree}" ]]; then
+		_print_step "Worktree ${worktree_name} already exists at: ${existing_worktree}. You may remove it if you want to create a worktree with the same name."
+
+		_removeWorktree "${existing_worktree}"
+	fi
 
 	if _git rev-parse --verify --quiet "refs/heads/${worktree_name}" >/dev/null; then
 		_print_step "Deleting stale branch ${worktree_name}"

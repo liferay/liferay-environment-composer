@@ -384,18 +384,16 @@ _list_saasEnvironments() {
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
 
-	if [[ ! -d "${worktree}" ]]; then
-		_errorExit "${worktree} is not a directory"
-	fi
-
 	local worktree_name="${worktree##*/}"
 
-	_print_step "Shutting down project and removing Docker volumes..."
-	(
-		cd "${worktree}" || exit 1
+	if [[ -d "${worktree}" ]]; then
+		_print_step "Shutting down project and removing Docker volumes..."
+		(
+			cd "${worktree}" || exit 1
 
-		./gradlew stop -Plr.docker.environment.clear.volume.data=true
-	)
+			./gradlew stop -Plr.docker.environment.clear.volume.data=true
+		)
+	fi
 
 	_print_step "Removing project dir..."
 	_git worktree remove --force "${worktree_name}"
@@ -695,6 +693,10 @@ cmd_init() {
 
 	if [[ "${existing_worktree}" ]]; then
 		_print_step "Worktree ${worktree_name} already exists at: ${existing_worktree}. You may remove it if you want to create a worktree with the same name."
+
+		if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
+			exit 1
+		fi
 
 		_removeWorktree "${existing_worktree}"
 	fi

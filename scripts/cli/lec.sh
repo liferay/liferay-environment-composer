@@ -459,6 +459,24 @@ _writeLiferayVersion() {
 			return
 		fi
 
+		if _isMasterVersion "${liferay_version}"; then
+			local latest_docker_tag
+
+			latest_docker_tag="$(curl -s "https://registry.hub.docker.com/v2/repositories/liferay/dxp/tags/?page_size=100" | jq -r '.results.[].name | select(endswith("nightly"))' | head -n 1)"
+
+			if [[ -z "${latest_docker_tag}" ]]; then
+				latest_docker_tag="7.4.13.nightly"
+			fi
+
+			local docker_image="liferay/dxp:${latest_docker_tag}"
+
+			_writeProperty "liferay.workspace.docker.image.liferay" "${docker_image}" gradle.properties
+
+			echo "Docker image set to ${docker_image} in gradle.properties"
+
+			return
+		fi
+
 		if _isReleaseVersion "${liferay_version}"; then
 			_writeProperty "liferay.workspace.product" "${liferay_version}" gradle.properties
 

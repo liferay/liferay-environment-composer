@@ -373,10 +373,6 @@ _removeWorktree() {
 
 	local worktree_name="${worktree##*/}"
 
-	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
-		return
-	fi
-
 	_print_step "Shutting down project and removing Docker volumes..."
 	(
 		cd "${worktree}" || exit 1
@@ -673,6 +669,10 @@ cmd_remove() {
 	local worktree
 	worktree="$(_listWorktrees | _select "Choose a project to remove")"
 	_cancelIfEmpty "${worktree}"
+
+	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
+		return
+	fi
 
 	_removeWorktree "${worktree}"
 }

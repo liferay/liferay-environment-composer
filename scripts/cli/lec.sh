@@ -532,8 +532,6 @@ _cmd_list() {
 		fi
 	fi
 
-	_print_step "Listing all ${resource//_/ }"
-
 	_list_"${resource}"
 }
 _cmd_ports() {

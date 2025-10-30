@@ -603,6 +603,12 @@ Stop the workspace and delete the Docker volumes:
 lec clean # Shuts down the environment and deletes the Docker volumes
 ```
 
+Completely tear down and remove one or more Composer projects:
+
+```sh
+lec remove # Choose one or more projects to remove
+```
+
 Jump to a workspace:
 
 ```sh

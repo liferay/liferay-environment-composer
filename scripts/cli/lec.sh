@@ -112,6 +112,7 @@ _printHelpAndExit() {
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes
 		  exportData                       Export container data for a Composer project
+		  list [resource]                  List resources of a specified type
 		  remove                           Completely tear down and remove a Composer project
 		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
@@ -336,6 +337,11 @@ _verifyCommand() {
 
 	_listPublicCommands | grep -q "^${command}$"
 }
+_verifyListResource() {
+	local resource="${1}"
+
+	_listPrefixedFunctions _list_ | grep -wq "${resource}"
+}
 
 #
 # General helper functions
@@ -363,6 +369,18 @@ _getWorktreeDir() {
 	local worktree_name="${1}"
 
 	_listWorktrees | grep "/${worktree_name}$"
+}
+_list_releases() {
+	_listReleases
+}
+_list_runningProjects() {
+	_listRunningProjects
+}
+_list_saasEnvironments() {
+	_listSaaSEnvironments
+}
+_list_worktrees() {
+	_listWorktrees
 }
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
@@ -506,6 +524,9 @@ _cmd_commands() {
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Private Commands:"
 	_listPrivateCommands | sed 's,^,  ,g'
 }
+_cmd_fn() {
+	"${1}" "${@:2}"
+}
 _cmd_gw() {
 	_checkCWDProject
 
@@ -515,14 +536,33 @@ _cmd_gw() {
 		./gradlew "${@}"
 	)
 }
-_cmd_fn() {
-	"${1}" "${@:2}"
-}
 _cmd_list() {
-	_listWorktrees
-}
-_cmd_listRunning() {
-	_listRunningProjects
+	local closest_resource
+	local resource="${1}"
+
+	if [[ -z "${resource}"]]; then
+		_print_step "Listing valid resources..."
+
+		_listPrefixedFunctions _list_
+
+		exit
+	fi
+
+	if ! _verifyListResource "${resource}"; then
+		closest_resource=$(_listPrefixedFunctions _list_| _fzf --filter "${resource}" | head -n 1)
+
+		if _verifyListResource "${closest_resource}" && _confirm "Resource \"${resource}\" is unknown; use closest resource \"${closest_resource}\" instead?"; then
+			resource=${closest_resource}
+		else
+			_print_error "Resource \"${resource}\" is invalid. Listing valid resources..."
+
+			_listPrefixedFunctions _list_
+
+			exit
+		fi
+	fi
+
+	_list_"${resource}"
 }
 _cmd_ports() {
 	local serviceName="${1}"

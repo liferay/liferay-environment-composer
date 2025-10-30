@@ -529,23 +529,6 @@ _cmd_ports() {
 
 	_getServicePorts "${serviceName}"
 }
-_cmd_remove2() {
-	local worktrees
-	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
-	_cancelIfEmpty "${worktrees}"
-
-	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
-
-	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
-		return 1
-	fi
-
-	for worktree in ${worktrees}; do
-		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
-		_removeWorktree "${worktree}"
-		echo
-	done
-}
 _cmd_setVersion() {
 	local liferay_version
 
@@ -673,15 +656,21 @@ cmd_init() {
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
 }
 cmd_remove() {
-	local worktree
-	worktree="$(_listWorktrees | _select "Choose a project to remove")"
-	_cancelIfEmpty "${worktree}"
+	local worktrees
+	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+	_cancelIfEmpty "${worktrees}"
 
-	if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
-		return
+	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
+
+	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
+		return 1
 	fi
 
-	_removeWorktree "${worktree}"
+	for worktree in ${worktrees}; do
+		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
+		_removeWorktree "${worktree}"
+		echo
+	done
 }
 cmd_share() {
 	local exportFlag="${1}"

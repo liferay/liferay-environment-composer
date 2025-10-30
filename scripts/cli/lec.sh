@@ -536,7 +536,9 @@ _cmd_remove2() {
 
 	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
 
-	_confirm "Are you sure you want to remove them? This cannot be undone."
+	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
+		return 1
+	fi
 
 	for worktree in ${worktrees}; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"

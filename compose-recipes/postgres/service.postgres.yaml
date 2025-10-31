@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   postgres:/container-data/postgres
     database:
         build:
             args:

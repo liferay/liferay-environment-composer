@@ -1,5 +1,3 @@
-import com.bmuschko.gradle.docker.tasks.container.DockerCopyFileFromContainer
-
 import com.liferay.docker.workspace.environments.Util
 
 import groovy.json.JsonSlurper
@@ -32,26 +30,83 @@ withZone(ZoneId.systemDefault())
 
 String timestamp = formatter.format(now)
 
-tasks.register("exportContainerData", DockerCopyFileFromContainer) {
-	containerId = "${config.namespace}-data-helper"
+tasks.register("exportContainerData") {
+	doFirst {
+		List<String> existingVolumeNames = getExistingVolumeNames()
+
+		if (existingVolumeNames.isEmpty()) {
+			println "There is no data to export. Skipping."
+
+			return
+		}
+
+		File exportDir = file("exported_data/data_${config.namespace}_${timestamp}")
+
+		String hostPath = projectDir.relativePath(exportDir)
+
+		existingVolumeNames.each {
+			String volumeName ->
+
+			String backupFileName = "${volumeName.substring(config.namespace.length() + 1)}.tar"
+
+			if (backupFileName.equals("dumps.tar")) {
+				return
+			}
+
+			println "Creating backup of volume ${volumeName} in ${hostPath}/${backupFileName}"
+			waitForCommand("docker run --rm -v ${volumeName}:/source -v ${exportDir.absolutePath}:/target busybox:latest tar --create --file=/target/${backupFileName} --directory=/source .")
+		}
+
+		updateGradleLocalProperties(["lr.docker.environment.data.directory" : hostPath])
+
+		logger.lifecycle("\nUpdated gradle-local.properties with the new value:\nlr.docker.environment.data.directory=${hostPath}")
+	}
+}
+
+tasks.register("importContainerData") {
+	mustRunAfter ":buildDockerImage"
 
 	doFirst {
-		mkdir hostPath.get()
+		List<String> previousVolumeNames = getExistingVolumeNames()
 
-		waitForCommand("docker compose create data-helper")
+		waitForCommand("docker compose build")
+		waitForCommand("docker compose create")
+
+		List<String> currentVolumeNames = getExistingVolumeNames()
+
+		project.file(config.dataDirectory).listFiles().each {
+			File backupFile ->
+
+			if (backupFile.isFile() && !backupFile.name.endsWith(".tar")) {
+				return
+			}
+
+			String volumeName = "${config.namespace}_${backupFile.name}"
+
+			if (backupFile.isFile()) {
+				volumeName = volumeName.substring(0, volumeName.length() - 4)
+			}
+
+			if (!currentVolumeNames.contains(volumeName)) {
+				return
+			}
+
+			if (previousVolumeNames.contains(volumeName)) {
+				return
+			}
+
+			println "Restoring backup of volume ${volumeName} using ${backupFile.absolutePath}"
+
+			if (backupFile.isFile()) {
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${backupFile.absolutePath}:/source.tar busybox:latest tar --extract --file=/source.tar --directory=/target/")
+			}
+			else {
+				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${backupFile.absolutePath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
+			}
+
+			println waitForCommand("docker run --rm -v ${volumeName}:/${volumeName} busybox:latest du -sh /${volumeName}/")
+		}
 	}
-
-	doLast {
-		updateGradleLocalProperties(["lr.docker.environment.data.directory" : hostPath.get()])
-
-		logger.lifecycle("\nUpdated gradle-local.properties with the new value:\nlr.docker.environment.data.directory=${hostPath.get()}")
-	}
-
-	hostPath = provider {
-		"exported_data/data_${config.namespace}_${timestamp}"
-	}
-
-	remotePath = "/container-data"
 }
 
 tasks.register("importDocumentLibraryStructure") {
@@ -74,37 +129,52 @@ tasks.register("importDocumentLibraryStructure") {
 	}
 }
 
-tasks.register("shareWorkspace", Zip) {
-	archiveFileName = provider {
-		"workspace_${config.namespace}_${timestamp}.zip"
-	}
-
-	destinationDirectory = file 'shared_workspaces'
-
+tasks.register("shareWorkspace") {
 	doLast {
-		logger.lifecycle "\nWorkspace zip: ${archiveFile.get()}\n"
-	}
+		if (!isProgramInstalled("7z")) {
+			throw new GradleException("The 7z CLI must be installed in order to share workspaces. Follow the install instructions at https://7-zip.org/download.html.")
+		}
 
-	exclude ".gitkeep"
-	exclude ".gitignore"
-	exclude ".git"
-	exclude ".gradle"
-	exclude "dumps/*"
-	exclude "shared_workspaces"
-	exclude {
-		FileTreeElement fileTreeElement ->
+		String fileListFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.txt"
+		String archiveFileName = "shared_workspaces/workspace_${config.namespace}_${timestamp}.7z"
 
-		fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
-		!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
-	}
+		File fileListFile = file(fileListFileName)
 
-	from '.'
+		fileListFile.parentFile.mkdirs()
 
-	include "${config.dataDirectory}/**"
-	include "**/*"
+		fileListFile.text = fileTree('.') {
+			exclude ".gitkeep"
+			exclude ".gitignore"
+			exclude ".git"
+			exclude ".gradle"
+			exclude "binds"
+			exclude "buildSrc/build"
+			exclude "buildSrc/.gradle"
+			exclude "dumps/*"
+			exclude "shared_workspaces"
+			exclude {
+				FileTreeElement fileTreeElement ->
 
-	outputs.upToDateWhen {
-		false
+				fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
+				!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
+			}
+
+			include "${config.dataDirectory}/**"
+			include "**/*"
+		}.files.collect {
+			File file ->
+
+			project.relativePath(file)
+		}.join("\n")
+
+		try {
+			waitForCommand("7z a -m0=lzma2 -mx=1 -bsp2 ${archiveFileName} -i@${fileListFileName}")
+		}
+		finally {
+			fileListFile.delete()
+		}
+
+		println "New workspace archive file: ${archiveFileName}"
 	}
 }
 
@@ -163,6 +233,7 @@ composeUp {
 	}
 
 	dependsOn ":buildDockerImage"
+	dependsOn ":importContainerData"
 	dependsOn ":importDatabaseDumps"
 
 	doFirst {

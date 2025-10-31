@@ -1,7 +1,4 @@
 services:
-    data-helper:
-        volumes:
-            -   mariadb:/container-data/mariadb
     database:
         build:
             args:

@@ -1,2 +1,3 @@
 CREATE DATABASE %DATABASE_NAME%
+ALTER DATABASE %DATABASE_NAME% set read_committed_snapshot on
 GO

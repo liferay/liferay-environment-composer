@@ -782,10 +782,19 @@ cmd_share() {
 	)
 }
 cmd_start() {
-	_checkCWDProject
+	local project_dir
+	local workspace_or_dir="${1}"
+
+	if [[ ${workspace_or_dir} == lec* ]]; then
+		project_dir="$(_getWorktreeDir ${workspace_or_dir})"
+	elif [[ ${workspace_or_dir} == /* ]]; then
+		project_dir="${workspace_or_dir}"
+	elif [[ -z ${workspace_or_dir} ]]; then
+		project_dir="${CWD_PROJECT_ROOT}"
+	fi
 
 	(
-		cd "${CWD_PROJECT_ROOT}" || exit
+		cd "${project_dir}" || exit
 
 		_print_step "Starting environment"
 		if ! ./gradlew start; then

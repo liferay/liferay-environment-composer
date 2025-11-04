@@ -669,8 +669,26 @@ cmd_importDLStructure() {
 
 }
 cmd_init() {
-	local ticket="${1}"
-	local liferay_version="${2}"
+	local args=()
+	local start
+
+	start=0
+
+	while [[ $# -gt  0 ]]; do
+		case "${1}" in
+			--start)
+				start=1
+				shift
+				;;
+			*)
+				args+=("${1}")
+				shift
+				;;
+		esac
+	done
+
+	local ticket="${args[0]}"
+	local liferay_version="${args[1]}"
 
 	local existing_worktree_path
 	local worktree_dir

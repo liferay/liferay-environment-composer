@@ -107,17 +107,17 @@ _printHelpAndExit() {
 		  lec <command>
 
 		${C_BOLD}COMMANDS:${C_RESET}
-		  init [<ticket>] [<version>]      Create a new Composer project
-		  start                            Start a Composer project
-		  stop                             Stop a Composer project
-		  clean                            Stop a Composer project and remove Docker volumes
-		  exportData                       Export container data for a Composer project
-		  remove                           Completely tear down and remove one or more Composer projects
-		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
-		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
-		  version                          Prints the current version of lec
+		  init [<ticket>] [<version>] [--start]     Create a new Composer project. The "--start" flag starts the Composer project.
+		  start                                     Start a Composer project
+		  stop                                      Stop a Composer project
+		  clean                                     Stop a Composer project and remove Docker volumes
+		  exportData                                Export container data for a Composer project
+		  remove                                    Completely tear down and remove one or more Composer projects
+		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
+		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
+		  version                                   Prints the current version of lec
 
-		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
+		  importDLStructure <sourceDir>             Import a Document Library (file structure only, no content) into configs/common/data/document_library
 
 		${C_BOLD}JUMP TO A PROJECT:${C_RESET}
 		  lecd [project name]

@@ -758,6 +758,10 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
+
+	if [[ ${start} == 1 ]]; then
+		cmd_start "${worktree_dir}"
+	fi
 }
 cmd_remove() {
 	local worktrees

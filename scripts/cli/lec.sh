@@ -352,9 +352,29 @@ _getComposeProjectName() {
 	echo "${CWD_PROJECT_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
 }
 _getServicePorts() {
-	_checkCWDProject
+	local project_dir service_name
 
-	local serviceName="${1}"
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+			*/*)
+				project_dir="${1}"
+				shift
+				;;
+			*)
+				serviceName="${1}"
+				shift
+				;;
+		esac
+	done
+
+	if [[ -z ${project_dir} ]]; then
+		_checkCWDProject
+
+		project_dir=$"{CWD_PROJECT_ROOT}"
+	fi
+
+	cd "${project_dir}"
+
 	# shellcheck disable=SC2016
 	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.TargetPort}}\tlocalhost:{{.PublishedPort}}\n{{end}}{{end}}'
 
@@ -802,7 +822,7 @@ cmd_start() {
 		fi
 
 		_print_step "Printing published ports"
-		_getServicePorts
+		_getServicePorts "${project_dir}"
 
 		_print_step "Tailing logs"
 		docker compose logs -f

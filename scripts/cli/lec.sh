@@ -370,6 +370,9 @@ _getWorktreeDir() {
 
 	_listWorktrees | grep "/${worktree_name}$"
 }
+_list_projects() {
+	_listWorktrees
+}
 _list_releases() {
 	_listReleases
 }
@@ -378,9 +381,6 @@ _list_runningProjects() {
 }
 _list_saasEnvironments() {
 	_listSaaSEnvironments
-}
-_list_worktrees() {
-	_listWorktrees
 }
 _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"

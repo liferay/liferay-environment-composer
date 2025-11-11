@@ -16,7 +16,7 @@ function lecd() {
 
 	local worktree_dir
 	worktree_dir="$(
-		lec list worktrees |
+		lec list projects |
 			fzf \
 				--delimiter "/" \
 				--exit-0 \

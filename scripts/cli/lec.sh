@@ -107,7 +107,7 @@ _printHelpAndExit() {
 		  lec <command>
 
 		${C_BOLD}COMMANDS:${C_RESET}
-		  init [ticket] [version]          Create a new Composer project
+		  init [<ticket>] [<version>]      Create a new Composer project
 		  start                            Start a Composer project
 		  stop                             Stop a Composer project
 		  clean                            Stop a Composer project and remove Docker volumes

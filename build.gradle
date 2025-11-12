@@ -64,7 +64,7 @@ tasks.register("exportContainerData") {
 }
 
 tasks.register("importContainerData") {
-	mustRunAfter ":buildDockerImage"
+	dependsOn ":buildDockerImage"
 
 	doFirst {
 		List<String> previousVolumeNames = getExistingVolumeNames()

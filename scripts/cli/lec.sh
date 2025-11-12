@@ -584,19 +584,42 @@ _cmd_setVersion() {
 #
 
 cmd_clean() {
-	_print_step "Removing manually deleted worktrees"
-	_git worktree prune
-
 	_checkCWDProject
 
 	(
 		cd "${CWD_PROJECT_ROOT}" || exit
 
-		_print_step "Stopping environment"
-		./gradlew stop
+		local docker_images
+		docker_images="$(docker image ls | grep "^$(_getComposeProjectName)" | awk '{print $1}')"
 
-		_print_step "Deleting volumes..."
-		docker volume prune --all --filter="label=com.docker.compose.project=$(_getComposeProjectName)"
+		if [[ "${docker_images}" ]]; then
+			_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
+			echo ""
+			printf "${C_YELLOW}%s${C_NC}\n" "${docker_images}"
+			echo ""
+		else
+			_print_warn "This will stop the Docker compose project and remove the Docker volumes."
+		fi
+
+		if ! _confirm "Do you want to continue?"; then
+			return
+		fi
+
+		_print_step "Removing manually deleted worktrees"
+		_git worktree prune
+
+		_print_step "Stopping environment and deleting volumes"
+		./gradlew stop -Plr.docker.environment.clear.volume.data=true
+
+		_print_step "Cleaning the Gradle build"
+		./gradlew clean
+
+		if [[ "${docker_images}" ]]; then
+			_print_step "Removing Docker images..."
+			docker image ls | grep "^$(_getComposeProjectName)" | awk '{print $3}' | xargs -I{} docker image rm {}
+		fi
+
+		_print_success "Done"
 	)
 }
 cmd_exportData() {

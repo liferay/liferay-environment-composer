@@ -696,6 +696,7 @@ cmd_init() {
 			exit 1
 		fi
 
+		_print_step "Cleaning up left over project data..."
 		_removeWorktree "${existing_worktree}"
 	fi
 

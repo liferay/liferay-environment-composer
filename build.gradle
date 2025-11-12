@@ -129,7 +129,7 @@ tasks.register("importDocumentLibraryStructure") {
 	}
 }
 
-tasks.register("shareWorkspace") {
+tasks.register("shareWorkspace7z") {
 	doLast {
 		if (!isProgramInstalled("7z")) {
 			throw new GradleException("The 7z CLI must be installed in order to share workspaces. Follow the install instructions at https://7-zip.org/download.html.")
@@ -212,6 +212,15 @@ tasks.register("shareWorkspaceZip", Zip) {
 
 	outputs.upToDateWhen {
 		false
+	}
+}
+
+tasks.register("shareWorkspace") {
+	if (isProgramInstalled("7z")) {
+		dependsOn ":shareWorkspace7z"
+	}
+	else {
+		dependsOn ":shareWorkspaceZip"
 	}
 }
 

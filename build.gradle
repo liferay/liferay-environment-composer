@@ -104,8 +104,16 @@ tasks.register("importContainerData") {
 				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${backupFile.absolutePath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
 			}
 
-			if (volumeName.endsWith("_liferay")) {
-				waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest sh -c 'chown -R 1000:1000 /target'")
+			["liferay": 1000, "sqlserver": 10001 ].each {
+				entry ->
+				int port = entry.value
+				String serviceName = entry.key
+
+				if (volumeName.endsWith("_${serviceName}")) {
+					println "Setting volume permissions for service ${serviceName} to user/group ${port}"
+
+					waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest sh -c 'chown -R ${port}:${port} /target'")
+				}
 			}
 
 			println waitForCommand("docker run --rm -v ${volumeName}:/${volumeName} busybox:latest du -sh /${volumeName}/")

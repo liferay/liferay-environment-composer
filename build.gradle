@@ -104,6 +104,10 @@ tasks.register("importContainerData") {
 				waitForCommand("docker run --rm -v ${volumeName}:/target -v ${backupFile.absolutePath}:/source busybox:latest sh -c 'cp --update --recursive /source/* /target/'")
 			}
 
+			if (volumeName.endsWith("_liferay")) {
+				waitForCommand("docker run --rm -v ${volumeName}:/target busybox:latest sh -c 'chown -R 1000:1000 /target'")
+			}
+
 			println waitForCommand("docker run --rm -v ${volumeName}:/${volumeName} busybox:latest du -sh /${volumeName}/")
 		}
 	}

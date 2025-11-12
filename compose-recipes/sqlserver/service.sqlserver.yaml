@@ -22,7 +22,7 @@ services:
             test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Liferay123 -Q  "select name from sys.databases where name = ${DATABASE_NAME}" | grep -q ${DATABASE_NAME}
             timeout: 5s
         ports:
-            -   "1433:1433"
+            -   "${DATABASE_PORT}:1433"
         volumes:
             -   dumps:/var/opt/mssql/backups
             -   sqlserver:/var/opt/mssql/data

@@ -672,7 +672,7 @@ cmd_init() {
 	local ticket="${1}"
 	local liferay_version="${2}"
 
-	local existing_worktree
+	local existing_worktree_path
 	local worktree_dir
 	local worktree_name
 
@@ -689,15 +689,15 @@ cmd_init() {
 	_cancelIfEmpty "${liferay_version}"
 	_verifyLiferayVersion "${liferay_version}"
 
-	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
+	existing_worktree_path="$(_getWorktreeDir "${worktree_name}")"
 
-	if [[ "${existing_worktree}" ]]; then
-		if [[ -d "${existing_worktree}" ]] && ! _confirm "Do you want to replace the existing project ${C_YELLOW}${worktree_name}${C_NC}? Any existing data will be removed."; then
+	if [[ "${existing_worktree_path}" ]]; then
+		if [[ -d "${existing_worktree_path}" ]] && ! _confirm "Do you want to replace the existing project ${C_YELLOW}${worktree_name}${C_NC}? Any existing data will be removed."; then
 			exit 1
 		fi
 
 		_print_step "Cleaning up left over project data..."
-		_removeWorktree "${existing_worktree}"
+		_removeWorktree "${existing_worktree_path}"
 	fi
 
 	if _git rev-parse --verify --quiet "refs/heads/${worktree_name}" >/dev/null; then

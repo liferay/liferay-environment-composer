@@ -692,9 +692,7 @@ cmd_init() {
 	existing_worktree="$(_getWorktreeDir "${worktree_name}")"
 
 	if [[ "${existing_worktree}" ]]; then
-		_print_step "Worktree ${worktree_name} already exists at: ${existing_worktree}. You may remove it if you want to create a worktree with the same name."
-
-		if ! _confirm "Are you sure you want to remove the project ${C_YELLOW}${worktree_name}${C_NC}? The project directory and all data will be removed."; then
+		if [[ -d "${existing_worktree}" ]] && ! _confirm "Do you want to replace the existing project ${C_YELLOW}${worktree_name}${C_NC}? Any existing data will be removed."; then
 			exit 1
 		fi
 

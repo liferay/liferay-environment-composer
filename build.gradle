@@ -178,6 +178,43 @@ tasks.register("shareWorkspace") {
 	}
 }
 
+tasks.register("shareWorkspaceZip", Zip) {
+	archiveFileName = provider {
+		"workspace_${config.namespace}_${timestamp}.zip"
+	}
+
+	destinationDirectory = file 'shared_workspaces'
+
+	doLast {
+		logger.lifecycle "\nWorkspace zip: ${archiveFile.get()}\n"
+	}
+
+	exclude ".gitkeep"
+	exclude ".gitignore"
+	exclude ".git"
+	exclude ".gradle"
+	exclude "binds"
+	exclude "buildSrc/build"
+	exclude "buildSrc/.gradle"
+	exclude "dumps/*"
+	exclude "shared_workspaces"
+	exclude {
+		FileTreeElement fileTreeElement ->
+
+		fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
+		!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
+	}
+
+	from '.'
+
+	include "${config.dataDirectory}/**"
+	include "**/*"
+
+	outputs.upToDateWhen {
+		false
+	}
+}
+
 tasks.register("restart") {
 	dependsOn ":start"
 	dependsOn ":stop"

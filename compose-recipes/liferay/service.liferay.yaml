@@ -20,6 +20,8 @@ services:
             -   "${LIFERAY_GOGO_SHELL_PORT}:11311"
             -   "${LIFERAY_PORT}:8080"
         volumes:
+            -   glowroot:/opt/liferay/glowroot
             -   liferay:/opt/liferay/data
 volumes:
+    glowroot:
     liferay:

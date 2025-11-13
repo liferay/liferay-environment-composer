@@ -625,34 +625,6 @@ _cmd_gw() {
 		./gradlew "${@}"
 	)
 }
-_cmd_list() {
-	local closest_entity
-	local entity="${1}"
-
-	if [[ -z "${entity}" ]]; then
-		_print_step "Showing listable entities..."
-
-		_listPrefixedFunctions _list_
-
-		exit
-	fi
-
-	if ! _verifyListableEntity "${entity}"; then
-		closest_entity=$(_listPrefixedFunctions _list_| _fzf --filter "${entity}" | head -n 1)
-
-		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
-			entity=${closest_entity}
-		else
-			_print_error "Cannot list ${C_YELLOW}${entity}${C_NC}. Showing listable entities..."
-
-			_listPrefixedFunctions _list_
-
-			exit
-		fi
-	fi
-
-	_list_"${entity}"
-}
 _cmd_ports() {
 	_checkProjectDirectory
 
@@ -834,6 +806,34 @@ cmd_init() {
 		_print_step "Starting workspace"
 		_startProject "${worktree_dir}"
 	fi
+}
+cmd_list() {
+	local closest_entity
+	local entity="${1}"
+
+	if [[ -z "${entity}" ]]; then
+		_print_step "Showing listable entities..."
+
+		_listPrefixedFunctions _list_
+
+		exit
+	fi
+
+	if ! _verifyListableEntity "${entity}"; then
+		closest_entity=$(_listPrefixedFunctions _list_| _fzf --filter "${entity}" | head -n 1)
+
+		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
+			entity=${closest_entity}
+		else
+			_print_error "Cannot list ${C_YELLOW}${entity}${C_NC}. Showing listable entities..."
+
+			_listPrefixedFunctions _list_
+
+			exit
+		fi
+	fi
+
+	_list_"${entity}"
 }
 cmd_remove() {
 	local worktrees

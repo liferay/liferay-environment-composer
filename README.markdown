@@ -620,6 +620,13 @@ Completely tear down and remove one or more Composer projects:
 lec remove # Choose one or more projects to remove
 ```
 
+List various entities
+
+```sh
+lec list # Displays entities that can be listed; `lec list <entity>` lists all entries of the selected entity.
+lec list releases # Displays all releases.
+```
+
 Jump to a workspace:
 
 ```sh

@@ -5,7 +5,6 @@ services:
             -   path: ./liferay-jvm-opts.env
                 required: false
         environment:
-            -   GLOWROOT_ENABLED=${GLOWROOT_ENABLED}
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
             -   LIFERAY_UPGRADE_PERIOD_DATABASE_PERIOD_AUTO_PERIOD_RUN=true
@@ -20,8 +19,6 @@ services:
             -   "${LIFERAY_GOGO_SHELL_PORT}:11311"
             -   "${LIFERAY_PORT}:8080"
         volumes:
-            -   glowroot:/opt/liferay/glowroot
             -   liferay:/opt/liferay/data
 volumes:
-    glowroot:
     liferay:

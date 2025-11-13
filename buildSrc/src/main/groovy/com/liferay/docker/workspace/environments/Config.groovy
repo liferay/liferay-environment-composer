@@ -231,6 +231,10 @@ class Config {
 				include "**/clustering.*.yaml"
 			}
 
+			if (glowrootEnabled) {
+				include "**/glowroot.*.yaml"
+			}
+
 			if (useLiferay) {
 				include "**/liferay.*.yaml"
 			}

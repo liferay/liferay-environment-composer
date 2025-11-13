@@ -1,0 +1,8 @@
+services:
+    liferay:
+        environment:
+            -   GLOWROOT_ENABLED=true
+        volumes:
+            -   glowroot:/opt/liferay/glowroot
+volumes:
+    glowroot:

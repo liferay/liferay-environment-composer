@@ -44,6 +44,12 @@ tasks.register("exportContainerData") {
 
 		String hostPath = projectDir.relativePath(exportDir)
 
+		if (!config.glowrootEnabled) {
+			String glowrootVolume = "${config.namespace}_glowroot"
+
+			existingVolumeNames.remove(glowrootVolume)
+		}
+
 		existingVolumeNames.each {
 			String volumeName ->
 

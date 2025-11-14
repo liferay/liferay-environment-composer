@@ -216,6 +216,11 @@ _check_dependencies() {
 # The root project dir of where the current working directory, if any
 #
 
+_getRunningProjectDir() {
+	local project_locator="${1%/}"
+
+	_listRunningProjects | grep -e "/${project_locator}$" -e "${project_locator}"
+}
 _getProjectRoot() {
 	local dir="${PWD}"
 

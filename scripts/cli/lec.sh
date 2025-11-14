@@ -222,7 +222,15 @@ _getRunningProjectDir() {
 	_listRunningProjects | grep -e "/${project_locator}$" -e "${project_locator}"
 }
 _getProjectRoot() {
-	local dir="${PWD}"
+	local dir="${1}"
+
+	if [[ -z "${dir}" ]]; then
+		return 1
+	fi
+
+	if [[ -f "${dir}" ]]; then
+		dir="${dir%/*}"
+	fi
 
 	while [[ -d "${dir}" ]]; do
 		if [[ -d "${dir}/compose-recipes" ]]; then

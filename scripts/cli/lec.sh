@@ -11,6 +11,8 @@ if [ ! -d "${LXC_REPOSITORY_PATH}" ] && [ -d "${HOME}/dev/projects/liferay-lxc" 
 	LXC_REPOSITORY_PATH="${HOME}/dev/projects/liferay-lxc"
 fi
 
+PROJECT_DIRECTORY=""
+
 #
 # Helper function for fzf
 #
@@ -249,16 +251,29 @@ _getProjectRoot() {
 	return 1
 }
 
-CWD_PROJECT_ROOT="$(_getProjectRoot)"
+_getProjectDir() {
+	local projectDir
+	local projectLocator="${1}"
 
-#
-# Check to see if the script is called from a Composer project
-#
-
-_checkCWDProject() {
-	if [[ ! -d "${CWD_PROJECT_ROOT}" ]]; then
-		_errorExit "Not inside of a Liferay Environment Composer project"
+	projectDir="$(_getProjectRoot "${projectLocator}")"
+	if [[ -d "${projectDir}" ]]; then
+		echo "${projectDir}"
+		return
 	fi
+
+	projectDir="$(_getWorktreeDir "${projectLocator}")"
+	if [[ -d "${projectDir}" ]]; then
+		echo "${projectDir}"
+		return
+	fi
+
+	projectDir="$(_getRunningProjectDir "${projectLocator}")"
+	if [[ -d "${projectDir}" ]]; then
+		echo "${projectDir}"
+		return
+	fi
+
+	return 1
 }
 
 #
@@ -921,14 +936,44 @@ cmd_version() {
 
 _check_dependencies
 
-COMMAND="${1}"
+COMMAND=""
+OPTION_PROJECT="${PWD}"
+REST_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+	case "${1}" in
+		-p|--project)
+			OPTION_PROJECT="${2}"
+			[[ "${2}" ]] || _errorExit "${1} requires a value"
+			shift
+			shift
+			;;
+		*)
+			if [[ -z "${COMMAND}" ]]; then
+				COMMAND="${1}"
+			else
+				REST_ARGS+=("${1}")
+			fi
+			shift
+			;;
+	esac
+done
+
+_checkProjectDirectory() {
+	PROJECT_DIRECTORY="$(_getProjectDir "${OPTION_PROJECT}")"
+
+	test -d "${PROJECT_DIRECTORY}" || _errorExit "Cannot get a valid project for ${OPTION_PROJECT}"
+
+	echo "Project directory: ${C_BOLD}${PROJECT_DIRECTORY}${C_RESET}" 1>&2
+}
+
 if [[ -z "${COMMAND}" ]]; then
 	_printHelpAndExit
 fi
 
 PRIVATE_COMMAND="_cmd_${COMMAND}"
 if [[ $(type -t "${PRIVATE_COMMAND}") == function ]]; then
-	"${PRIVATE_COMMAND}" "${@:2}"
+	"${PRIVATE_COMMAND}" "${REST_ARGS[@]}"
 	exit
 fi
 
@@ -946,4 +991,4 @@ if ! _verifyCommand "${COMMAND}"; then
 	_printHelpAndExit
 fi
 
-"cmd_${COMMAND}" "${@:2}"
+"cmd_${COMMAND}" "${REST_ARGS[@]}"

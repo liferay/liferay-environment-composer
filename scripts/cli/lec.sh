@@ -411,22 +411,25 @@ _verifyListableEntity() {
 #
 
 _getComposeProjectName() {
-	_checkCWDProject
+	local projectDir="${1}"
 
-	echo "${CWD_PROJECT_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
+	echo "${projectDir##*/}" | tr "[:upper:]" "[:lower:]"
 }
 _getServicePorts() {
-	_checkCWDProject
-
-	local serviceName="${1}"
+	local projectDir="${1}"
+	local serviceName="${2}"
 	# shellcheck disable=SC2016
 	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.TargetPort}}\tlocalhost:{{.PublishedPort}}\n{{end}}{{end}}'
 
-	if [[ "${serviceName}" ]]; then
-		docker compose ps "${serviceName}" --format "${template}" | tail -n +3
-	else
-		docker compose ps --format "${template}" | tail -n +3
-	fi
+	(
+		cd "${projectDir}" || exit 1
+
+		if [[ "${serviceName}" ]]; then
+			docker compose ps "${serviceName}" --format "${template}" | tail -n +3
+		else
+			docker compose ps --format "${template}" | tail -n +3
+		fi
+	)
 }
 _getWorktreeDir() {
 	local worktree_name="${1}"

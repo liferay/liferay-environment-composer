@@ -370,7 +370,7 @@ _listWorktrees() {
 _getClosestCommand() {
 	local command="${1}"
 
-	_listPublicCommands | _fzf --filter "${command}"
+	_listPublicCommands | _fzf --filter "${command}" | head -n 1
 }
 _verifyCommand() {
 	local command="${1}"

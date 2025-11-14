@@ -107,17 +107,17 @@ _printHelpAndExit() {
 		  lec <command>
 
 		${C_BOLD}COMMANDS:${C_RESET}
-		  init [<ticket>] [<version>]      Create a new Composer project
-		  start                            Start a Composer project
-		  stop                             Stop a Composer project
-		  clean                            Stop a Composer project and remove Docker volumes
-		  exportData                       Export container data for a Composer project
-		  remove                           Completely tear down and remove one or more Composer projects
-		  share [--export]                 Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
-		  update [--unstable]              Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
-		  version                          Prints the current version of lec
+		  init [<ticket>] [<version>] [--start]     Create a new Composer project. The "--start" flag starts the Composer project.
+		  start                                     Start a Composer project
+		  stop                                      Stop a Composer project
+		  clean                                     Stop a Composer project and remove Docker volumes
+		  exportData                                Export container data for a Composer project
+		  remove                                    Completely tear down and remove one or more Composer projects
+		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
+		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
+		  version                                   Prints the current version of lec
 
-		  importDLStructure <sourceDir>    Import a Document Library (file structure only, no content) into configs/common/data/document_library
+		  importDLStructure <sourceDir>             Import a Document Library (file structure only, no content) into configs/common/data/document_library
 
 		${C_BOLD}JUMP TO A PROJECT:${C_RESET}
 		  lecd [project name]
@@ -352,9 +352,29 @@ _getComposeProjectName() {
 	echo "${CWD_PROJECT_ROOT##*/}" | tr "[:upper:]" "[:lower:]"
 }
 _getServicePorts() {
-	_checkCWDProject
+	local project_dir service_name
 
-	local serviceName="${1}"
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+			*/*)
+				project_dir="${1}"
+				shift
+				;;
+			*)
+				serviceName="${1}"
+				shift
+				;;
+		esac
+	done
+
+	if [[ -z ${project_dir} ]]; then
+		_checkCWDProject
+
+		project_dir=$"{CWD_PROJECT_ROOT}"
+	fi
+
+	cd "${project_dir}"
+
 	# shellcheck disable=SC2016
 	local template='table NAME\tCONTAINER PORT\tHOST PORT\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.TargetPort}}\tlocalhost:{{.PublishedPort}}\n{{end}}{{end}}'
 
@@ -669,8 +689,26 @@ cmd_importDLStructure() {
 
 }
 cmd_init() {
-	local ticket="${1}"
-	local liferay_version="${2}"
+	local args=()
+	local start
+
+	start=0
+
+	while [[ $# -gt  0 ]]; do
+		case "${1}" in
+			--start)
+				start=1
+				shift
+				;;
+			*)
+				args+=("${1}")
+				shift
+				;;
+		esac
+	done
+
+	local ticket="${args[0]}"
+	local liferay_version="${args[1]}"
 
 	local existing_worktree_path
 	local worktree_dir
@@ -720,6 +758,10 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
+
+	if [[ ${start} == 1 ]]; then
+		cmd_start "${worktree_dir}"
+	fi
 }
 cmd_remove() {
 	local worktrees
@@ -764,10 +806,19 @@ cmd_share() {
 	)
 }
 cmd_start() {
-	_checkCWDProject
+	local project_dir
+	local workspace_or_dir="${1}"
+
+	if [[ ${workspace_or_dir} == lec* ]]; then
+		project_dir="$(_getWorktreeDir ${workspace_or_dir})"
+	elif [[ ${workspace_or_dir} == /* ]]; then
+		project_dir="${workspace_or_dir}"
+	elif [[ -z ${workspace_or_dir} ]]; then
+		project_dir="${CWD_PROJECT_ROOT}"
+	fi
 
 	(
-		cd "${CWD_PROJECT_ROOT}" || exit
+		cd "${project_dir}" || exit
 
 		_print_step "Starting environment"
 		if ! ./gradlew start; then
@@ -775,7 +826,7 @@ cmd_start() {
 		fi
 
 		_print_step "Printing published ports"
-		_getServicePorts
+		_getServicePorts "${project_dir}"
 
 		_print_step "Tailing logs"
 		docker compose logs -f

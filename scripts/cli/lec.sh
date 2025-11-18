@@ -262,11 +262,7 @@ RELEASES_JSON_URLS=(
 )
 
 _verifyReleasesJsonFile() {
-	if jq . "${RELEASES_JSON_FILE}" &>/dev/null; then
-		return
-	fi
-
-	return 1
+	jq . "${RELEASES_JSON_FILE}" &>/dev/null
 }
 _checkReleasesJsonFile() {
 	if ! _verifyReleasesJsonFile; then

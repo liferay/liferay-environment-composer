@@ -260,6 +260,14 @@ RELEASES_JSON_URLS=(
 	"https://releases-cdn.liferay.com/releases.json"
 	"https://releases.liferay.com/releases.json"
 )
+
+_verifyReleasesJsonFile() {
+	if jq . "${RELEASES_JSON_FILE}" &>/dev/null; then
+		return
+	fi
+
+	return 1
+}
 _checkReleasesJsonFile() {
 	local releases_json_url="${1}"
 

@@ -256,6 +256,10 @@ LIFERAY_WORKSPACE_HOME="$HOME/.liferay/workspace"
 
 RELEASES_JSON_FILE="${LIFERAY_WORKSPACE_HOME}/releases.json"
 
+RELEASES_JSON_URLS=(
+	"https://releases-cdn.liferay.com/releases.json"
+	"https://releases.liferay.com/releases.json"
+)
 _checkReleasesJsonFile() {
 	local releases_json_url="${1}"
 

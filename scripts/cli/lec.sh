@@ -257,10 +257,11 @@ LIFERAY_WORKSPACE_HOME="$HOME/.liferay/workspace"
 RELEASES_JSON_FILE="${LIFERAY_WORKSPACE_HOME}/releases.json"
 
 _checkReleasesJsonFile() {
+	local releases_json_url="${1}"
+
 	local curl_cmd
 	local etag_status_code
 	local releases_json_etag_file="${LIFERAY_WORKSPACE_HOME}/releases-json.etag"
-	local releases_json_url="https://releases-cdn.liferay.com/releases.json"
 
 	if [[ ! -d "${LIFERAY_WORKSPACE_HOME}" ]]; then
 		mkdir -p "${LIFERAY_WORKSPACE_HOME}"

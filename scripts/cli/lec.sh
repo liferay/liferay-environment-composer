@@ -269,6 +269,33 @@ _verifyReleasesJsonFile() {
 	return 1
 }
 _checkReleasesJsonFile() {
+	if ! _verifyReleasesJsonFile; then
+		rm "${RELEASES_JSON_FILE}" &>/dev/null
+	fi
+
+	local backupJson
+
+	if [[ -f "${RELEASES_JSON_FILE}" ]]; then
+		backupJson="$(cat "${RELEASES_JSON_FILE}")"
+	fi
+
+	for url in "${RELEASES_JSON_URLS[@]}"; do
+		_checkReleasesJsonFileURL "${url}"
+
+		if _verifyReleasesJsonFile; then
+			return
+		fi
+
+		rm "${RELEASES_JSON_FILE}" &>/dev/null
+	done
+
+	if [[ "${backupJson}" ]]; then
+		echo "${backupJson}" > "${RELEASES_JSON_FILE}"
+	fi
+
+	return 1
+}
+_checkReleasesJsonFileURL() {
 	local releases_json_url="${1}"
 
 	local curl_cmd

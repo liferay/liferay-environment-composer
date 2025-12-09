@@ -877,7 +877,19 @@ cmd_update() {
 	local remote
 	local tag_branch
 	local upstream_repo_owner=liferay
-	local unstable_flag="${1}"
+
+	local FLAG_UNSTABLE=0
+
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+			--unstable)
+				shift && FLAG_UNSTABLE=1
+				;;
+			*)
+				shift
+				;;
+		esac
+	done
 
 	remote="$(_git remote -v | grep "\b${upstream_repo_owner}/liferay-environment-composer\b" | grep -F '(fetch)' | awk '{print $1}' | head -n1)"
 	if [[ -z "${remote}" ]]; then
@@ -904,7 +916,7 @@ cmd_update() {
 
 	_print_step "Checking for updates..."
 
-	if [[ "${unstable_flag}" == "--unstable" ]]; then
+	if [[ "${FLAG_UNSTABLE}" -gt 0 ]]; then
 		_git fetch "${remote}" master
 
 		if ! _git rebase "${remote}/master" master; then

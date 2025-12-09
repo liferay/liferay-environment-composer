@@ -810,12 +810,23 @@ cmd_remove() {
 cmd_share() {
 	_checkProjectDirectory
 
-	local exportFlag="${1}"
+	local FLAG_EXPORT=0
+
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+			--export)
+				shift && FLAG_EXPORT=1
+				;;
+			*)
+				shift
+				;;
+		esac
+	done
 
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
 
-		if [[ "${exportFlag}" == "--export" ]]; then
+		if [[ "${FLAG_EXPORT}" -gt 1 ]]; then
 			_print_step "Exporting container data..."
 
 			if ! ./gradlew exportContainerData --quiet; then

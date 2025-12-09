@@ -489,6 +489,26 @@ _selectLiferayRelease() {
 		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}    ${delimiter},g"
 	) | _select "${promptMessage}" | awk -F "${delimiter}" '{print $2}'
 }
+_startProject() {
+	local projectDir="${1}"
+
+	(
+		cd "${projectDir}" || exit
+
+		if ! ./gradlew start; then
+			exit 1
+		fi
+	)
+}
+_tailProjectLogs() {
+	local projectDir="${1}"
+
+	(
+		cd "${projectDir}" || exit
+
+		docker compose logs -f
+	)
+}
 _isLXCVersion() {
 	local lxc_version="${1}"
 
@@ -850,20 +870,14 @@ cmd_share() {
 cmd_start() {
 	_checkProjectDirectory
 
-	(
-		cd "${PROJECT_DIRECTORY}" || exit
+	_print_step "Starting environment"
+	_startProject "${PROJECT_DIRECTORY}"
 
-		_print_step "Starting environment"
-		if ! ./gradlew start; then
-			exit 1
-		fi
+	_print_step "Printing published ports"
+	_getServicePorts "${PROJECT_DIRECTORY}"
 
-		_print_step "Printing published ports"
-		_getServicePorts
-
-		_print_step "Tailing logs"
-		docker compose logs -f
-	)
+	_print_step "Tailing logs"
+	_tailProjectLogs "${PROJECT_DIRECTORY}"
 }
 cmd_stop() {
 	_checkProjectDirectory

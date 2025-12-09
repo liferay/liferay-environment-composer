@@ -762,8 +762,23 @@ cmd_importDLStructure() {
 
 }
 cmd_init() {
-	local ticket="${1}"
-	local liferay_version="${2}"
+	local ARGS=()
+	local FLAG_START=0
+
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+			--start)
+				shift && FLAG_START=1
+				;;
+			*)
+				ARGS+=("${1}")
+				shift
+				;;
+		esac
+	done
+
+	local ticket="${ARGS[0]}"
+	local liferay_version="${ARGS[1]}"
 
 	local existing_worktree_path
 	local worktree_dir
@@ -813,6 +828,11 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
+
+	if [[ "${FLAG_START}" -gt 0 ]]; then
+		_print_step "Starting workspace"
+		_startProject "${worktree_dir}"
+	fi
 }
 cmd_remove() {
 	local worktrees

@@ -3,11 +3,34 @@ deploy {
 		String projectName = "{{PROJECT_NAME}}"
 		String composedArchive = "${destinationDir}/${liferay.deployedFileNameClosure.call(jar)}"
 
-		ExecOutput execOutput = providers.exec {
-			commandLine "docker", "compose", "-p", projectName, "cp", "--archive", composedArchive, "liferay:/opt/liferay/deploy"
+		List<String> commandArgs = ["docker", "compose", "-p", projectName, "cp"]
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream()
+
+		project.exec {
+			commandLine "docker", "info", "--format", "json"
+			standardOutput = out
 		}
 
+		groovy.json.JsonSlurper jsonSlurper = new groovy.json.JsonSlurper()
+
+		Object dockerInfo = jsonSlurper.parse(out.toByteArray())
+
+		boolean rootless = dockerInfo['SecurityOptions'].any {
+			it.contains("name=rootless")
+		}
+
+		if (!rootless) {
+			commandArgs.add("--archive")
+		}
+
+		commandArgs.addAll([composedArchive, "liferay:/opt/liferay/deploy"])
+
 		logger.lifecycle("Copying jar to Docker container...")
-		logger.lifecycle(execOutput.standardError.asText.get().trim())
+		logger.lifecycle("Using command: ${commandArgs.join(" ")}")
+
+		project.exec {
+			commandLine commandArgs
+		}
 	}
 }

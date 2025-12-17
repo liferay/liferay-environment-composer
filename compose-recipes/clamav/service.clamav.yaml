@@ -6,6 +6,6 @@ services:
             timeout: 10s
             test: echo 'PING' | nc -w 5 localhost ${CLAMAV_PORT}
             retries: 5
-        image: clamav/clamav:1.0.9
+        image: clamav/clamav:${CLAMAV_VERSION}
         ports:
             -   ${CLAMAV_PORT}:3310

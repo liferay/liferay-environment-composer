@@ -1,0 +1,11 @@
+services:
+    clamav:
+        container_name: ${NAMESPACE}-clamav
+        healthcheck:
+            interval: 30s
+            timeout: 10s
+            test: echo 'PING' | nc -w 5 localhost 3310
+            retries: 5
+        image: clamav/clamav:1.0.9
+        ports:
+            -   3310:3310

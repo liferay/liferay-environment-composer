@@ -1,0 +1,7 @@
+services:
+    liferay:
+        depends_on:
+            clamav:
+                condition: service_healthy
+        environment:
+            -   LIFERAY_DL_PERIOD_STORE_PERIOD_ANTIVIRUS_PERIOD_ENABLED=true

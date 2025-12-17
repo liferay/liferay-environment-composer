@@ -183,6 +183,8 @@ class Config {
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
+		this.useClamAV = this.services.contains("clamav")
+
 		if (this.services.contains("db2")) {
 			this.databaseType = "db2"
 			this.useDatabase = true
@@ -321,6 +323,7 @@ class Config {
 	public String namespace = null
 	public String product = null
 	public List<String> services = new ArrayList<String>()
+	public boolean useClamAV = false
 	public boolean useClustering = false
 	public boolean useDatabase = false
 	public boolean useDatabaseDB2 = false

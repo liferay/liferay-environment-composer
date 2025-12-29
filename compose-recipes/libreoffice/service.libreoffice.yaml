@@ -1,0 +1,12 @@
+services:
+    libreoffice:
+        build: ./compose-recipes/libreoffice
+        container_name: ${NAMESPACE}_libreoffice
+        healthcheck:
+            interval: 10s
+            retries: 3
+            start_period: 20s
+            test: nc -z localhost ${LIBRE_OFFICE_PORT}
+            timeout: 5s
+        ports:
+            -   ${LIBRE_OFFICE_PORT}:8100

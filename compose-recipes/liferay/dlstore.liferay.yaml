@@ -1,0 +1,4 @@
+services:
+    liferay:
+        environment:
+            -   LIFERAY_DL_PERIOD_STORE_PERIOD_IMPL=${DL_STORE_CLASS}

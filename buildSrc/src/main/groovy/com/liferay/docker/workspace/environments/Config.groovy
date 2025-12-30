@@ -90,6 +90,12 @@ class Config {
 			this.dataDirectory = dataDirectoryProperty
 		}
 
+		String dlStoreProperty = project.findProperty("lr.docker.environment.dl.store")
+
+		if (dlStoreProperty != null && !dlStoreProperty.isEmpty()) {
+			this.dlStore = dlStoreProperty
+		}
+
 		String glowrootEnabledProperty = project.findProperty("lr.docker.environment.glowroot.enabled")
 
 		if (glowrootEnabledProperty != null) {
@@ -257,6 +263,10 @@ class Config {
 				include "**/database-partitioning.*.yaml"
 			}
 
+			if (this.dlStore) {
+				include "**/dlstore.liferay.yaml"
+			}
+
 			if (this.yourKitEnabled) {
 				include "**/yourkit.liferay.yaml"
 
@@ -317,6 +327,7 @@ class Config {
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
+	public String dlStore = "simple"
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
 	public List<String> gcpHotfixURLs = new ArrayList<String>()

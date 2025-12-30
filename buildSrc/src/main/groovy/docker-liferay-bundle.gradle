@@ -14,12 +14,20 @@ configurations {
 	db2
 	sqlserver
 	xerces
+	xuggler
 }
 
 dependencies {
 	db2 group: "com.ibm.db2.jcc", name: "db2jcc", version: "db2jcc4"
 	sqlserver group: "com.microsoft.sqlserver", name: "mssql-jdbc", version: "12.10.1.jre11"
 	xerces group: "xerces", name: "xercesImpl", version: "2.12.2"
+	xuggler group: 'xuggle', name: 'xuggle-xuggler', version: '5.4'
+}
+
+repositories {
+	maven {
+			url "https://maven.dcm4che.org/"
+		}
 }
 
 Closure<Boolean> isValidLicenseFile = {
@@ -224,6 +232,23 @@ tasks.register("prepareSAXParser", Copy) {
 	from configurations.xerces
 
 	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+}
+
+tasks.register("prepareXugglerJar", Copy) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("media preview is enabled") {
+		config.mediaPreviewEnabled
+	}
+	onlyIf("specifying a workspace product version for Liferay 7.3 or older") {
+		config.product != null && !(config.product.contains(".q") || config.product.contains("7.4"))
+	}
+
+	from {
+		configurations.findByName("xuggler")
+	}
+	into "configs/common/tomcat/webapps/ROOT/WEB-INF/lib"
 }
 
 tasks.register("validateHotfixURLs") {

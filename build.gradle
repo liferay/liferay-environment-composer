@@ -274,6 +274,7 @@ clean {
 	dependsOn ":cleanPrepareSAXParser"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
+	dependsOn ":cleanPrepareXugglerJar"
 	dependsOn ":cleanDownloadYourKitAgentZip"
 	dependsOn ":cleanPrepareYourKitAgent"
 }
@@ -282,6 +283,7 @@ dockerDeploy {
 	dependsOn ":prepareJDBCDriver"
 	dependsOn ":prepareHotfixes"
 	dependsOn ":prepareSAXParser"
+	dependsOn ":prepareXugglerJar"
 	dependsOn ":prepareYourKitAgent"
 }
 

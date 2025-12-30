@@ -216,6 +216,12 @@ class Config {
 			this.yourKitUrl = yourKitUrlProperty
 		}
 
+		String mediaPreviewEnabledProperty = project.findProperty("lr.docker.environment.media.preview.enabled")
+
+		if (mediaPreviewEnabledProperty != null) {
+			this.mediaPreviewEnabled = mediaPreviewEnabledProperty
+		}
+
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
@@ -381,6 +387,7 @@ class Config {
 	public String lxcBackupPassword = null
 	public String lxcEnvironmentName = null
 	public String lxcRepositoryPath = null
+	public boolean mediaPreviewEnabled = false
 	public String namespace = null
 	public String product = null
 	public boolean recaptchaEnabled = false

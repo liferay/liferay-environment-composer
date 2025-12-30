@@ -321,6 +321,30 @@ if (config.useLiferay) {
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
 environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
+if (config.dlStore != "simple") {
+	String validStoreTypes = "advanced,db,s3"
+
+	if (!validStoreTypes.contains(config.dlStore)) {
+		throw new GradleException("Invalid DL store type provided. Please see gradle.properties file for valid store types.")
+	}
+
+	String dlStoreClass = ""
+	
+	if (config.dlStore = "advanced") {
+		dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
+	}
+
+	if (config.dlStore = "db") {
+		dlStoreClass = "com.liferay.portal.store.db.DBStore"
+	}
+
+	if (config.dlStore = "s3") {
+		dlStoreClass = "com.liferay.portal.store.s3.S3Store"
+	}
+
+	environmentMap.put("DL_STORE_CLASS", dlStoreClass)
+}
+
 file("ports.env").withInputStream {
 	portsFile ->
 

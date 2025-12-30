@@ -26,8 +26,8 @@ dependencies {
 
 repositories {
 	maven {
-			url "https://maven.dcm4che.org/"
-		}
+		url "https://maven.dcm4che.org/"
+	}
 }
 
 Closure<Boolean> isValidLicenseFile = {

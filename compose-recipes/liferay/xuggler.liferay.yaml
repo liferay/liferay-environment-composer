@@ -1,0 +1,4 @@
+services:
+    liferay:
+        environment:
+            -   LIFERAY_XUGGLER_PERIOD_ENABLED=${MEDIA_PREVIEW_ENABLED}

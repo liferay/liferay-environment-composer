@@ -311,6 +311,15 @@ class Config {
 					include "**/yourkit-clustering.liferay.yaml"
 				}
 			}
+
+			if (mediaPreviewEnabled) {
+				if (product.contains("7.4") || product.contains(".q")) {
+					include "**/ffmpeg.liferay.yaml"
+				}
+				else {
+					include "**/xuggler.liferay.yaml"
+				}
+			}
 		}
 
 		List<String> serviceComposeFiles = this.services.collect {

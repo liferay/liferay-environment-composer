@@ -343,6 +343,8 @@ if (config.dlStore == "s3") {
 
 environmentMap.put("DL_STORE_CLASS", config.dlStoreClass)
 
+environmentMap.put("MEDIA_PREVIEW_ENABLED", config.mediaPreviewEnabled)
+
 file("ports.env").withInputStream {
 	portsFile ->
 

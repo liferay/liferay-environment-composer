@@ -324,7 +324,7 @@ environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
 String validDLStoreTypes = "advanced,db,s3,simple"
 
-if (!validStoreTypes.contains(config.dlStore)) {
+if (!validDLStoreTypes.contains(config.dlStore)) {
 	throw new GradleException("Invalid DL store type provided. Please see gradle.properties file for valid store types.")
 }
 

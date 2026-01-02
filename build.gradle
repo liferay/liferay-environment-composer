@@ -270,6 +270,7 @@ buildDockerImage {
 clean {
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":cleanPrepareSAXParser"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 	dependsOn ":cleanDownloadYourKitAgentZip"

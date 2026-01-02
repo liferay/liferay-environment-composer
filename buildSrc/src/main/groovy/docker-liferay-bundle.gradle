@@ -13,11 +13,13 @@ project.plugins.apply "docker-common"
 configurations {
 	db2
 	sqlserver
+	xerces
 }
 
 dependencies {
 	db2 group: "com.ibm.db2.jcc", name: "db2jcc", version: "db2jcc4"
 	sqlserver group: "com.microsoft.sqlserver", name: "mssql-jdbc", version: "12.10.1.jre11"
+	xerces group: 'xerces', name: 'xercesImpl', version: '2.12.2'
 }
 
 Closure<Boolean> isValidLicenseFile = {
@@ -208,6 +210,19 @@ tasks.register("prepareJDBCDriver", Copy) {
 	from {
 		dbDriverConfiguration
 	}
+	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
+}
+
+tasks.register("prepareSAXParser", Copy) {
+	onlyIf("using the Liferay service") {
+		config.useLiferay
+	}
+	onlyIf("using Amazon S3 store") {
+		config.dlStore == "s3"
+	}
+
+	from configurations.xerces
+
 	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
 }
 

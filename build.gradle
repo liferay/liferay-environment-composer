@@ -322,45 +322,43 @@ if (config.useLiferay) {
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
 environmentMap.put("COMPOSE_PROJECT_NAME", config.namespace)
 
-if (config.dlStore != "simple") {
-	String validStoreTypes = "advanced,db,s3"
+String validDLStoreTypes = "advanced,db,s3,simple"
 
-	if (!validStoreTypes.contains(config.dlStore)) {
-		throw new GradleException("Invalid DL store type provided. Please see gradle.properties file for valid store types.")
-	}
-
-	String dlStoreClass = ""
-
-	if (config.dlStore = "advanced") {
-		dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
-	}
-
-	if (config.dlStore = "db") {
-		dlStoreClass = "com.liferay.portal.store.db.DBStore"
-	}
-
-	if (config.dlStore = "s3") {
-		dlStoreClass = "com.liferay.portal.store.s3.S3Store"
-
-		if (config.s3AccessKey) {
-			environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
-		}
-
-		if (config.s3BucketName) {
-			environmentMap.put("S3_BUCKET_NAME", config.s3BucketName)
-		}
-
-		if (config.s3Region) {
-			environmentMap.put("S3_REGION", config.s3Region)
-		}
-
-		if (config.s3SecretKey) {
-			environmentMap.put("S3_SECRET_KEY", config.s3SecretKey)
-		}
-	}
-
-	environmentMap.put("DL_STORE_CLASS", dlStoreClass)
+if (!validStoreTypes.contains(config.dlStore)) {
+	throw new GradleException("Invalid DL store type provided. Please see gradle.properties file for valid store types.")
 }
+
+String dlStoreClass = "com.liferay.portal.store.file.system.FileSystemStore"
+
+if (config.dlStore == "advanced") {
+	dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
+}
+
+if (config.dlStore == "db") {
+	dlStoreClass = "com.liferay.portal.store.db.DBStore"
+}
+
+if (config.dlStore == "s3") {
+	dlStoreClass = "com.liferay.portal.store.s3.S3Store"
+
+	if (config.s3AccessKey) {
+		environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
+	}
+
+	if (config.s3BucketName) {
+		environmentMap.put("S3_BUCKET_NAME", config.s3BucketName)
+	}
+
+	if (config.s3Region) {
+		environmentMap.put("S3_REGION", config.s3Region)
+	}
+
+	if (config.s3SecretKey) {
+		environmentMap.put("S3_SECRET_KEY", config.s3SecretKey)
+	}
+}
+
+environmentMap.put("DL_STORE_CLASS", dlStoreClass)
 
 file("ports.env").withInputStream {
 	portsFile ->

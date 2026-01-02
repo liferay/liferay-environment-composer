@@ -5,6 +5,7 @@ services:
             -   path: ./liferay-jvm-opts.env
                 required: false
         environment:
+            -   LIFERAY_DL_PERIOD_STORE_PERIOD_IMPL=${DL_STORE_CLASS}
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
             -   LIFERAY_UPGRADE_PERIOD_DATABASE_PERIOD_AUTO_PERIOD_RUN=true

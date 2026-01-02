@@ -330,7 +330,7 @@ if (config.dlStore != "simple") {
 	}
 
 	String dlStoreClass = ""
-	
+
 	if (config.dlStore = "advanced") {
 		dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
 	}

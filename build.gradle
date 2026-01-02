@@ -341,6 +341,22 @@ if (config.dlStore != "simple") {
 
 	if (config.dlStore = "s3") {
 		dlStoreClass = "com.liferay.portal.store.s3.S3Store"
+
+		if (config.s3AccessKey) {
+			environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
+		}
+
+		if (config.s3BucketName) {
+			environmentMap.put("S3_BUCKET_NAME", config.s3BucketName)
+		}
+
+		if (config.s3Region) {
+			environmentMap.put("S3_REGION", config.s3Region)
+		}
+
+		if (config.s3SecretKey) {
+			environmentMap.put("S3_SECRET_KEY", config.s3SecretKey)
+		}
 	}
 
 	environmentMap.put("DL_STORE_CLASS", dlStoreClass)

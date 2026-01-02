@@ -96,6 +96,12 @@ class Config {
 			this.dlStore = dlStoreProperty
 		}
 
+		String dlStorePathProperty = project.findProperty("lr.docker.environment.dl.store.path")
+
+		if (dlStorePathProperty != null) {
+			this.dlStorePath = dlStorePathProperty
+		}
+
 		String s3AccessKeyProperty = project.findProperty("lr.docker.environment.s3.access.key")
 
 		if (s3AccessKey != null) {
@@ -288,7 +294,9 @@ class Config {
 			}
 
 			if (this.dlStore) {
-				include "**/dlstore.liferay.yaml"
+				if (this.dlStore == "advanced") {
+					include "**/dlstore.liferay.yaml"
+				}
 
 				if (this.dlStore == "s3") {
 					include "**/s3store.liferay.yaml"
@@ -356,6 +364,7 @@ class Config {
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dlStore = "simple"
+	public String dlStorePath = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
 	public List<String> gcpHotfixURLs = new ArrayList<String>()

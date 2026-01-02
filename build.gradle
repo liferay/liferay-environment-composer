@@ -332,6 +332,10 @@ String dlStoreClass = "com.liferay.portal.store.file.system.FileSystemStore"
 
 if (config.dlStore == "advanced") {
 	dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
+
+	if (config.dlStorePath) {
+		environmentMap.put("DL_STORE_PATH", config.dlStorePath)
+	}
 }
 
 if (config.dlStore == "db") {

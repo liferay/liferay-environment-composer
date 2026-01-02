@@ -19,7 +19,7 @@ configurations {
 dependencies {
 	db2 group: "com.ibm.db2.jcc", name: "db2jcc", version: "db2jcc4"
 	sqlserver group: "com.microsoft.sqlserver", name: "mssql-jdbc", version: "12.10.1.jre11"
-	xerces group: 'xerces', name: 'xercesImpl', version: '2.12.2'
+	xerces group: "xerces", name: "xercesImpl", version: "2.12.2"
 }
 
 Closure<Boolean> isValidLicenseFile = {

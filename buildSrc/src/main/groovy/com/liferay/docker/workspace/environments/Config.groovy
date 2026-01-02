@@ -96,6 +96,30 @@ class Config {
 			this.dlStore = dlStoreProperty
 		}
 
+		String s3AccessKeyProperty = project.findProperty("lr.docker.environment.s3.access.key")
+
+		if (s3AccessKey != null) {
+			this.s3AccessKey = s3AccessKeyProperty
+		}
+
+		String s3BucketNameProperty = project.findProperty("lr.docker.environment.s3.bucket.name")
+
+		if (s3BucketName != null) {
+			this.s3BucketName = s3BucketNameProperty
+		}
+
+		String s3RegionProperty = project.findProperty("lr.docker.environment.s3.region")
+
+		if (s3Region != null) {
+			this.s3Region = s3RegionProperty
+		}
+
+		String s3SecretKeyProperty = project.findProperty("lr.docker.environment.s3.secret.key")
+
+		if (s3SecretKey != null) {
+			this.s3SecretKey = s3SecretKeyProperty
+		}
+
 		String glowrootEnabledProperty = project.findProperty("lr.docker.environment.glowroot.enabled")
 
 		if (glowrootEnabledProperty != null) {
@@ -265,6 +289,10 @@ class Config {
 
 			if (this.dlStore) {
 				include "**/dlstore.liferay.yaml"
+
+				if (this.dlStore == "s3") {
+					include "**/s3store.liferay.yaml"
+				}
 			}
 
 			if (this.yourKitEnabled) {
@@ -342,6 +370,10 @@ class Config {
 	public String namespace = null
 	public String product = null
 	public boolean recaptchaEnabled = false
+	public String s3AccessKey = null
+	public String s3BucketName = null
+	public String s3Region = null
+	public String s3SecretKey = null
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useDatabase = false

@@ -2,6 +2,12 @@ services:
     libreoffice:
         build: ./compose-recipes/libreoffice
         container_name: ${NAMESPACE}_libreoffice
+        deploy:
+            resources:
+                limits:
+                    memory: 0.5G
+                reservations:
+                    memory: 0.5G
         healthcheck:
             interval: 10s
             retries: 3

@@ -1,7 +1,7 @@
 services:
     libreoffice:
         build: ./compose-recipes/libreoffice
-        container_name: ${NAMESPACE}_libreoffice
+        container_name: ${NAMESPACE}-libreoffice
         deploy:
             resources:
                 limits:

@@ -213,6 +213,10 @@ class Config {
 			this.useDatabaseSQLServer = true
 		}
 
+		if (this.services.contains("libreoffice")) {
+			this.useLibreOffice = true
+		}
+
 		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
 			throw new GradleException("Both HTTP and HTTPS are enabled for the webserver service. Only one protocol can be active at a time.")
 		}
@@ -233,6 +237,10 @@ class Config {
 
 			if (glowrootEnabled) {
 				include "**/glowroot.*.yaml"
+			}
+
+			if (useLibreOffice) {
+				include "**/*.libreoffice.yaml"
 			}
 
 			if (useLiferay) {
@@ -328,6 +336,7 @@ class Config {
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
 	public boolean useDatabaseSQLServer = false
+	public boolean useLibreOffice = false
 	public boolean useLiferay = false
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false

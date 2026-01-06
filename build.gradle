@@ -263,6 +263,7 @@ buildDockerImage {
 
 	dependsOn ":checkForLiferayLicense"
 	dependsOn ":prepareJDBCDriver"
+	dependsOn ":prepareSAXParser"
 
 	mustRunAfter ":importDatabaseDumps"
 }

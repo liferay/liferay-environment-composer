@@ -114,6 +114,12 @@ class Config {
 			this.s3BucketName = s3BucketNameProperty
 		}
 
+		String s3EndpointProperty = project.findProperty("lr.docker.environment.s3.endpoint")
+
+		if (s3EndpointProperty != null) {
+			this.s3Endpoint = s3EndpointProperty
+		}
+
 		String s3RegionProperty = project.findProperty("lr.docker.environment.s3.region")
 
 		if (s3RegionProperty != null) {
@@ -381,6 +387,7 @@ class Config {
 	public boolean recaptchaEnabled = false
 	public String s3AccessKey = null
 	public String s3BucketName = null
+	public String s3Endpoint = null
 	public String s3Region = null
 	public String s3SecretKey = null
 	public List<String> services = new ArrayList<String>()

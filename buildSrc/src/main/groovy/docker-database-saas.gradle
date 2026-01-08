@@ -619,16 +619,12 @@ tasks.register("importDatabaseDumps") {
 			executeSQLQuery(query)
 		}
 
-		if (config.useDatabasePostgreSQL) {
-			FileCollection binaryDumpFiles = project.fileTree("dumps") {
-				include "**/*.dmp"
-				include "**/*.dump"
-			}
+		FileCollection binaryDumpFiles = project.fileTree("dumps") {
+			include "**/*.dmp"
+			include "**/*.dump"
+		}
 
-			if (Util.isEmpty(binaryDumpFiles)) {
-				return;
-			}
-
+		if (config.useDatabasePostgreSQL && !Util.isEmpty(binaryDumpFiles)) {
 			if (binaryDumpFiles.size() > 1) {
 				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
 			}

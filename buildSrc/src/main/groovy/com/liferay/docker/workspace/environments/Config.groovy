@@ -161,6 +161,12 @@ class Config {
 
 		this.liferayDockerImageId = "${this.namespace}-liferay"
 
+		String recaptchaEnabledProperty = project.findProperty("lr.docker.environment.recaptcha.enabled")
+
+		if (recaptchaEnabledProperty != null) {
+			this.recaptchaEnabled = recaptchaEnabledProperty.toBoolean()
+		}
+
 		def webserverHostnamesProperty = project.findProperty("lr.docker.environment.web.server.hostnames").split(',')*.trim().findAll { it }
 
 		if (webserverHostnamesProperty != null) {
@@ -237,6 +243,10 @@ class Config {
 
 			if (useLiferay) {
 				include "**/liferay.*.yaml"
+			}
+
+			if (recaptchaEnabled) {
+				include "**/recaptcha.*.yaml"
 			}
 
 			if (this.databasePartitioningEnabled) {
@@ -320,6 +330,7 @@ class Config {
 	public String lxcRepositoryPath = null
 	public String namespace = null
 	public String product = null
+	public boolean recaptchaEnabled = false
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
 	public boolean useDatabase = false

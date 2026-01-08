@@ -8,7 +8,7 @@ tasks.register("validateWebserverProtocol") {
 	}
 	
 	if (!(config.webserverProtocol == "http" || config.webserverProtocol == "https")) {
-		throw new GradleException("Please set \"lr.docker.environment.webserver.protocol\" as \"http\" or \"https\".")
+		throw new GradleException("Please set \"lr.docker.environment.web.server.protocol\" as \"http\" or \"https\".")
 	}
 }
 

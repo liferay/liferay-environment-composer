@@ -167,7 +167,7 @@ class Config {
 			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
-		String webserverProtocolProperty = project.findProperty("lr.docker.environment.webserver.protocol")
+		String webserverProtocolProperty = project.findProperty("lr.docker.environment.web.server.protocol")
 
 		if (webserverProtocolProperty != null) {
 			this.webserverProtocol = webserverProtocolProperty

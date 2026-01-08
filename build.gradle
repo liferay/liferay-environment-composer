@@ -270,6 +270,7 @@ buildDockerImage {
 clean {
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":validateWebserverProtocol"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 	dependsOn ":cleanDownloadYourKitAgentZip"
@@ -283,6 +284,7 @@ dockerDeploy {
 }
 
 composeBuild {
+	dependsOn ":validateWebserverProtocol"
 	dependsOn ":prepareSelfSignedCert"
 	dependsOn ":prepareWebserverConfig"
 }

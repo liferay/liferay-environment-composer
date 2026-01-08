@@ -2,6 +2,16 @@ import groovy.text.SimpleTemplateEngine
 
 SimpleTemplateEngine templateEngine = new SimpleTemplateEngine()
 
+tasks.register("validateWebserverProtocol") {
+	onlyIf("using webserver service") {
+		config.useWebserver
+	}
+	
+	if (!(config.webserverProtocol == "http" || config.webserverProtocol == "https")) {
+		throw new GradleException("Please set \"lr.docker.environment.webserver.protocol\" as \"http\" or \"https\".")
+	}
+}
+
 tasks.register("prepareSelfSignedCert", Copy) {
 	outputs.upToDateWhen {
 		false

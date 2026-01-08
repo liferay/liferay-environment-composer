@@ -272,6 +272,7 @@ clean {
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareSAXParser"
+	dependsOn ":validateWebserverProtocol"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 	dependsOn ":cleanPrepareXugglerJar"
@@ -288,6 +289,7 @@ dockerDeploy {
 }
 
 composeBuild {
+	dependsOn ":validateWebserverProtocol"
 	dependsOn ":prepareSelfSignedCert"
 	dependsOn ":prepareWebserverConfig"
 }

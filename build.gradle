@@ -332,6 +332,10 @@ file("ports.env").withInputStream {
 }
 
 if (config.useWebserver) {
+	if (config.webserverProtocol != "http" && config.webserverProtocol != https) {
+		throw new GradleException("Please set the property \"lr.docker.environment.webserver.protocol\" as either \"http\" or \"https\".")
+	}
+
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)
 	environmentMap.put("WEBSERVER_PROTOCOL_UPPERCASE", config.webserverProtocol.toUpperCase())
 	

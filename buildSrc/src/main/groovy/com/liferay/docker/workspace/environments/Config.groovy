@@ -206,6 +206,10 @@ class Config {
 
 		String webserverProtocolProperty = project.findProperty("lr.docker.environment.webserver.protocol")
 
+		if (this.useWebserver && webserverProtocolProperty == null) {
+			throw new GradleException("Please set the property \"lr.docker.environment.webserver.protocol\" when using the webserver service")
+		}
+
 		if (webserverProtocolProperty != null) {
 			this.webserverProtocol = webserverProtocolProperty
 		}

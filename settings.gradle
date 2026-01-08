@@ -3,6 +3,7 @@ buildscript {
 		classpath(group: "com.liferay", name: "com.liferay.gradle.plugins.workspace", version: "12.0.0") {
 			exclude group: "net.java.dev.jna", module: "jna"
 		}
+
 		classpath group: "net.java.dev.jna", name: "jna", version: "5.14.0"
 	}
 

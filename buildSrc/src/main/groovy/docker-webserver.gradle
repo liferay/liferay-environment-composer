@@ -15,7 +15,7 @@ tasks.register("prepareSelfSignedCert", Copy) {
 	.split(" ")
 	.toList()
 
-	File certDir = "compose-recipes/webserver-https/build/ssl" as File
+	File certDir = "compose-recipes/webserver/build/ssl" as File
 	File opensslConfigFile = "$certDir/openssl.cnf" as File
 	File certFile = "$certDir/server.crt" as File
 	File keyFile = "$certDir/server.key" as File
@@ -67,7 +67,7 @@ tasks.register("prepareWebserverConfig", Copy) {
 
 	from webserverConfigTemplatesDir
 	include "base.conf.template"
-	into "compose-recipes/webserver-${protocol}/build/config"
+	into "compose-recipes/webserver/build/config"
 	rename "base.conf.template", "default.conf"
 
 	expand(

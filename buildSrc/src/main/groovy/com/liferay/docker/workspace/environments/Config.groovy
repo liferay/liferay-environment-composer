@@ -204,6 +204,12 @@ class Config {
 			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
+		String webserverProtocolProperty = project.findProperty("lr.docker.environment.webserver.protocol")
+
+		if (webserverProtocolProperty != null) {
+			this.webserverProtocol = webserverProtocolProperty
+		}
+
 		String yourKitEnabledProperty = project.findProperty("lr.docker.environment.yourkit.enabled")
 
 		if (yourKitEnabledProperty != null) {
@@ -256,13 +262,10 @@ class Config {
 			this.useDatabaseSQLServer = true
 		}
 
-		if (this.services.contains("webserver_http") && this.services.contains("webserver_https")) {
-			throw new GradleException("Both HTTP and HTTPS are enabled for the webserver service. Only one protocol can be active at a time.")
+		if (this.services.contains("webserver")) {
+			this.useWebserver = true
 		}
 
-		this.useWebserverHttp = this.services.contains("webserver_http")
-
-		this.useWebserverHttps = this.services.contains("webserver_https")
 
 		if (this.dockerImageLiferay.contains("7.4") || this.dockerImageLiferay.contains(".q")) {
 			this.is74OrQuarterly = true
@@ -419,9 +422,9 @@ class Config {
 	public boolean useDatabasePostgreSQL = false
 	public boolean useDatabaseSQLServer = false
 	public boolean useLiferay = false
-	public boolean useWebserverHttp = false
-	public boolean useWebserverHttps = false
+	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"
+	public String webserverProtocol = null
 	public boolean yourKitEnabled = false
 	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip"
 

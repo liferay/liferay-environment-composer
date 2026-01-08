@@ -8,7 +8,7 @@ tasks.register("prepareSelfSignedCert", Copy) {
 	}
 
 	onlyIf("using a webserver with HTTPS") {
-		config.useWebserverHttps
+		config.useWebserver && config.webserverProtocol == "https"
 	}
 
 	List<String> hostnames = config.webserverHostnames
@@ -51,7 +51,7 @@ tasks.register("prepareSelfSignedCert", Copy) {
 
 tasks.register("prepareWebserverConfig", Copy) {
 	onlyIf("using a webserver") {
-		config.useWebserverHttp || config.useWebserverHttps
+		config.useWebserver
 	}
 
 	outputs.upToDateWhen {
@@ -59,7 +59,7 @@ tasks.register("prepareWebserverConfig", Copy) {
 	}
 
 	File webserverConfigTemplatesDir = "templates/webserver/config" as File
-	String protocol = config.useWebserverHttps ? "https" : "http"
+	String protocol = config.webserverProtocol
 
 	File upstreamTemplateFile = config.useClustering
 	? file("${webserverConfigTemplatesDir}/upstream.cluster.conf.template")

@@ -9,4 +9,4 @@ RUN sed -i -E 's,(^\s*)(exec "\$@"),\1mysql_note "STARTING_UP"\n\1\2,' /usr/loca
 
 CMD ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci"]
 
-COPY *.cnf /etc/mysql/conf.d/
+COPY --chmod=644 *.cnf /etc/mysql/conf.d/

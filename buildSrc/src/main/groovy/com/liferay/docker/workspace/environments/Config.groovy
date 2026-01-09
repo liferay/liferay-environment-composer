@@ -170,6 +170,10 @@ class Config {
 		String webserverProtocolProperty = project.findProperty("lr.docker.environment.web.server.protocol")
 
 		if (webserverProtocolProperty != null) {
+			if (!(webserverProtocolProperty == "http" || webserverProtocolProperty == "https")) {
+				throw new GradleException("Please set \"lr.docker.environment.web.server.protocol\" as either \"http\" or \"https\".")
+			}
+
 			this.webserverProtocol = webserverProtocolProperty
 		}
 

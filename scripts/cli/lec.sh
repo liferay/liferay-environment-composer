@@ -794,6 +794,7 @@ cmd_init() {
 	fi
 
 	worktree_dir="$(_getWorktreeDir "${worktree_name}")"
+	echo "Workspace dir: ${worktree_dir}"
 
 	echo
 	_print_step "Writing Liferay version"

@@ -596,6 +596,8 @@ lec init LPP-12345 dxp-2025.q3.0 # Pass in the LPP ticket number and the Liferay
 lec init LPP-12345 abc1prd # Pass in the LPP ticket number and the SaaS environment name
 ```
 
+The `lec-init` shell function is the same as `lec init`, but will also jump to the new project after it is created.
+
 Start the workspace:
 
 ```sh

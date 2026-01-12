@@ -34,3 +34,24 @@ function lecd() {
 		cd "${worktree_dir}" || return 1
 	fi
 }
+
+function lec-init() {
+	local tmp_file
+	local workspace_dir
+
+	tmp_file="$(mktemp)"
+	trap 'rm -rf ${tmp_file}' EXIT
+
+	if ! lec init "${@}" | tee "${tmp_file}"; then
+		return 1
+	fi
+
+	workspace_dir="$(grep "Workspace dir: " "${tmp_file}" | awk '{print $3}')"
+
+	if [[ -d "${workspace_dir}" ]]; then
+		echo ""
+		echo "Navigating to new workspace at ${workspace_dir}..."
+
+		cd "${workspace_dir}" || return 1
+	fi
+}

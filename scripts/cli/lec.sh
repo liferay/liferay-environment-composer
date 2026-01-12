@@ -126,8 +126,9 @@ _printHelpAndExit() {
 		  -p, --project PROJECT_IDENTIFIER          Pass in a project directory or name to commands that operate on a project. If not provided, the current working
 		                                            is used. Supported commands are: clean, exportData, importDLStructure, share, start, and stop.
 
-		${C_BOLD}JUMP TO A PROJECT:${C_RESET}
-		  lecd [project name]
+		${C_BOLD}SHELL FUNCTIONS:${C_RESET}
+		  lecd [project name]                       Jump to a project
+		  lec-init                                  Same as "init", but also jumps to the project after it is created
 
 	EOF
 

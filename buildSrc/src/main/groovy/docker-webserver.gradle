@@ -2,6 +2,47 @@ import groovy.text.SimpleTemplateEngine
 
 SimpleTemplateEngine templateEngine = new SimpleTemplateEngine()
 
+tasks.register("deleteModSecurityConfigFiles") {
+	doLast {
+		String webserverBuildConfigDir = "compose-recipes/webserver/build/config"
+
+		for (filepath in ['crs-setup.conf', 'rules']) {
+			project.delete("${webserverBuildConfigDir}/${filepath}")
+		}
+	}
+}
+
+tasks.register("prepareModSecurityConfigFiles") {
+	onlyIf("using a webserver") {
+		config.useWebserver
+	}
+	onlyIf("ModSecurity is enabled") {
+		config.modSecurityEnabled
+	}
+	
+	doLast {
+		String containerName = 'modsecurity'
+		
+		exec {
+			commandLine 'docker', 'create', '--name', containerName, 'owasp/modsecurity-crs:nginx'
+		}
+
+		File webserverBuildConfigDir = "compose-recipes/webserver/build/config/" as File
+
+		mkdir webserverBuildConfigDir
+
+		exec {
+			commandLine 'docker', 'cp', "${containerName}:/etc/modsecurity.d/owasp-crs/crs-setup.conf", webserverBuildConfigDir
+		}
+
+		exec {
+			commandLine 'docker', 'cp', "${containerName}:/etc/modsecurity.d/owasp-crs/rules", webserverBuildConfigDir
+		}
+
+		exec { commandLine 'docker', 'rm', containerName }
+	}
+}
+
 tasks.register("prepareSelfSignedCert", Copy) {
 	outputs.upToDateWhen {
 		false

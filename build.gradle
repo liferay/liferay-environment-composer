@@ -270,6 +270,7 @@ buildDockerImage {
 clean {
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
+	dependsOn ":deleteModSecurityConfigFiles"
 	dependsOn ":cleanPrepareSelfSignedCert"
 	dependsOn ":cleanPrepareWebserverConfig"
 	dependsOn ":cleanDownloadYourKitAgentZip"
@@ -283,6 +284,7 @@ dockerDeploy {
 }
 
 composeBuild {
+	dependsOn ":prepareModSecurityConfigFiles"
 	dependsOn ":prepareSelfSignedCert"
 	dependsOn ":prepareWebserverConfig"
 }
@@ -332,6 +334,7 @@ file("ports.env").withInputStream {
 }
 
 if (config.useWebserver) {
+	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)
 	environmentMap.put("WEBSERVER_PROTOCOL_UPPERCASE", config.webserverProtocol.toUpperCase())
 

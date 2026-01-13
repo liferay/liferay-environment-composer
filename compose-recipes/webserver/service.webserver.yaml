@@ -2,6 +2,7 @@ services:
     webserver:
         build:
             args:
+                MODSECURITY_ENABLED: ${MODSECURITY_ENABLED}
                 PROTOCOL: ${WEBSERVER_PROTOCOL}
             context: ./compose-recipes/webserver
         container_name: ${NAMESPACE}-webserver

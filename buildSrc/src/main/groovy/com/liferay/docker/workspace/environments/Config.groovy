@@ -204,6 +204,12 @@ class Config {
 			this.webserverHostnames = webserverHostnamesProperty.join(' ')
 		}
 
+		String webserverModSecurityEnabledProperty = project.findProperty("lr.docker.environment.web.server.modsecurity.enabled")
+
+		if (webserverModSecurityEnabledProperty != null) {
+			this.modSecurityEnabled = webserverModSecurityEnabledProperty.toBoolean()
+		}
+
 		String webserverProtocolProperty = project.findProperty("lr.docker.environment.web.server.protocol")
 
 		if (webserverProtocolProperty != null) {
@@ -409,6 +415,7 @@ class Config {
 	public String lxcEnvironmentName = null
 	public String lxcRepositoryPath = null
 	public boolean mediaPreviewEnabled = false
+	public boolean modSecurityEnabled = false
 	public String namespace = null
 	public String product = null
 	public boolean recaptchaEnabled = false

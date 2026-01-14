@@ -9,7 +9,6 @@ plugins {
 	id "docker-common"
 	id "docker-database-saas"
 	id "docker-liferay-bundle"
-	id "docker-webserver"
 }
 
 if (Boolean.getBoolean("env.mode.ci")) {
@@ -60,6 +59,16 @@ tasks.register("exportContainerData") {
 		updateGradleLocalProperties(["lr.docker.environment.data.directory" : hostPath])
 
 		logger.lifecycle("\nUpdated gradle-local.properties with the new value:\nlr.docker.environment.data.directory=${hostPath}")
+	}
+}
+
+tasks.register("printWebserverConfig") {
+	onlyIf("using a webserver") {
+		config.useWebserver
+	}
+
+	doFirst {
+		println waitForCommand("docker exec ${config.namespace}-webserver nginx -T")
 	}
 }
 
@@ -270,9 +279,6 @@ buildDockerImage {
 clean {
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
-	dependsOn ":deleteModSecurityConfigFiles"
-	dependsOn ":cleanPrepareSelfSignedCert"
-	dependsOn ":cleanPrepareWebserverConfig"
 	dependsOn ":cleanDownloadYourKitAgentZip"
 	dependsOn ":cleanPrepareYourKitAgent"
 }
@@ -283,11 +289,6 @@ dockerDeploy {
 	dependsOn ":prepareYourKitAgent"
 }
 
-composeBuild {
-	dependsOn ":prepareModSecurityConfigFiles"
-	dependsOn ":prepareSelfSignedCert"
-	dependsOn ":prepareWebserverConfig"
-}
 
 composeUp {
 	onlyIf("there are Compose files") {
@@ -304,6 +305,7 @@ composeUp {
 
 	finalizedBy ":listAdminUsers"
 	finalizedBy ":printBundleInfo"
+	finalizedBy ":printWebserverConfig"
 }
 
 Map<String, String> environmentMap = [:]
@@ -333,7 +335,13 @@ file("ports.env").withInputStream {
 	environmentMap.putAll ports
 }
 
+if (config.useClustering) {
+	environmentMap.put("UPSTREAM_FILE", "upstream.cluster.conf")
+}
+
 if (config.useWebserver) {
+	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)	
+	environmentMap.put("USE_CLUSTERING", config.useClustering)
 	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)
 	environmentMap.put("WEBSERVER_PROTOCOL_UPPERCASE", config.webserverProtocol.toUpperCase())

@@ -2,16 +2,20 @@ services:
     webserver:
         build:
             args:
-                MODSECURITY_ENABLED: ${MODSECURITY_ENABLED}
-                PROTOCOL: ${WEBSERVER_PROTOCOL}
+                MODSECURITY_ENABLED: ${MODSECURITY_ENABLED:-false}
+                WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
+                PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
             context: ./compose-recipes/webserver
+            additional_contexts:
+                templates_config: ./templates/webserver/config
+                templates_ssl: ./templates/webserver/ssl
         container_name: ${NAMESPACE}-webserver
+        environment:
+            - PROTOCOL=${WEBSERVER_PROTOCOL:-http}
+            - WEBSERVER_HOSTNAMES=${WEBSERVER_HOSTNAMES:-localhost}
+            - UPSTREAM_FILE=${UPSTREAM_FILE:-upstream.conf}
         depends_on:
             liferay:
                 condition: service_healthy
         ports:
             -   "${WEBSERVER_HOST_PORT}:${WEBSERVER_CONTAINER_PORT}" ## Figure out a way to toggle the first part
-        volumes:
-            -   webserver:/etc/nginx/conf.d
-volumes:
-    webserver:

@@ -136,7 +136,10 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	println "Attempting to copy trial license from ${latestImageName}"
 
 	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/deploy ${latestImageName}")
-	waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ./configs/common/osgi/modules/:/target alpine sh -c 'cp /source/trial-*.xml /target/'")
+
+	File modulesDir = file("${rootProject.projectDir}/configs/common/osgi/modules")
+
+	waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ${modulesDir.absolutePath}:/target alpine sh -c 'cp /source/trial-*.xml /target/'")
 	waitForCommand("docker rm ${temporaryContainerName}")
 	waitForCommand("docker volume rm ${config.namespace}-license")
 

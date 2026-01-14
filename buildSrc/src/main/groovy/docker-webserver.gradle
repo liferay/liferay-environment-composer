@@ -39,7 +39,9 @@ tasks.register("prepareModSecurityConfigFiles") {
 			commandLine 'docker', 'cp', "${containerName}:/etc/modsecurity.d/owasp-crs/rules", webserverBuildConfigDir
 		}
 
-		exec { commandLine 'docker', 'rm', containerName }
+		exec {
+			commandLine 'docker', 'rm', containerName
+		}
 	}
 }
 

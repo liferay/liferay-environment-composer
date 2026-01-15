@@ -24,6 +24,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Deploy license files](#deploy-license-files)
 - [Enable clustering](#enable-clustering)
 - [Configure Liferay ports](#configure-liferay-ports)
+- [Enable LibreOffice integration](#enable-libreoffice-integration)
 
 ### Database features overview
 
@@ -202,6 +203,16 @@ LIFERAY_PORT=8080-8089
 LIFERAY_GOGO_SHELL_PORT=11311-11319
 LIFERAY_DEBUG_PORT=8000-8009
 LIFERAY_YOURKIT_PORT=10001-10010
+```
+
+#### Enable LibreOffice integration
+
+You can enable LibreOffice integration with Liferay by setting the `lr.docker.environment.service.enabled[libreoffice]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`
+
+```properties
+lr.docker.environment.service.enabled[libreoffice]=true
 ```
 
 ### Java Virtual Machine features overview

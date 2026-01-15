@@ -96,6 +96,10 @@ class Config {
 			this.dlStore = dlStoreProperty
 		}
 
+		Map<String, String> dlStoreClassMap = ["advanced": "com.liferay.portal.store.file.system.AdvancedFileSystemStore", "db": "com.liferay.portal.store.db.DBStore", "s3": "com.liferay.portal.store.s3.S3Store", "simple": "com.liferay.portal.store.file.system.FileSystemStore"]
+
+		this.dlStoreClass = dlStoreClassMap[this.dlStore]
+
 		String dlStorePathProperty = project.findProperty("lr.docker.environment.dl.store.path")
 
 		if (dlStorePathProperty != null) {
@@ -369,7 +373,8 @@ class Config {
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
-	public String dlStore = "simple"
+	public String dlStore = ""
+	public String dlStoreClass = ""
 	public String dlStorePath = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false

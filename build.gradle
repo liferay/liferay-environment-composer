@@ -330,23 +330,13 @@ if (!validDLStoreTypes.contains(config.dlStore)) {
 	throw new GradleException("Invalid DL store type provided. Please see gradle.properties file for valid store types.")
 }
 
-String dlStoreClass = "com.liferay.portal.store.file.system.FileSystemStore"
-
 if (config.dlStore == "advanced") {
-	dlStoreClass = "com.liferay.portal.store.file.system.AdvancedFileSystemStore"
-
 	if (config.dlStorePath) {
 		environmentMap.put("DL_STORE_PATH", config.dlStorePath)
 	}
 }
 
-if (config.dlStore == "db") {
-	dlStoreClass = "com.liferay.portal.store.db.DBStore"
-}
-
 if (config.dlStore == "s3") {
-	dlStoreClass = "com.liferay.portal.store.s3.S3Store"
-
 	if (config.s3AccessKey) {
 		environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
 	}
@@ -364,7 +354,7 @@ if (config.dlStore == "s3") {
 	}
 }
 
-environmentMap.put("DL_STORE_CLASS", dlStoreClass)
+environmentMap.put("DL_STORE_CLASS", config.dlStoreClass)
 
 file("ports.env").withInputStream {
 	portsFile ->

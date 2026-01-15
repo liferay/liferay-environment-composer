@@ -26,6 +26,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Configure Liferay ports](#configure-liferay-ports)
 - [Enable LibreOffice integration](#enable-libreoffice-integration)
 - [Configure document library store](#configure-document-library-store)
+- [Enable media previews](#enable-media-previews)
 
 ### Database features overview
 
@@ -255,6 +256,15 @@ You may also need to configure the endpoint URL by setting the value for the `lr
 
 ```properties
 lr.docker.environment.s3.endpoint=
+
+#### Enable media previews
+
+You can enable media previews in Liferay by setting the `lr.docker.environment.media.preview.enabled` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`
+
+```properties
+lr.docker.environment.preview.media.enabled=true
 ```
 
 ### Java Virtual Machine features overview

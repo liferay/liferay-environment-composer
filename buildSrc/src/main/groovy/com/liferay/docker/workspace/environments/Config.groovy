@@ -109,40 +109,16 @@ class Config {
 			throw new GradleException("${dlStore} is not a valid DLStore type. Valid types are: ${dlStoreClassMap.collect {it.key}}")
 		}
 
-		String dlStorePathProperty = project.findProperty("lr.docker.environment.dl.store.path")
-
-		if (dlStorePathProperty != null) {
-			this.dlStorePath = dlStorePathProperty
+		if (this.dlStore == "advanced") {
+			this.dlStorePath = getRequiredProperty(project, "lr.docker.environment.dl.store.path")
 		}
 
-		String s3AccessKeyProperty = project.findProperty("lr.docker.environment.s3.access.key")
-
-		if (s3AccessKeyProperty != null) {
-			this.s3AccessKey = s3AccessKeyProperty
-		}
-
-		String s3BucketNameProperty = project.findProperty("lr.docker.environment.s3.bucket.name")
-
-		if (s3BucketNameProperty != null) {
-			this.s3BucketName = s3BucketNameProperty
-		}
-
-		String s3EndpointProperty = project.findProperty("lr.docker.environment.s3.endpoint")
-
-		if (s3EndpointProperty != null) {
-			this.s3Endpoint = s3EndpointProperty
-		}
-
-		String s3RegionProperty = project.findProperty("lr.docker.environment.s3.region")
-
-		if (s3RegionProperty != null) {
-			this.s3Region = s3RegionProperty
-		}
-
-		String s3SecretKeyProperty = project.findProperty("lr.docker.environment.s3.secret.key")
-
-		if (s3SecretKeyProperty != null) {
-			this.s3SecretKey = s3SecretKeyProperty
+		if (this.dlStore == "s3") {
+			this.s3AccessKey = getRequiredProperty(project, "lr.docker.environment.s3.access.key")
+			this.s3BucketName = getRequiredProperty(project, "lr.docker.environment.s3.bucket.name")
+			this.s3Endpoint = getRequiredProperty(project, "lr.docker.environment.s3.endpoint")
+			this.s3Region = getRequiredProperty(project, "lr.docker.environment.s3.region")
+			this.s3SecretKey = getRequiredProperty(project, "lr.docker.environment.s3.secret.key")
 		}
 
 		String glowrootEnabledProperty = project.findProperty("lr.docker.environment.glowroot.enabled")

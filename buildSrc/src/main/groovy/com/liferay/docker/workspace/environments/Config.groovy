@@ -105,6 +105,10 @@ class Config {
 
 		this.dlStoreClass = dlStoreClassMap[this.dlStore]
 
+		if (this.dlStoreClass == null) {
+			throw new GradleException("${dlStore} is not a valid DLStore type. Valid types are: ${dlStoreClassMap.collect {it.key}}")
+		}
+
 		String dlStorePathProperty = project.findProperty("lr.docker.environment.dl.store.path")
 
 		if (dlStorePathProperty != null) {

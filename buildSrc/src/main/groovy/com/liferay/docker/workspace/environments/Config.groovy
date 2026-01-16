@@ -317,11 +317,11 @@ class Config {
 			}
 
 			if (mediaPreviewEnabled) {
-				if (product.contains("7.4") || product.contains(".q")) {
-					include "**/ffmpeg.liferay.yaml"
+				if (this.useXuggler) {
+					include "**/xuggler.liferay.yaml"
 				}
 				else {
-					include "**/xuggler.liferay.yaml"
+					include "**/ffmpeg.liferay.yaml"
 				}
 			}
 		}

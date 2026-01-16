@@ -264,6 +264,10 @@ class Config {
 
 		this.useWebserverHttps = this.services.contains("webserver_https")
 
+		if (product.contains("7.4") || product.contains(".q")) {
+			this.useXuggler = true
+		}
+
 		File projectDir = project.projectDir as File
 		String[] databasePartitioningCompatibleServiceNames = ["mysql", "postgres"]
 
@@ -416,6 +420,7 @@ class Config {
 	public boolean useLiferay = false
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false
+	public boolean useXuggler = false
 	public String webserverHostnames = "localhost"
 	public boolean yourKitEnabled = false
 	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip"

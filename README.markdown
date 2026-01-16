@@ -255,7 +255,6 @@ You may also need to configure the endpoint URL by setting the value for the `lr
 
 ```properties
 lr.docker.environment.s3.endpoint=
->>>>>>> cf2b28f (LPD-73841 Update README with document library store configurations)
 ```
 
 ### Java Virtual Machine features overview

@@ -242,7 +242,7 @@ tasks.register("prepareXugglerJar", Copy) {
 		config.mediaPreviewEnabled
 	}
 	onlyIf("specifying a workspace product version for Liferay 7.3 or older") {
-		config.product != null && !(config.product.contains(".q") || config.product.contains("7.4"))
+		config.product != null && config.useXuggler
 	}
 
 	from {

@@ -334,6 +334,9 @@ if (config.dlStore == "advanced") {
 	if (config.dlStorePath) {
 		environmentMap.put("DL_STORE_PATH", config.dlStorePath)
 	}
+	else {
+		throw new GradleException("Please set \"lr.docker.environment.dl.store.path\".")
+	}
 }
 
 if (config.dlStore == "s3") {

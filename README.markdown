@@ -238,7 +238,7 @@ lr.docker.environment.dl.store.path=data/document_library
 
 ##### Configuring S3 store
 
-When using the `s3` document library store option, you will also need to provide additional details related to the S3-compatible object storage bucket in `gradle.properties`.
+When using the `s3` document library store option, you must also provide additional details related to the S3-compatible object storage bucket in `gradle.properties`.
 
 `gradle.properties`:
 

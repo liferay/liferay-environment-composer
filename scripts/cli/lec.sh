@@ -873,7 +873,7 @@ cmd_share() {
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
 
-		if [[ "${FLAG_EXPORT}" -gt 1 ]]; then
+		if [[ "${FLAG_EXPORT}" -gt 0 ]]; then
 			_print_step "Exporting container data..."
 
 			if ! ./gradlew exportContainerData --quiet; then

@@ -96,7 +96,12 @@ class Config {
 			this.dlStore = dlStoreProperty
 		}
 
-		Map<String, String> dlStoreClassMap = ["advanced": "com.liferay.portal.store.file.system.AdvancedFileSystemStore", "db": "com.liferay.portal.store.db.DBStore", "s3": "com.liferay.portal.store.s3.S3Store", "simple": "com.liferay.portal.store.file.system.FileSystemStore"]
+		Map<String, String> dlStoreClassMap = [
+			"advanced": "com.liferay.portal.store.file.system.AdvancedFileSystemStore",
+			"db": "com.liferay.portal.store.db.DBStore",
+			"s3": "com.liferay.portal.store.s3.S3Store",
+			"simple": "com.liferay.portal.store.file.system.FileSystemStore"
+		]
 
 		this.dlStoreClass = dlStoreClassMap[this.dlStore]
 

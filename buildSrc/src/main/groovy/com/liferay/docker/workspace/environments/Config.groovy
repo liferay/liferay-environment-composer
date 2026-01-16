@@ -116,7 +116,7 @@ class Config {
 		if (this.dlStore == "s3") {
 			this.s3AccessKey = getRequiredProperty(project, "lr.docker.environment.s3.access.key")
 			this.s3BucketName = getRequiredProperty(project, "lr.docker.environment.s3.bucket.name")
-			this.s3Endpoint = getRequiredProperty(project, "lr.docker.environment.s3.endpoint")
+			this.s3Endpoint = project.findProperty("lr.docker.environment.s3.endpoint")
 			this.s3Region = getRequiredProperty(project, "lr.docker.environment.s3.region")
 			this.s3SecretKey = getRequiredProperty(project, "lr.docker.environment.s3.secret.key")
 		}

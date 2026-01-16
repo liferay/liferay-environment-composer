@@ -331,42 +331,14 @@ if (!validDLStoreTypes.contains(config.dlStore)) {
 }
 
 if (config.dlStore == "advanced") {
-	if (config.dlStorePath) {
-		environmentMap.put("DL_STORE_PATH", config.dlStorePath)
-	}
-	else {
-		throw new GradleException("Please set \"lr.docker.environment.dl.store.path\".")
-	}
+	environmentMap.put("DL_STORE_PATH", config.dlStorePath)
 }
 
 if (config.dlStore == "s3") {
-	if (config.s3AccessKey) {
-		environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
-	}
-	else {
-		throw new GradleException("Please set \"lr.docker.environment.s3.access.key\".")
-	}
-
-	if (config.s3BucketName) {
-		environmentMap.put("S3_BUCKET_NAME", config.s3BucketName)
-	}
-	else {
-		throw new GradleException("Please set \"lr.docker.environment.s3.bucket.name\".")
-	}
-
-	if (config.s3Region) {
-		environmentMap.put("S3_REGION", config.s3Region)
-	}
-	else {
-		throw new GradleException("Please set \"lr.docker.environment.s3.region\".")
-	}
-
-	if (config.s3SecretKey) {
-		environmentMap.put("S3_SECRET_KEY", config.s3SecretKey)
-	}
-	else {
-		throw new GradleException("Please set \"lr.docker.environment.s3.secret.key\".")
-	}
+	environmentMap.put("S3_ACCESS_KEY", config.s3AccessKey)
+	environmentMap.put("S3_BUCKET_NAME", config.s3BucketName)
+	environmentMap.put("S3_REGION", config.s3Region)
+	environmentMap.put("S3_SECRET_KEY", config.s3SecretKey)
 }
 
 environmentMap.put("DL_STORE_CLASS", config.dlStoreClass)

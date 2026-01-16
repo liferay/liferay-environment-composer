@@ -209,7 +209,7 @@ LIFERAY_YOURKIT_PORT=10001-10010
 
 You can enable LibreOffice integration with Liferay by setting the `lr.docker.environment.service.enabled[libreoffice]` property to `true` or `1` in `gradle.properties`.
 
-`gradle.properties`
+`gradle.properties`:
 
 ```properties
 lr.docker.environment.service.enabled[libreoffice]=true

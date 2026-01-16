@@ -25,6 +25,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable clustering](#enable-clustering)
 - [Configure Liferay ports](#configure-liferay-ports)
 - [Enable LibreOffice integration](#enable-libreoffice-integration)
+- [Configure document library store](#configure-document-library-store)
 
 ### Database features overview
 
@@ -213,6 +214,48 @@ You can enable LibreOffice integration with Liferay by setting the `lr.docker.en
 
 ```properties
 lr.docker.environment.service.enabled[libreoffice]=true
+```
+
+#### Configure document library store
+
+You can configure which document library store Liferay will use by setting the `lr.docker.environment.dl.store` property in the `gradle.properties` file. Valid document library store options are `advanced`, `db`, `s3`, and `simple`. The default document library store is `simple`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.dl.store=simple
+```
+
+##### Configuring advanced file system store
+
+When using the `advanced` document library store option, you will also need to define the path used to specify the document library directory by setting the `lr.docker.environment.dl.store.path` property in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.dl.store.path=data/document_library
+```
+
+##### Configuring S3 store
+
+When using the `s3` document library store option, you will also need to provide additional details related to the S3-compatible object storage bucket in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.s3.access.key=
+lr.docker.environment.s3.bucket.name=
+lr.docker.environment.s3.region=
+lr.docker.environment.s3.secret.key=
+```
+
+You may also need to configure the endpoint URL by setting the value for the `lr.docker.environment.s3.endpoint` property in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.s3.endpoint=
+>>>>>>> cf2b28f (LPD-73841 Update README with document library store configurations)
 ```
 
 ### Java Virtual Machine features overview

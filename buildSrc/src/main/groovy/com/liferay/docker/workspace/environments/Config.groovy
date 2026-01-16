@@ -359,6 +359,15 @@ class Config {
 		this.composeFiles.addAll(serviceComposeFiles)
 	}
 
+	static Object getRequiredProperty(Project project, String property) {
+		try {
+			return project.getProperty(property)
+		}
+		catch (MissingPropertyException missingPropertyException) {
+			throw new GradleException("Missing required property: ${property}", missingPropertyException)
+		}
+	}
+
 	static List toList(String s) {
 		if (s == null) {
 			return []

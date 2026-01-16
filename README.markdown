@@ -261,7 +261,7 @@ lr.docker.environment.s3.endpoint=
 
 You can enable media previews in Liferay by setting the `lr.docker.environment.media.preview.enabled` property to `true` or `1` in `gradle.properties`.
 
-`gradle.properties`
+`gradle.properties`:
 
 ```properties
 lr.docker.environment.preview.media.enabled=true

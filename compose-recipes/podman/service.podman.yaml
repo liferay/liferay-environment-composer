@@ -1,0 +1,11 @@
+services:
+    podman:
+        build:
+            context: ./compose-recipes/podman
+        container_name: ${NAMESPACE}-podman
+        depends_on:
+            k8s:
+                condition: service_healthy
+        privileged: true # Required for Podman-in-Docker functionality
+        volumes:
+            -   ./client-extensions:/client-extensions:ro

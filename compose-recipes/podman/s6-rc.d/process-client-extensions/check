@@ -1,0 +1,21 @@
+#!/bin/bash
+HEARTBEAT_FILE="/tmp/processing-heartbeat"
+TIMEOUT_SECONDS=180  # 3 minutes (allows for 1 min run + buffer)
+
+# 1. If the file doesn't exist yet, give it a pass (startup grace period)
+if [ ! -f "$HEARTBEAT_FILE" ]; then
+    exit 0
+fi
+
+# 2. Get current time and file modification time
+CURRENT_TIME=$(date +%s)
+FILE_TIME=$(date -r "$HEARTBEAT_FILE" +%s)
+DIFF=$((CURRENT_TIME - FILE_TIME))
+
+# 3. Check if the difference is greater than the timeout
+if [ "$DIFF" -gt "$TIMEOUT_SECONDS" ]; then
+    echo "Heartbeat stale! Last run was ${DIFF}s ago."
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,5 @@
+services:
+    liferay:
+        depends_on:
+            k8s:
+                condition: service_healthy

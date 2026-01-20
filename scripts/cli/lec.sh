@@ -420,7 +420,7 @@ _clean() {
 	local project_directory="${1}"
 
 	(
-		cd "${1}" || exit
+		cd "${project_directory}" || exit
 
 		local docker_images
 		docker_images="$(docker image ls | grep "^$(_getComposeProjectName "${project_directory}")" | awk '{print $1}')"
@@ -870,6 +870,7 @@ cmd_remove() {
 
 	for worktree in ${worktrees}; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
+		_clean "${worktree}"
 		_removeWorktree "${worktree}"
 		echo
 	done

@@ -857,6 +857,7 @@ cmd_remove() {
 
 	for worktree in ${worktrees}; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
+		_clean "${worktree}"
 		_removeWorktree "${worktree}"
 		echo
 	done

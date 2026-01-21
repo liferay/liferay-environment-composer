@@ -6,18 +6,18 @@ server {
     server_name ${WEBSERVER_HOSTNAMES};
 
 	location / {
-		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$http_x_forwarded_proto;
-		proxy_set_header X-Forwarded-Port \$http_x_forwarded_port;
-		proxy_set_header Host \$host;
-		proxy_set_header X-Real-IP \$http_x_forwarded_for;
-		proxy_set_header Upgrade \$http_upgrade;
-		proxy_set_header Connection \$http_connection;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+		proxy_set_header X-Forwarded-Port $http_x_forwarded_port;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $http_x_forwarded_for;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $http_connection;
 		proxy_buffering on;
 		proxy_cache STATIC;
 		proxy_cache_valid 200 1d;
 		proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
-		proxy_pass http://appserver-\$scheme;
+		proxy_pass http://appserver-${PROTOCOL};
 	}
 
 	location /nginx_status {

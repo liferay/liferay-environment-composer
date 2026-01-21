@@ -340,7 +340,6 @@ if (config.useClustering) {
 
 if (config.useWebserver) {
 	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)
-	environmentMap.put("USE_CLUSTERING", config.useClustering)
 	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)
 	environmentMap.put("WEBSERVER_PROTOCOL_UPPERCASE", config.webserverProtocol.toUpperCase())

@@ -264,7 +264,9 @@ You can enable media previews in Liferay by setting the `lr.docker.environment.m
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.preview.media.enabled=true
+
 ```
 
 ### Java Virtual Machine features overview
@@ -282,7 +284,9 @@ Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1`
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[mysql]=true
+
 ```
 
 #### Enable PostgreSQL 16.3
@@ -292,7 +296,9 @@ Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or 
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[postgres]=true
+
 ```
 
 #### Enable DB2 11.5
@@ -302,7 +308,9 @@ Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` i
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[db2]=true
+
 ```
 
 #### Enable MariaDB 10.6
@@ -312,7 +320,9 @@ Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[mariadb]=true
+
 ```
 
 #### Enable SQL Server 2022
@@ -322,7 +332,9 @@ Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[sqlserver]=true
+
 ```
 
 #### Import a database dump
@@ -330,27 +342,35 @@ lr.docker.environment.service.enabled[sqlserver]=true
 Database dump files can be added to the `./dumps` directory at the root of the Workspace. They will automatically be copied into the database container.
 
 ```
-./dumps/dumpfile.sql  # raw database dump file
-./dumps/dumpfile.gz   # compressed database dump file downloaded from LXC or extracted from a password-protected archive
+
+./dumps/dumpfile.sql # raw database dump file
+./dumps/dumpfile.gz # compressed database dump file downloaded from LXC or extracted from a password-protected archive
+
 ```
 
 For SaaS database backups, you will often be provided with a password-protected 7zip file. While ideally you would extract the file, the tool can also automatically extract it for you if you set the `lr.docker.environment.lxc.backup.password` property in `gradle.properties` to the provided password.
 
 ```
-./dumps/dumpfile.7z   # database dump file provided by SRE team (SaaS), usually password-protected
-./dumps/dumpfile.zip  # database dump file provided by SRE team (SaaS), usually password-protected
+
+./dumps/dumpfile.7z # database dump file provided by SRE team (SaaS), usually password-protected
+./dumps/dumpfile.zip # database dump file provided by SRE team (SaaS), usually password-protected
+
 ```
 
 When importing SaaS database backups, make sure to set properties to allow the tool to find information related to the SaaS environment.
 
 ```
+
 lr.docker.environment.lxc.environment.name=abc1prd
+
 ```
 
 For example, if the projectId is `lxcabc1-abc1prd`, the environment name name is `abc1prd`. The tool will use this information to automatically copy configurations from the `liferay/liferay-lxc` repository, which it assumes will be located at `${user.home}/dev/projects/liferay-lxc`. If it is not located at this location, you will need to set the correct path as an environment variable.
 
 ```
+
 export LXC_REPOSITORY_PATH=/home/me/dev/projects/liferay-lxc
+
 ```
 
 #### Enable database partitioning (MySQL and PostgreSQL only)
@@ -360,7 +380,9 @@ Set the `lr.docker.environment.database.partitioning.enabled` property to `true`
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.database.partitioning.enabled=true
+
 ```
 
 #### Configure database port
@@ -370,7 +392,9 @@ The database port can be configured by the `DATABASE_PORT` environment variable 
 `ports.env`:
 
 ```dotenv
+
 DATABASE_PORT=54321-54330
+
 ```
 
 #### Reset user passwords
@@ -378,7 +402,9 @@ DATABASE_PORT=54321-54330
 Set the `lr.docker.environment.liferay.user.password` property to the password you wish to type when signing in using existing users in imported databases.
 
 ```properties
+
 lr.docker.environment.liferay.user.password=test
+
 ```
 
 ### Elasticsearch Features
@@ -390,7 +416,9 @@ Set the `lr.docker.environment.service.enabled[elasticsearch]` property to `true
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[elasticsearch]=true
+
 ```
 
 #### Configure Elasticsearch ports
@@ -401,8 +429,10 @@ the `ELASTICSEARCH_TRANSPORT_PORT` environment variables respectively in the `po
 `ports.env`:
 
 ```dotenv
+
 ELASTICSEARCH_HTTP_PORT=9200-9209
 ELASTICSEARCH_TRANSPORT_PORT=9300-9309
+
 ```
 
 ### Mail features
@@ -414,7 +444,9 @@ Set the `lr.docker.environment.service.enabled[mail]` property to `true` or `1` 
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[mail]=true
+
 ```
 
 #### Configure mail service ports
@@ -425,8 +457,10 @@ respectively in the `ports.env` file.
 `ports.env`:
 
 ```dotenv
+
 MAIL_WEB_PORT=1080
 MAIL_SMTP_PORT=1025
+
 ```
 
 ### Webserver Features
@@ -438,7 +472,9 @@ Set the `lr.docker.environment.service.enabled[webserver_http]` property to `tru
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[webserver_http]=true
+
 ```
 
 #### Enable NGINX (HTTPS)
@@ -448,7 +484,9 @@ Set the `lr.docker.environment.service.enabled[webserver_https]` property to `tr
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.service.enabled[webserver_https]=true
+
 ```
 
 #### Configure webserver ports
@@ -459,8 +497,10 @@ environment variables respectively in the `ports.env` file.
 `ports.env`:
 
 ```dotenv
+
 WEBSERVER_HTTP_PORT=80
 WEBSERVER_HTTPS_PORT=443
+
 ```
 
 #### Use custom hostnames
@@ -469,7 +509,9 @@ Specify the hostnames through which you want to access Liferay using the `lr.doc
 You can provide multiple hostnames, separated by commas.
 
 ```properties
+
 lr.docker.environment.web.server.hostnames=localhost
+
 ```
 
 ### Data Features
@@ -477,7 +519,9 @@ lr.docker.environment.web.server.hostnames=localhost
 #### Export container data to a timestamped directory
 
 ```
+
 ./gradlew exportContainerData
+
 ```
 
 This will export data from each of the running containers to a timestamped directory inside of `./exported_data`. This directory can then be directly referenced by the `lr.docker.environment.data.directory` property to re-use that data on future startups.
@@ -489,16 +533,20 @@ This will export data from each of the running containers to a timestamped direc
 Set the `lr.docker.environment.data.directory` property in `gradle.properties` to a relative or absolute path to a directory. This directory structure illustrates where each service directory is mapped in the respective container:
 
 ```
-data_folder          (directory in their repsective container)
+
+data_folder (directory in their repsective container)
 ├── elasticsearch -> /usr/share/elasticsearch/data/
-├── liferay       -> /opt/liferay/data
-└── mysql         -> /var/lib/mysql
+├── liferay -> /opt/liferay/data
+└── mysql -> /var/lib/mysql
+
 ```
 
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.data.directory=exported_data/data_20241206.175343
+
 ```
 
 ### Profiling features
@@ -510,7 +558,9 @@ Set the `lr.docker.environment.glowroot.enabled` property to `true` or `1` in `g
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.glowroot.enabled=true
+
 ```
 
 #### Enable YourKit
@@ -520,7 +570,9 @@ Set the `lr.docker.environment.yourkit.enabled` property to `true` or `1` in `gr
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.yourkit.enabled=true
+
 ```
 
 You can provide the download URL of the preferred YourKit version zip in the `lr.docker.environment.yourkit.url` property.
@@ -528,7 +580,9 @@ You can provide the download URL of the preferred YourKit version zip in the `lr
 `gradle.properties`:
 
 ```properties
+
 lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip
+
 ```
 
 ### Sharing Features
@@ -536,7 +590,9 @@ lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKi
 #### Zip up the workspace to share the setup
 
 ```
+
 ./gradlew shareWorkspace
+
 ```
 
 This will zip up the workspace as-is, including the declared data folder, into a shareable `zip` file. The zipped workspace will be timestamped and placed in the `./shared_workspaces` directory. It will omit unnecessary files such as the `.gradle` and `.git` directories, as well as other exported data folders and shared workspaces in the `exported_data` and `shared_workspaces` directories.
@@ -552,11 +608,13 @@ You can change Docker image versions for several services in the `versions.env` 
 `versions.env`:
 
 ```dotenv
+
 DB2_VERSION=11.5.9.0
 MARIADB_VERSION=10.6.22-jammy
 MYSQL_VERSION=8.4.5-oracle
 POSTGRES_VERSION=16.3
 SQLSERVER_VERSION=2022-CU21-ubuntu-22.04
+
 ```
 
 ### Gradle tasks
@@ -564,13 +622,17 @@ SQLSERVER_VERSION=2022-CU21-ubuntu-22.04
 #### Start up environment
 
 ```
+
 ./gradlew start
+
 ```
 
 #### Shut down environment
 
 ```
+
 ./gradlew stop
+
 ```
 
 By default, stopping a container will delete all persistent data, which has the desirable side-effect that product team members always start from a clean reproduced environment, but has the undesirable side-effect that customer support engineers always lose all changes since the last saved reproduced environment.
@@ -578,13 +640,17 @@ By default, stopping a container will delete all persistent data, which has the 
 To change this behavior, set the following in your `gradle-local.properties`:
 
 ```properties
+
 lr.docker.environment.clear.volume.data=false
+
 ```
 
 #### Restart environment
 
 ```
+
 ./gradlew restart
+
 ```
 
 This will also stop the environment, so please see the previous note which describes the strategy for persisting data between restarts.
@@ -592,19 +658,25 @@ This will also stop the environment, so please see the previous note which descr
 #### Export container data
 
 ```
+
 ./gradlew exportContainerData
+
 ```
 
 #### Zip the workspace for sharing
 
 ```
+
 ./gradlew shareWorkspace
+
 ```
 
 #### Export the Liferay logs, reports, and routes directories
 
 ```
+
 ./gradlew exportLiferayLogs
+
 ```
 
 This will copy the logs, reports, and routes directories to the `./exports/liferay` directory on your machine (host machine).
@@ -612,13 +684,17 @@ This will copy the logs, reports, and routes directories to the `./exports/lifer
 #### Clean up prepared hotfixes
 
 ```
+
 ./gradlew cleanPrepareHotfixes
+
 ```
 
 #### Clean up all prepared data and built Liferay Docker images
 
 ```
+
 ./gradlew clean
+
 ```
 
 ## Convenience script
@@ -628,17 +704,23 @@ Creating new workspaces can be tedious, so we have provided a shell script to he
 To use this shell script, add the following snippet to your `.bashrc` or `.zshrc`, replacing the values with the correct file paths:
 
 ```sh
+
 #
+
 # Liferay Environment Composer
+
 #
 
 # This environment variable should be the path to your clone of this repository (or your own fork).
+
 export LIFERAY_ENVIRONMENT_COMPOSER_HOME="$HOME/Documents/liferay/liferay-environment-composer"
 
 # Source the cli
+
 [[ -s "$LIFERAY_ENVIRONMENT_COMPOSER_HOME/scripts/cli/shell-source.sh" ]] && source "$LIFERAY_ENVIRONMENT_COMPOSER_HOME/scripts/cli/shell-source.sh"
 
 # Optional: This environment variable should point to a directory where you want projects created when running `lec init`.
+
 export LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR="$HOME/Documents/liferay/tickets"
 
 ```
@@ -650,6 +732,7 @@ This will provide the `lec` script alias and the `lecd` shell function.
 Create a new workspaces:
 
 ```sh
+
 lec init # No args
 
 lec init LPP-12345 # Pass in the LPP ticket number
@@ -657,6 +740,7 @@ lec init LPP-12345 # Pass in the LPP ticket number
 lec init LPP-12345 dxp-2025.q3.0 # Pass in the LPP ticket number and the Liferay version
 
 lec init LPP-12345 abc1prd # Pass in the LPP ticket number and the SaaS environment name
+
 ```
 
 The `lec-init` shell function is the same as `lec init`, but will also jump to the new project after it is created.
@@ -664,37 +748,49 @@ The `lec-init` shell function is the same as `lec init`, but will also jump to t
 Start the workspace:
 
 ```sh
+
 lec start # Starts the environment and tails the logs
+
 ```
 
 Stop the workspace:
 
 ```sh
+
 lec stop # Shuts down the environment
+
 ```
 
 Stop the workspace and delete the Docker volumes:
 
 ```sh
+
 lec clean # Shuts down the environment and deletes the Docker volumes
+
 ```
 
 Completely tear down and remove one or more Composer projects:
 
 ```sh
+
 lec remove # Choose one or more projects to remove
+
 ```
 
 List various entities
 
 ```sh
+
 lec list # Displays entities that can be listed; `lec list <entity>` lists all entries of the selected entity.
 lec list releases # Displays all releases.
+
 ```
 
 Jump to a workspace:
 
 ```sh
+
 lecd # Choose from a list
 lecd workspace-name # Pre-filter the list by name. If only one matches, jump there.
+
 ```

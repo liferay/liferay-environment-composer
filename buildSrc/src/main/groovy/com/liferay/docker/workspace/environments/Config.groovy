@@ -264,8 +264,8 @@ class Config {
 
 		this.useWebserverHttps = this.services.contains("webserver_https")
 
-		if (product.contains("7.4") || product.contains(".q")) {
-			this.useXuggler = true
+		if (this.dockerImageLiferay.contains("7.4") || this.dockerImageLiferay.contains(".q")) {
+			this.is74OrQuarterly = true
 		}
 
 		File projectDir = project.projectDir as File
@@ -317,11 +317,11 @@ class Config {
 			}
 
 			if (mediaPreviewEnabled) {
-				if (this.useXuggler) {
-					include "**/xuggler.liferay.yaml"
+				if (this.is74OrQuarterly) {
+					include "**/ffmpeg.liferay.yaml"
 				}
 				else {
-					include "**/ffmpeg.liferay.yaml"
+					include "**/xuggler.liferay.yaml"
 				}
 			}
 		}
@@ -394,6 +394,7 @@ class Config {
 	public List<String> gcpHotfixURLs = new ArrayList<String>()
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
+	public boolean is74OrQuarterly = false
 	public boolean isARM = false
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
@@ -420,7 +421,6 @@ class Config {
 	public boolean useLiferay = false
 	public boolean useWebserverHttp = false
 	public boolean useWebserverHttps = false
-	public boolean useXuggler = false
 	public String webserverHostnames = "localhost"
 	public boolean yourKitEnabled = false
 	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip"

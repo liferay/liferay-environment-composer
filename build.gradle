@@ -289,7 +289,6 @@ dockerDeploy {
 	dependsOn ":prepareYourKitAgent"
 }
 
-
 composeUp {
 	onlyIf("there are Compose files") {
 		!config.composeFiles.isEmpty()
@@ -340,7 +339,7 @@ if (config.useClustering) {
 }
 
 if (config.useWebserver) {
-	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)	
+	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)
 	environmentMap.put("USE_CLUSTERING", config.useClustering)
 	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)

@@ -95,25 +95,49 @@ def build_image(domain, app_name, context_dir):
 	return build_success
 
 
-def generate_configmap_obj(domain, app_name, file_path):
+def generate_configmap_obj(domain, app_name, file_path, host_rule=None):
 	"""
     Generates a dictionary representing a V1ConfigMap object.
-    Replaces the old YAML string generation.
+    Now parses JSON to inject homePageURL if a host_rule is present.
     """
 	filename = os.path.basename(file_path)
 	safe_app_name = app_name.lower().replace("_", "-").replace(".", "-")
 	safe_domain = domain.lower().replace("_", "-").replace(".", "-")
 	configmap_name = f"{safe_app_name}-{safe_domain}-lxc-ext-provision-metadata"
 
-	with open(file_path, "r") as f:
-		content = f.read()
+	content = ""
+	
+	try:
+		# 1. Open and Parse the JSON file
+		with open(file_path, "r") as f:
+			config_data = json.load(f)
+
+		# 2. Inject http://{host_rule} into homePageURL if host_rule exists
+		# The file structure is usually { "extension-key": { "homePageURL": "..." } }
+		if host_rule:
+			for ext_key, ext_def in config_data.items():
+				# We only modify if it looks like a dict (configuration object)
+				if isinstance(ext_def, dict) and "homePageURL" in ext_def:
+					# Force HTTP to prevent Liferay's auto-HTTPS upgrade
+					# This solves the "PKIX path building failed" error
+					ext_def["homePageURL"] = f"http://{host_rule}"
+					logging.info(f"    [CONFIG] Updated homePageURL for '{ext_key}' to http://{host_rule}")
+
+		# 3. Dump back to string
+		content = json.dumps(config_data, indent=4)
+
+	except Exception as e:
+		logging.error(f"    [ERROR] Failed to parse or modify {filename}: {e}")
+		# Fallback: Read raw content if JSON parsing fails
+		with open(file_path, "r") as f:
+			content = f.read()
 
 	# Construct the object (Dict)
-	# The Python client accepts raw dicts for creation
 	manifest = {
 		"apiVersion": "v1",
 		"kind": "ConfigMap",
 		"metadata": {
+			"annotations": {},
 			"name": configmap_name,
 			"namespace": "default",
 			"labels": {
@@ -124,20 +148,30 @@ def generate_configmap_obj(domain, app_name, file_path):
 		},
 		"data": {filename: content},
 	}
+
+	# Inject Host Rule annotations if present
+	if host_rule:
+		manifest["metadata"]["annotations"]["ext.lxc.liferay.com/domains"] = host_rule
+		manifest["metadata"]["annotations"]["ext.lxc.liferay.com/mainDomain"] = host_rule
+
 	return manifest
 
 
 def get_lcp_info(extract_path):
 	lcp_files = glob.glob(f"{extract_path}/**/LCP.json", recursive=True)
 	if not lcp_files:
-		return {"id": None, "env": {}}
+		return {"id": None, "env": {}, "loadBalancer": {}}
 	try:
 		with open(lcp_files[0], "r") as f:
 			data = json.load(f)
-			return {"id": data.get("id"), "env": data.get("env", {})}
+			return {
+				"id": data.get("id"), 
+				"env": data.get("env", {}), 
+				"loadBalancer": data.get("loadBalancer", {})
+			}
 	except Exception as e:
 		logging.error(f"Could not parse LCP.json {e}")
-		return {"id": None, "env": {}}
+		return {"id": None, "env": {}, "loadBalancer": {}}
 
 
 def main():
@@ -172,14 +206,24 @@ def process_zip(zip_path):
 	lcp_info = get_lcp_info(extract_path)
 	app_name = lcp_info["id"] or temp_id
 	app_env = lcp_info["env"]
+	lb_info = lcp_info["loadBalancer"]
+
+	# Check for Load Balancer / Ingress requirements
+	target_port = lb_info.get("targetPort")
+	host_rule = None
+	
+	if target_port:
+		# We construct a default Host rule based on app_name and domain
+		# Note: You can switch this to .localtest.me, .nip.io, or your coredns .test domain as needed
+		host_rule = f"{app_name}.{domain}.localtest.me"
 
 	# 1. Prepare ConfigMap Objects (List of Dicts)
-	# Changed from string concatenation to list appending
 	config_maps_list = []
 	for json_file in glob.glob(
 		f"{extract_path}/**/*.client-extension-config.json", recursive=True
 	):
-		cm_obj = generate_configmap_obj(domain, app_name, json_file)
+		# Pass host_rule so it can be added to metadata labels AND substituted in JSON
+		cm_obj = generate_configmap_obj(domain, app_name, json_file, host_rule)
 		config_maps_list.append(cm_obj)
 
 	# 2. Prepare Dockerfile and Build
@@ -198,6 +242,25 @@ def process_zip(zip_path):
 						df.write(f"ENV {key}={json.dumps(value)}\n")
 			except Exception as e:
 				logging.error(f"  [ERROR] Failed to inject env vars: {e}")
+
+		# Inject Traefik Labels (If loadBalancer.targetPort is present)
+		if target_port and host_rule:
+			logging.info(f"  [BUILD] Injecting Traefik labels for targetPort: {target_port}...")
+			
+			# Generate unique router/service names safe for Traefik
+			safe_id = f"{app_name}-{domain}".lower().replace("_", "-").replace(".", "-")
+
+			try:
+				with open(dockerfile_path, "a") as df:
+					df.write("\n# --- Injected Traefik Configuration ---\n")
+					df.write(f"LABEL traefik.enable=true\n")
+					# Map the internal port
+					df.write(f"LABEL traefik.http.services.{safe_id}.loadbalancer.server.port={target_port}\n")
+					# Define the routing rule (using the same host_rule as ConfigMap)
+					df.write(f"LABEL traefik.http.routers.{safe_id}.rule=Host(`{host_rule}`)\n")
+					df.write(f"LABEL traefik.http.routers.{safe_id}.entrypoints=web\n")
+			except Exception as e:
+				logging.error(f"  [ERROR] Failed to inject Traefik labels: {e}")
 
 		# Attempt Build
 		is_built = build_image(domain, app_name, extract_path)

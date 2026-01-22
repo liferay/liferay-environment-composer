@@ -6,6 +6,9 @@ services:
         depends_on:
             k8s:
                 condition: service_healthy
+        ports:
+            -   "80:80"
+            -   "8092:8092"
         privileged: true # Required for Podman-in-Docker functionality
         volumes:
             -   ./client-extensions:/client-extensions:ro

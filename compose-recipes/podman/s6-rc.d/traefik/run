@@ -1,0 +1,13 @@
+#!/command/with-contenv bash
+
+exec traefik \
+   --api.insecure=true \
+   --api.dashboard=true \
+   --entrypoints.web.address=:80 \
+   --entrypoints.traefik.address=:8092 \
+   --log.level=DEBUG \
+   --accesslog=true \
+   --providers.docker=true \
+   --providers.docker.endpoint="unix:///run/podman/podman.sock" \
+   --providers.docker.exposedbydefault=false \
+   --providers.docker.network=podman

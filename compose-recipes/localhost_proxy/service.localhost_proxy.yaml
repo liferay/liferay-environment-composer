@@ -1,0 +1,16 @@
+services:
+    localhost_proxy:
+        # Command Breakdown:
+        # TCP-LISTEN:80    -> Listen on port 80 (inside Liferay)
+        # bind=127.0.0.1   -> Bind specifically to loopback
+        # fork             -> Handle multiple connections
+        # TCP:podman:80  -> Forward everything to Traefik's hostname on port 80
+        command: TCP-LISTEN:80,fork,bind=127.0.0.1 TCP:podman:80
+        container_name: ${NAMESPACE}-localhost_proxy
+        depends_on:
+            -   liferay
+            -   podman
+        image: alpine/socat
+        # CRITICAL: Join Liferay's network namespace
+        # This makes 'localhost' here the SAME as 'localhost' in Liferay
+        network_mode: service:liferay

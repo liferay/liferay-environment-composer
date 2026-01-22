@@ -28,6 +28,18 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 RUN echo '[registries.search]' > /etc/containers/registries.conf && \
     echo 'registries = ["docker.io"]' >> /etc/containers/registries.conf
 
+# 4. traefik
+
+ARG TRAEFIK_VERSION=v2.10.7
+
+ADD https://github.com/traefik/traefik/releases/download/${TRAEFIK_VERSION}/traefik_${TRAEFIK_VERSION}_linux_amd64.tar.gz /tmp/traefik.tar.gz
+
+RUN tar xzvf /tmp/traefik.tar.gz -C /usr/local/bin traefik \
+    && rm /tmp/traefik.tar.gz \
+    && chmod +x /usr/local/bin/traefik
+
+# 5. S6 Overlay to manage different init processes
+
 ARG S6_VER=3.1.6.2
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_VER}/s6-overlay-noarch.tar.xz /tmp
@@ -41,3 +53,5 @@ COPY s6-rc.d /etc/s6-overlay/s6-rc.d/
 RUN find /etc/s6-overlay/s6-rc.d -name "run" -o -name "up" | xargs chmod +x
 
 ENTRYPOINT ["/init"]
+
+EXPOSE 80 8092

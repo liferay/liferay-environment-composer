@@ -3,7 +3,7 @@
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
 _has_backup_file() {
-	if [[ $(find /var/opt/mssql/backups -type f -iname "*.bak") ]]; then
+	if [[ $(find /var/opt/mssql/backups -regextype posix-extended -regex ".*/.*\.ba(cpac|k)") ]]; then
 		echo true
 	fi
 }
@@ -37,15 +37,27 @@ create_database() {
 	if [[ $(_has_backup_file) ]]; then
 		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
 
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
+		local backup_file=$(find /var/opt/mssql/backups -regextype posix-extended -regex ".*/.*\.ba(cpac|k)")
 
-		local backup_file=$(find /var/opt/mssql/backups -type f -iname "*.bak")
+		if [[ "${backup_file}" =~ .*\.bak ]]; then
+			echo "[entrypoint] Found bak file"
 
-		sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
+			sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
 
-		${_sqlcmd} -i /init/restore.sql
+			sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
 
-		return
+			${_sqlcmd} -i /init/restore.sql
+
+			return
+		else
+			echo "[entrypoint] Found bacpac file"
+
+			sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
+
+			${_sqlcmd} -i /init/init.sql
+
+			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
+		fi
 	fi
 
 	if [[ $(_has_database_files ${database_name}) ]]; then

@@ -38,6 +38,13 @@ class Config {
 			this.databaseName = databaseNameProperty
 		}
 
+		String databaseSchemaNameProperty = project.findProperty("lr.docker.environment.database.schema.name")
+
+		if (databaseSchemaNameProperty != null) {
+			this.databaseSchemaName = databaseSchemaNameProperty
+		}
+
+
 		String databasePartitioningEnabledProperty = project.findProperty("lr.docker.environment.database.partitioning.enabled")
 
 		if (databasePartitioningEnabledProperty != null) {
@@ -382,6 +389,7 @@ class Config {
 	public List<Map<String, String>> companyVirtualHosts = null
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseName = "lportal"
+	public String databaseSchemaName = null
 	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false
 	public String dataDirectory = "data"

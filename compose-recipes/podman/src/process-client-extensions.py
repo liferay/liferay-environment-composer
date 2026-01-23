@@ -117,11 +117,12 @@ def generate_configmap_obj(domain, app_name, file_path, host_rule=None):
 		if host_rule:
 			for ext_key, ext_def in config_data.items():
 				# We only modify if it looks like a dict (configuration object)
-				if isinstance(ext_def, dict) and "homePageURL" in ext_def:
-					# Force HTTP to prevent Liferay's auto-HTTPS upgrade
-					# This solves the "PKIX path building failed" error
-					ext_def["homePageURL"] = f"http://{host_rule}"
-					logging.info(f"    [CONFIG] Updated homePageURL for '{ext_key}' to http://{host_rule}")
+				if isinstance(ext_def, dict):
+					ext_def["baseURL"] = f"http://{host_rule}"
+					logging.info(f"    [CONFIG] Set baseURL for '{ext_key}' to http://{host_rule}")
+					if "homePageURL" in ext_def:
+						ext_def["homePageURL"] = f"http://{host_rule}"
+						logging.info(f"    [CONFIG] Updated homePageURL for '{ext_key}' to http://{host_rule}")
 
 		# 3. Dump back to string
 		content = json.dumps(config_data, indent=4)

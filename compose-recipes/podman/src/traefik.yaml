@@ -1,0 +1,16 @@
+http:
+  routers:
+    # 1. Define the Rule (Domain)
+    liferay-router:
+      rule: "Host(`localhost`)"
+      service: "liferay-service"
+      entryPoints:
+        - "web"
+
+  services:
+    # 2. Define the Destination
+    liferay-service:
+      loadBalancer:
+        servers:
+          # Since they are siblings on the network, use the service name
+          - url: "http://liferay:8080"

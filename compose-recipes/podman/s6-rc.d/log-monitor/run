@@ -1,22 +1,31 @@
 #!/bin/bash
-# Function to attach to a container's log stream
-# We use '&' to run it in the background so the loop continues
+
+cleanup() {
+    echo ""
+    echo "[LOG-MONITOR] Stopping all log streams..."
+    pkill -P $$ 
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
+
 attach_logs() {
     local id=$1
-    # --names prepends the container name to the log line (e.g., "my-app | log output")
-    podman logs -f --names "$id" &
+    local name=$(podman inspect --format '{{.Name}}' "$id" 2>/dev/null | sed 's/^\///')
+    name=${name:-$id} # Default to ID if variable is empty
+
+    echo "[LOG-MONITOR] Attaching to $name..."
+    
+    # THE PIPE FIX
+    podman logs -f "$id" 2>&1 | sed -u "s/^/[${name}] /" &
 }
 
-echo "[LOG-MONITOR] Starting dynamic log monitoring..."
-
-# 1. Attach to any containers that are ALREADY running
+echo "[LOG-MONITOR] Scanning for existing containers..."
 for id in $(podman ps -q); do
     attach_logs "$id"
 done
 
-# 2. Listen for 'start' events to catch NEW containers
-# podman events blocks execution, keeping the script alive.
-# We filter for 'container' types and 'start' events.
-podman events --filter type=container --filter event=start --format '{{.ID}}' | while read event_id; do
+echo "[LOG-MONITOR] Listening for new containers..."
+while read -r event_id; do
+    sleep 0.5
     attach_logs "$event_id"
-done
+done < <(podman events --filter type=container --filter event=start --format '{{.ID}}')

@@ -10,4 +10,5 @@ exec traefik \
    --providers.docker=true \
    --providers.docker.endpoint="unix:///run/podman/podman.sock" \
    --providers.docker.exposedbydefault=false \
-   --providers.docker.network=podman
+   --providers.docker.network=podman \
+   --providers.file.filename=/src/traefik.yaml

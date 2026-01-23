@@ -57,6 +57,12 @@ ext {
 		if (config.useDatabaseDB2 || config.useDatabaseSQLServer) {
 			List<String> results = waitForCommand("${getDatabaseAccessCommand(schema)} \"${sql}\"").split("\n").minus("")
 
+			println "!!!!!"
+			println sql
+			println "---"
+			println results
+			println "#####"
+
 			if (results.size() <= 1 || results.join("").contains("SQL0100W")) {
 				return Collections.emptyMap()
 			}

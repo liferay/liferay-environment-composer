@@ -354,6 +354,18 @@ tasks.register("fixWorkspaceProduct") {
 
 verifyProduct.dependsOn fixWorkspaceProduct
 
+tasks.register("listCX") {
+
+	onlyIf("using CX (k8s and podman)") {
+		config.useCX
+	}
+
+	doFirst {
+		println waitForCommand("docker-compose exec podman kubectl get cx")
+
+	}
+}
+
 tasks.register("listAdminUsers") {
 	onlyIf("using an external database") {
 		config.useDatabase

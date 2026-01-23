@@ -187,6 +187,8 @@ class Config {
 
 		this.useLiferay = this.services.contains("liferay")
 
+		this.useCX = this.services.contains("k8s") && this.services.contains("podman")
+
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
 		if (this.services.contains("db2")) {
@@ -333,6 +335,7 @@ class Config {
 	public boolean recaptchaEnabled = false
 	public List<String> services = new ArrayList<String>()
 	public boolean useClustering = false
+	public boolean useCX = false
 	public boolean useDatabase = false
 	public boolean useDatabaseDB2 = false
 	public boolean useDatabaseMariaDB = false

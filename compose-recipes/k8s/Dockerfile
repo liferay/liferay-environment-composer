@@ -8,6 +8,7 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_VER}/s
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
 COPY s6-rc.d /etc/s6-overlay/s6-rc.d/
+COPY src /src
 
 RUN find /etc/s6-overlay/s6-rc.d -name "run" -o -name "up" | xargs chmod +x
 

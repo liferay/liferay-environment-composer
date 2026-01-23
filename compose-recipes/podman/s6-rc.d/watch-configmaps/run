@@ -1,3 +1,0 @@
-#!/bin/bash
-echo "Starting Kopf Operator..."
-exec kopf run /src/watch-configmaps.py --verbose --standalone

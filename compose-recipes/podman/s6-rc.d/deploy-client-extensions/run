@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Starting Kopf Operator..."
+exec kopf run /src/deploy-client-extensions.py --verbose --standalone

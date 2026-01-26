@@ -2,12 +2,6 @@
 
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
-_has_backup_file() {
-	if [[ $(find /var/opt/mssql/backups -regextype posix-extended -regex ".*/.*\.ba(cpac|k)") ]]; then
-		echo true
-	fi
-}
-
 _has_database_files() {
 	local database_name=${1}
 
@@ -36,10 +30,10 @@ create_database() {
 		return
 	fi
 
-	if [[ $(_has_backup_file) ]]; then
-		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
+	local backup_file=$(find /var/opt/mssql/backups -regextype posix-extended -regex ".*/.*\.ba(cpac|k)")
 
-		local backup_file=$(find /var/opt/mssql/backups -regextype posix-extended -regex ".*/.*\.ba(cpac|k)")
+	if [[ ! -z "${backup_file}" ]]; then
+		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
 
 		if [[ "${backup_file}" =~ .*\.bak ]]; then
 			echo "[entrypoint] Found bak file"

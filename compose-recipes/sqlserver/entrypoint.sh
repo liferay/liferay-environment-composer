@@ -81,15 +81,16 @@ create_database() {
 	${_sqlcmd} -i /init/init.sql
 }
 
-main() {
-	until ${_sqlcmd} -Q "SELECT 1"; do
-		sleep 1
-		echo "[entrypoint] Waiting for SQL Server to be available..."
-	done
+/opt/mssql/bin/sqlservr &
+PID=$!
 
-	create_database ${COMPOSER_DATABASE_NAME}
-}
+echo "Waiting for SQL Server to boot..."
+until grep -q "SQL Server is now ready for client connections" /var/opt/mssql/log/errorlog; do
+sleep 1
+done
 
-main & /opt/mssql/bin/sqlservr
+echo "[entrypoint] SQLServer is available"
 
-wait
+create_database ${COMPOSER_DATABASE_NAME}
+
+wait $PID

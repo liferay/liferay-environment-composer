@@ -52,10 +52,6 @@ create_database() {
 		else
 			echo "[entrypoint] Found bacpac file"
 
-			sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
-
-			${_sqlcmd} -i /init/init.sql
-
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
 		fi
 	fi

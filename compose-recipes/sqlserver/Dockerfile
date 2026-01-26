@@ -9,8 +9,6 @@ RUN apt update && apt install -y unzip wget && \
     chown -R mssql:mssql /home/mssql && \
     mkdir -p /var/opt/mssql/backups /var/opt/mssql/data && \
     chown -R mssql:mssql /var/opt/mssql/ && \
-    touch /startup_log.txt && \
-    chown mssql:mssql /startup_log.txt && \
     mkdir /init && \
     chown -R mssql:mssql /init
 

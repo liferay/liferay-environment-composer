@@ -47,6 +47,7 @@ create_database() {
 			sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
 
 			${_sqlcmd} -i /init/restore.sql
+			touch /tmp/import_done
 
 			return
 		else
@@ -57,7 +58,10 @@ create_database() {
 			${_sqlcmd} -i /init/init.sql
 
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
+			touch /tmp/import_done
 		fi
+	else
+		touch /tmp/import_done
 	fi
 
 	if [[ $(_has_database_files ${database_name}) ]]; then

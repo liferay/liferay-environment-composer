@@ -19,7 +19,7 @@ services:
             interval: 5s
             retries: 50
             start_period: 30s
-            test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Liferay123 -Q  "select name from sys.databases where name = ${DATABASE_NAME}" | grep -q ${DATABASE_NAME}
+            test: test -f /tmp/database_exists && /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Liferay123 -Q  "select name from sys.databases where name = ${DATABASE_NAME}" | grep -q ${DATABASE_NAME}
             timeout: 5s
         ports:
             -   "${DATABASE_PORT}:1433"

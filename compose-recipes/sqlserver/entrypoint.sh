@@ -84,7 +84,7 @@ create_database() {
 /opt/mssql/bin/sqlservr &
 PID=$!
 
-echo "Waiting for SQL Server to boot..."
+echo "[entrypoint] Waiting for SQL Server to boot..."
 until grep -q "SQL Server is now ready for client connections" /var/opt/mssql/log/errorlog; do
 sleep 1
 done

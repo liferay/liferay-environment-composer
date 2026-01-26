@@ -158,14 +158,14 @@ _select() {
 	local prompt_message="${1}"
 	shift
 
-	_fzf --prompt "${prompt_message} > " "${@}"
+	_fzf -i --prompt "${prompt_message} > " "${@}"
 }
 
 _selectMultiple() {
 	local prompt_message="${1}"
 	shift
 
-	_fzf --multi --marker="*" --prompt "${prompt_message} > " "${@}"
+	_fzf -i --multi --marker="*" --prompt "${prompt_message} > " "${@}"
 }
 
 #

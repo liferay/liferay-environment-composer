@@ -32,7 +32,7 @@ create_database() {
 
 	local backup_file=$(find /var/opt/mssql/backups -iname "*.bak" -or -iname "*.bacpac")
 
-	if [[ ! -z "${backup_file}" ]]; then
+	if [[ -f "${backup_file}" ]]; then
 		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
 
 		if [[ "${backup_file}" =~ .*\.bak ]]; then

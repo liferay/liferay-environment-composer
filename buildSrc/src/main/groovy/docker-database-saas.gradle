@@ -642,6 +642,17 @@ tasks.register("importDatabaseDumps") {
 			}
 		}
 
+		if (config.useDatabaseSQLServer) {
+			FileCollection dumpFiles = project.fileTree("dumps") {
+				include "**/*.bacpac"
+				include "**/*.bak"
+			}
+
+			if (dumpFiles.size() > 1) {
+					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+				}
+		}
+
 		println "Attempting to update database for local development"
 
 		updateDatabaseForLocalDevelopment()

@@ -1,6 +1,0 @@
-services:
-    liferay:
-        environment:
-            -   LIFERAY_VIRTUAL_PERIOD_HOSTS_PERIOD_VALID_PERIOD_HOSTS=*
-            -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_HTTPS_PERIOD_PORT=443
-            -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_PROTOCOL=https

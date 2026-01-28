@@ -22,9 +22,7 @@ RUN unzip /home/mssql/sqlpackage.zip -d /home/mssql/sqlpackage && \
 
 ENV PATH="${PATH}:/home/mssql/sqlpackage"
 
-COPY --chown=mssql:mssql --chmod=a+x entrypoint.sh /init/
-COPY --chown=mssql:mssql init.sql /init/
-COPY --chown=mssql:mssql reinit.sql /init
-COPY --chown=mssql:mssql restore.sql /init
+COPY --chown=mssql:mssql --chmod=a+x conf/entrypoint.sh /init/
+COPY --chown=mssql:mssql conf/*.sql /init/
 
 ENTRYPOINT ["/bin/bash", "/init/entrypoint.sh"]

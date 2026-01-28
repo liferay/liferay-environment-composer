@@ -4,19 +4,25 @@ FROM mcr.microsoft.com/mssql/server:${SQLSERVER_VERSION}
 
 USER root
 
-RUN mkdir -p /var/opt/mssql/backups /var/opt/mssql/data
-RUN chown -R mssql:mssql /var/opt/mssql/
-RUN touch /startup_log.txt
-RUN chown mssql:mssql /startup_log.txt
+RUN apt update && apt install -y unzip && \
+    mkdir -p /home/mssql && \
+    chown -R mssql:mssql /home/mssql && \
+    mkdir -p /var/opt/mssql/backups /var/opt/mssql/data && \
+    chown -R mssql:mssql /var/opt/mssql/ && \
+    mkdir /init && \
+    chown -R mssql:mssql /init
 
-COPY entrypoint.sh /init/
-COPY init.sql /init/
-COPY reinit.sql /init
-COPY restore.sql /init
-
-RUN chown -R mssql:mssql /init && \
-    chmod a+x /init/entrypoint.sh
+ADD --chown=mssql https://aka.ms/sqlpackage-linux /home/mssql/sqlpackage.zip
 
 USER mssql
+
+RUN unzip /home/mssql/sqlpackage.zip -d /home/mssql/sqlpackage && \
+    chmod a+x /home/mssql/sqlpackage/sqlpackage && \
+    rm -rf /home/mssql/sqlpackage.zip
+
+ENV PATH="${PATH}:/home/mssql/sqlpackage"
+
+COPY --chown=mssql:mssql --chmod=a+x conf/entrypoint.sh /init/
+COPY --chown=mssql:mssql conf/*.sql /init/
 
 ENTRYPOINT ["/bin/bash", "/init/entrypoint.sh"]

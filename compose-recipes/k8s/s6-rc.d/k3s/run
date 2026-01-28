@@ -1,0 +1,12 @@
+#!/bin/sh
+exec k3s server  --disable-agent \
+          --disable-scheduler \
+          --disable-network-policy \
+          --disable-controller-manager \
+          --flannel-backend=none \
+          --disable-helm-controller \
+          --disable=traefik \
+          --disable=metrics-server \
+          --disable=coredns \
+          --disable=servicelb \
+          --disable=local-storage 

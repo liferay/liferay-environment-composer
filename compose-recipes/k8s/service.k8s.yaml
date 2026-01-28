@@ -1,0 +1,15 @@
+services:
+    k8s:
+        build: ./compose-recipes/k8s
+        container_name: ${NAMESPACE}-k8s
+        healthcheck:
+            interval: 5s
+            retries: 5
+            start_period: 10s
+            test:
+                -   "CMD-SHELL"
+                -   "kubectl get --raw /livez || exit 1"
+            timeout: 5s
+        ports:
+            -   "6443:6443"
+            -   "8001:8001"

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+cleanup() {
+    echo ""
+    echo "[LOG-MONITOR] Stopping all log streams..."
+    pkill -P $$ 
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
+
+attach_logs() {
+    local id=$1
+    local name=$(podman inspect --format '{{.Name}}' "$id" 2>/dev/null | sed 's/^\///')
+    name=${name:-$id} # Default to ID if variable is empty
+
+    echo "[LOG-MONITOR] Attaching to $name..."
+    
+    # THE PIPE FIX
+    podman logs -f "$id" 2>&1 | sed -u "s/^/[${name}] /" &
+}
+
+echo "[LOG-MONITOR] Scanning for existing containers..."
+for id in $(podman ps -q); do
+    attach_logs "$id"
+done
+
+echo "[LOG-MONITOR] Listening for new containers..."
+while read -r event_id; do
+    sleep 0.5
+    attach_logs "$event_id"
+done < <(podman events --filter type=container --filter event=start --format '{{.ID}}')

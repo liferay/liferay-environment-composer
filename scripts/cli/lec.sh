@@ -119,6 +119,7 @@ _printHelpAndExit() {
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
+		  watchCX                                   Watch Client Extensions 
 
 		  importDLStructure <sourceDir>             Import a Document Library (file structure only, no content) into configs/common/data/document_library
 
@@ -997,6 +998,17 @@ cmd_update() {
 }
 cmd_version() {
 	_git describe --tags --abbrev=0 2>/dev/null
+}
+
+cmd_watchCX() {
+	_checkProjectDirectory
+
+	(
+		cd "${PROJECT_DIRECTORY}" || exit
+
+		_print_step "Watching Client Extensions..."
+		docker compose exec podman watch kubectl get cx
+	)
 }
 
 #

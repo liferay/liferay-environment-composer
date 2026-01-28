@@ -11,7 +11,7 @@ import java.util.regex.Pattern
 ext {
 	FALSE_SQL_VALUE = config.useDatabaseSQLServer ? "'false'" : "false"
 	SSO_CONFIGS = [".ldap.", ".multi.factor.authentication.", ".saml.", ".openid."]
-	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
+	PROD_ONLY_CONFIGS = ["org_apache_felix_cm_impl_DynamicBindings", ".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
 
 	clearSingleSignOnConfigurations = {
 		String schema ->

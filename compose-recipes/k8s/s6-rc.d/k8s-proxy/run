@@ -1,0 +1,2 @@
+#!/bin/sh
+exec kubectl proxy --kubeconfig=/var/lib/rancher/k3s/server/cred/admin.kubeconfig  --port=8001 --address=0.0.0.0 --accept-hosts='.*'

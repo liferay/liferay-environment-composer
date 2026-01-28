@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/mssql/server:${SQLSERVER_VERSION}
 
 USER root
 
-RUN apt update && apt install -y unzip wget && \
+RUN apt update && apt install -y unzip && \
     mkdir -p /home/mssql && \
     chown -R mssql:mssql /home/mssql && \
     mkdir -p /var/opt/mssql/backups /var/opt/mssql/data && \
@@ -12,14 +12,13 @@ RUN apt update && apt install -y unzip wget && \
     mkdir /init && \
     chown -R mssql:mssql /init
 
+ADD --chown=mssql https://aka.ms/sqlpackage-linux /home/mssql/sqlpackage.zip
+
 USER mssql
 
-RUN cd /home/mssql && \
-    mkdir sqlpackage && \
-    wget -O sqlpackage.zip https://aka.ms/sqlpackage-linux --no-check-certificate && \
-    unzip sqlpackage.zip -d sqlpackage && \
-    chmod a+x sqlpackage/sqlpackage && \
-    rm -rf sqlpackage.zip
+RUN unzip /home/mssql/sqlpackage.zip -d /home/mssql/sqlpackage && \
+    chmod a+x /home/mssql/sqlpackage/sqlpackage && \
+    rm -rf /home/mssql/sqlpackage.zip
 
 ENV PATH="${PATH}:/home/mssql/sqlpackage"
 

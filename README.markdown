@@ -48,7 +48,7 @@ To shut down the environment, run `./gradlew stop`.
 
 ### Mail features overview
 
-- [Enable mail service](#enable-mail-service)
+- [Enable the mail service](#enable-the-mail-service)
 - [Configure mail service ports](#configure-mail-service-ports)
 
 ### Webserver features overview

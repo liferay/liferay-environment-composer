@@ -53,6 +53,8 @@ create_database() {
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
 
 			touch /tmp/database_exists
+
+			return
 		fi
 	fi
 

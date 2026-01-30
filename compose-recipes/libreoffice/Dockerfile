@@ -1,6 +1,7 @@
-FROM debian:trixie-backports
+FROM debian:13.2-slim
 
-RUN apt-get update && \
+RUN echo "deb http://deb.debian.org/debian/ trixie-backports main contrib" > /etc/apt/sources.list.d/backports.list && \
+    apt-get update && \
     apt-get -y install \
         -t trixie-backports libreoffice-nogui \
         netcat-traditional

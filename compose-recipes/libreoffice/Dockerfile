@@ -1,7 +1,9 @@
-FROM debian:13.2-slim
+FROM debian:trixie-backports
 
 RUN apt-get update && \
-    apt-get -y install libreoffice-nogui netcat-traditional
+    apt-get -y install \
+        -t trixie-backports libreoffice-nogui \
+        netcat-traditional
 
 EXPOSE 8100
 

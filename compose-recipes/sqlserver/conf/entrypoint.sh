@@ -81,7 +81,15 @@ create_database() {
 PID=$!
 
 echo "[entrypoint] Waiting for SQL Server to boot..."
+until [[ -f /var/opt/mssql/log/errorlog ]]; do
+sleep 1
+done
+
 until grep -q "SQL Server is now ready for client connections" /var/opt/mssql/log/errorlog; do
+sleep 1
+done
+
+until [[ $(${_sqlcmd} -Q "select 1") ]]; do
 sleep 1
 done
 

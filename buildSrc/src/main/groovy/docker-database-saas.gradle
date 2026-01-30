@@ -597,6 +597,17 @@ tasks.register("importDatabaseDumps") {
 			return;
 		}
 
+		if (config.useDatabaseSQLServer) {
+			FileCollection dumpFiles = project.fileTree("dumps") {
+				include "**/*.bacpac"
+				include "**/*.bak"
+			}
+
+			if (dumpFiles.size() > 1) {
+				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+			}
+		}
+
 		println "Initializing database via first start scripts"
 
 		waitForContainer("database")
@@ -639,17 +650,6 @@ tasks.register("importDatabaseDumps") {
 				} else {
 					println "Database ${config.databaseName} already initialized, skipping dump binary restore."
 				}
-			}
-		}
-
-		if (config.useDatabaseSQLServer) {
-			FileCollection dumpFiles = project.fileTree("dumps") {
-				include "**/*.bacpac"
-				include "**/*.bak"
-			}
-
-			if (dumpFiles.size() > 1) {
-				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
 			}
 		}
 

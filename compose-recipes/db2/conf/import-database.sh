@@ -2,7 +2,7 @@ echo ${DB2INST1_PASSWORD} | su ${DB2INSTANCE} <<EOSU
 
 . /database/config/${DB2INSTANCE}/sqllib/db2profile
 
-if [[ $(find /database/data/${DB2INSTANCE}/backups -iname 'db2move.lst') ]]; then
+if [[ -f "$(find /database/data/${DB2INSTANCE}/backups -iname 'db2move.lst')" ]]; then
 	cd /database/data/${DB2INSTANCE}/backups
 
 	db2move ${COMPOSER_DATABASE_NAME} import

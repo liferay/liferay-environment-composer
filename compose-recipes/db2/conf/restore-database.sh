@@ -1,6 +1,6 @@
 echo "${DB2INST1_PASSWORD}" | su ${DB2INSTANCE} <<EOSU
 . /database/config/${DB2INSTANCE}/sqllib/db2profile
-[[ ! -z "$(find /database/data/${DB2INSTANCE}/backups -type f | tail -n 1)" ]] && \
+[[ -f "$(find /database/data/${DB2INSTANCE}/backups -type f | tail -n 1)" ]] && \
 db2 connect to ${COMPOSER_DATABASE_NAME} && \
 db2 force application all && \
 db2 terminate && \

@@ -597,6 +597,17 @@ tasks.register("importDatabaseDumps") {
 			return;
 		}
 
+		if (config.useDatabaseSQLServer) {
+			FileCollection dumpFiles = project.fileTree("dumps") {
+				include "**/*.bacpac"
+				include "**/*.bak"
+			}
+
+			if (dumpFiles.size() > 1) {
+				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+			}
+		}
+
 		println "Initializing database via first start scripts"
 
 		waitForContainer("database")
@@ -619,24 +630,26 @@ tasks.register("importDatabaseDumps") {
 			executeSQLQuery(query)
 		}
 
-		FileCollection binaryDumpFiles = project.fileTree("dumps") {
-			include "**/*.dmp"
-			include "**/*.dump"
-		}
-
-		if (config.useDatabasePostgreSQL && !Util.isEmpty(binaryDumpFiles)) {
-			if (binaryDumpFiles.size() > 1) {
-				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+		if (config.useDatabasePostgreSQL) {
+			FileCollection binaryDumpFiles = project.fileTree("dumps") {
+				include "**/*.dmp"
+				include "**/*.dump"
 			}
 
-			String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
+			if (!Util.isEmpty(binaryDumpFiles)) {
+				if (binaryDumpFiles.size() > 1) {
+					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+				}
 
-			if (databaseInitialized.trim() == "[]") {
-				println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
+				String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
 
-				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
-			} else {
-				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
+				if (databaseInitialized.trim() == "[]") {
+					println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
+
+					waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
+				} else {
+					println "Database ${config.databaseName} already initialized, skipping dump binary restore."
+				}
 			}
 		}
 

@@ -2,12 +2,6 @@
 
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
-_has_backup_file() {
-	if [[ $(find /var/opt/mssql/backups -type f -iname "*.bak") ]]; then
-		echo true
-	fi
-}
-
 _has_database_files() {
 	local database_name=${1}
 
@@ -31,21 +25,37 @@ create_database() {
 	if [[ $(_is_database_present ${database_name}) ]]; then
 		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
 
+		touch /tmp/database_exists
+
 		return
 	fi
 
-	if [[ $(_has_backup_file) ]]; then
+	local backup_file=$(find /var/opt/mssql/backups -iname "*.bak" -or -iname "*.bacpac" | tail -n 1)
+
+	if [[ -f "${backup_file}" ]]; then
 		echo "[entrypoint] Database backup found; restoring database ${database_name}..."
 
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
+		if [[ "${backup_file}" =~ .*\.bak ]]; then
+			echo "[entrypoint] Found bak file"
 
-		local backup_file=$(find /var/opt/mssql/backups -type f -iname "*.bak")
+			sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
 
-		sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
+			sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
 
-		${_sqlcmd} -i /init/restore.sql
+			${_sqlcmd} -i /init/restore.sql
 
-		return
+			touch /tmp/database_exists
+
+			return
+		else
+			echo "[entrypoint] Found bacpac file"
+
+			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
+
+			touch /tmp/database_exists
+
+			return
+		fi
 	fi
 
 	if [[ $(_has_database_files ${database_name}) ]]; then
@@ -54,6 +64,8 @@ create_database() {
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
 
 		${_sqlcmd} -i /init/reinit.sql
+
+		touch /tmp/database_exists
 
 		return
 	fi
@@ -65,15 +77,24 @@ create_database() {
 	${_sqlcmd} -i /init/init.sql
 }
 
-main() {
-	until ${_sqlcmd} -Q "SELECT 1"; do
-		sleep 1
-		echo "[entrypoint] Waiting for SQL Server to be available..."
-	done
+/opt/mssql/bin/sqlservr &
+PID=$!
 
-	create_database ${COMPOSER_DATABASE_NAME}
-}
+echo "[entrypoint] Waiting for SQL Server to boot..."
+until [[ -f /var/opt/mssql/log/errorlog ]]; do
+sleep 1
+done
 
-main & /opt/mssql/bin/sqlservr
+until grep -q "SQL Server is now ready for client connections" /var/opt/mssql/log/errorlog; do
+sleep 1
+done
 
-wait
+until [[ $(${_sqlcmd} -Q "select 1") ]]; do
+sleep 1
+done
+
+echo "[entrypoint] SQLServer is available"
+
+create_database ${COMPOSER_DATABASE_NAME}
+
+wait $PID

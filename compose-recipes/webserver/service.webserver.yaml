@@ -13,6 +13,6 @@ services:
         environment:
             -   PROTOCOL=${WEBSERVER_PROTOCOL:-http}
             -   WEBSERVER_HOSTNAMES=${WEBSERVER_HOSTNAMES:-localhost}
-            -   UPSTREAM_FILE=${UPSTREAM_FILE:-upstream.conf}
+            -   WEBSERVER_UPSTREAM_FILE=${WEBSERVER_UPSTREAM_FILE:-upstream.conf}
         ports:
             -   "${WEBSERVER_HOST_PORT}:${WEBSERVER_CONTAINER_PORT}"

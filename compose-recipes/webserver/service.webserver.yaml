@@ -1,14 +1,11 @@
 services:
     webserver:
         build:
-            additional_contexts:
-                templates_config: ./templates/webserver/config
-                templates_ssl: ./templates/webserver/ssl
+            context: ./compose-recipes/webserver
             args:
                 MODSECURITY_ENABLED: ${MODSECURITY_ENABLED:-false}
                 PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
                 WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
-            context: ./compose-recipes/webserver
         container_name: ${NAMESPACE}-webserver
         depends_on:
             liferay:
@@ -18,4 +15,4 @@ services:
             -   WEBSERVER_HOSTNAMES=${WEBSERVER_HOSTNAMES:-localhost}
             -   UPSTREAM_FILE=${UPSTREAM_FILE:-upstream.conf}
         ports:
-            -   "${WEBSERVER_HOST_PORT}:${WEBSERVER_CONTAINER_PORT}" ## Figure out a way to toggle the first part
+            -   "${WEBSERVER_HOST_PORT}:${WEBSERVER_CONTAINER_PORT}"

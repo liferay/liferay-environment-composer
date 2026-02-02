@@ -362,7 +362,7 @@ file("ports.env").withInputStream {
 
 if (config.useWebserver) {
 	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)
-	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)
+	environmentMap.put("WEBSERVER_MODSECURITY_ENABLED", config.modSecurityEnabled)
 	environmentMap.put("WEBSERVER_PROTOCOL", config.webserverProtocol)
 	environmentMap.put("WEBSERVER_PROTOCOL_UPPERCASE", config.webserverProtocol.toUpperCase())
 

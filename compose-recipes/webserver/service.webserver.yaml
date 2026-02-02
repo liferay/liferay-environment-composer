@@ -2,9 +2,9 @@ services:
     webserver:
         build:
             args:
-                WEBSERVER_MODSECURITY_ENABLED: ${WEBSERVER_MODSECURITY_ENABLED:-false}
                 PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
                 WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
+                WEBSERVER_MODSECURITY_ENABLED: ${WEBSERVER_MODSECURITY_ENABLED:-false}
             context: ./compose-recipes/webserver
         container_name: ${NAMESPACE}-webserver
         depends_on:

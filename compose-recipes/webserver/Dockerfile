@@ -21,7 +21,7 @@ RUN if [ "$PROTOCOL" = "https" ]; \
     then \
       mkdir -p ssl && \
       export hostname=$(echo $WEBSERVER_HOSTNAMES | awk '{print $1}') && \
-	I=1; SAN_ENTRIES=""; for host in $WEBSERVER_HOSTNAMES; do SAN_ENTRIES="${SAN_ENTRIES}DNS.$i = $host\n"; i=$((i+1)); done; \
+	i=1; SAN_ENTRIES=""; for host in $WEBSERVER_HOSTNAMES; do SAN_ENTRIES="${SAN_ENTRIES}DNS.$i = $host\n"; i=$((i+1)); done; \
       export sanEntries="$SAN_ENTRIES" && \
       envsubst < /templates/ssl/openssl.cnf.template > ssl/openssl.cnf && \
       openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/server.key -out ssl/server.crt -config ssl/openssl.cnf -subj "/CN=$hostname"; \

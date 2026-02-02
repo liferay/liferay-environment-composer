@@ -27,7 +27,7 @@ I=1; SAN_ENTRIES=""; for host in $WEBSERVER_HOSTNAMES; do SAN_ENTRIES="${SAN_ENT
 
 # --- Stage 2: Final Image ---
 
-FROM nginx:latest
+FROM nginx:1.26.3
 
 # 1. Deploy Main Template to Nginx's auto-process folder
 

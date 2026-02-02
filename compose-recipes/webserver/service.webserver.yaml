@@ -1,11 +1,11 @@
 services:
     webserver:
         build:
-            context: ./compose-recipes/webserver
             args:
                 MODSECURITY_ENABLED: ${MODSECURITY_ENABLED:-false}
                 PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
                 WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
+            context: ./compose-recipes/webserver
         container_name: ${NAMESPACE}-webserver
         depends_on:
             liferay:

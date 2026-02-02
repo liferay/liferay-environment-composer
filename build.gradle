@@ -361,7 +361,7 @@ file("ports.env").withInputStream {
 }
 
 if (config.useClustering) {
-	environmentMap.put("UPSTREAM_FILE", "upstream.cluster.conf")
+	environmentMap.put("WEBSERVER_UPSTREAM_FILE", "upstream.cluster.conf")
 }
 
 if (config.useWebserver) {

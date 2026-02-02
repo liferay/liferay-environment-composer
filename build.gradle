@@ -360,10 +360,6 @@ file("ports.env").withInputStream {
 	environmentMap.putAll ports
 }
 
-if (config.useClustering) {
-	environmentMap.put("WEBSERVER_UPSTREAM_FILE", "upstream.cluster.conf")
-}
-
 if (config.useWebserver) {
 	environmentMap.put("WEBSERVER_HOSTNAMES", config.webserverHostnames)
 	environmentMap.put("MODSECURITY_ENABLED", config.modSecurityEnabled)

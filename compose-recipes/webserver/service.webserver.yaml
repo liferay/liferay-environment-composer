@@ -2,7 +2,7 @@ services:
     webserver:
         build:
             args:
-                MODSECURITY_ENABLED: ${MODSECURITY_ENABLED:-false}
+                WEBSERVER_MODSECURITY_ENABLED: ${WEBSERVER_MODSECURITY_ENABLED:-false}
                 PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
                 WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
             context: ./compose-recipes/webserver

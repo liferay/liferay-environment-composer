@@ -9,8 +9,8 @@ ARG WEBSERVER_HOSTNAMES
 
 WORKDIR /build
 
-RUN if [ "$PROTOCOL" = "https" ]; then \
-      mkdir -p ssl && \
+RUN mkdir -p ssl && \
+    if [ "$PROTOCOL" = "https" ]; then \
       CN=$(echo $WEBSERVER_HOSTNAMES | awk '{print $1}') && \
       SAN=$(echo $WEBSERVER_HOSTNAMES | sed 's/ /,DNS:/g' | sed 's/^/DNS:/') && \
       openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -30,7 +30,6 @@ COPY templates/config/*.conf.template /etc/nginx/templates/partials/
 
 # 2. Explicit SSL & ModSecurity Deployment 🛡️
 
-COPY --from=builder /build/ssl/server.crt /etc/nginx/certs/
-COPY --from=builder /build/ssl/server.key /etc/nginx/certs/
+COPY --from=builder /build/ssl/* /etc/nginx/certs/
 COPY --from=modsec_source /etc/modsecurity.d/owasp-crs/crs-setup.conf* /etc/nginx/modsec/
 COPY --from=modsec_source /etc/modsecurity.d/owasp-crs/rules/ /etc/nginx/modsec/rules/

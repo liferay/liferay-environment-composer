@@ -48,3 +48,5 @@ else
 fi
 
 EOSU
+
+echo "STARTING_UP" > /startup_log.txt

@@ -14,10 +14,7 @@ if [[ -f "$(find /database/data/${DB2INSTANCE}/backups -iname 'db2move.lst')" ]]
 
 	db2move ${COMPOSER_DATABASE_NAME} import
 
-	rm -rf /database/data/${DB2INSTANCE}/backups/*
-fi
-
-if [[ -f "$(find /database/data/${DB2INSTANCE}/backups -type f | tail -n 1)" ]]; then
+elif [[ -f "$(find /database/data/${DB2INSTANCE}/backups -type f | tail -n 1)" ]]; then
 	echo "[prepare-database.sh] Found dump file. Restoring database..."
 
 	db2 connect to ${COMPOSER_DATABASE_NAME}

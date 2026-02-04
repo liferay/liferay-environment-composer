@@ -24,6 +24,11 @@ server {
 		stub_status on;
 		allow all;
 	}
+
+	location /healthz {
+		stub_status on;
+		allow all;
+	}
 }
 
 include /etc/nginx/conf.d/partials/${WEBSERVER_UPSTREAM_FILE};

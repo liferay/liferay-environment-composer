@@ -431,7 +431,7 @@ _clean() {
 		_print_step "Cleaning the Gradle build"
 		./gradlew clean
 
-		if [[ "${docker_images}" ]]; then
+		if _isDockerImage; then
 			_print_step "Removing Docker images..."
 			docker image ls | grep "^$(_getComposeProjectName "${project_directory}")" | awk '{print $3}' | xargs -I{} docker image rm {}
 		fi
@@ -534,6 +534,17 @@ _tailProjectLogs() {
 
 		docker compose logs -f
 	)
+}
+_isDockerImage() {
+	local docker_images
+	
+	docker_images=$(docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $1}')
+
+	if [[ "${docker_images}" ]]; then
+		return 0
+	fi
+
+	return 1
 }
 _isLXCVersion() {
 	local lxc_version="${1}"
@@ -674,11 +685,8 @@ _cmd_setVersion() {
 
 cmd_clean() {
 	_checkProjectDirectory
-
-	local docker_images
-	docker_images="$(docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $1}')"
-
-	if [[ "${docker_images}" ]]; then
+ 
+	if _isDockerImage; then
 		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
 		echo ""
 		printf "${C_YELLOW}%s${C_NC}\n" "${docker_images}"

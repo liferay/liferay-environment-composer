@@ -320,7 +320,7 @@ _checkReleasesJsonFile() {
 	done
 
 	if [[ "${backupJson}" ]]; then
-		echo "${backupJson}" > "${RELEASES_JSON_FILE}"
+		echo "${backupJson}" >"${RELEASES_JSON_FILE}"
 	fi
 
 	return 1
@@ -741,13 +741,13 @@ cmd_init() {
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
-			--start)
-				shift && FLAG_START=1
-				;;
-			*)
-				ARGS+=("${1}")
-				shift
-				;;
+		--start)
+			shift && FLAG_START=1
+			;;
+		*)
+			ARGS+=("${1}")
+			shift
+			;;
 		esac
 	done
 
@@ -822,7 +822,7 @@ cmd_list() {
 	fi
 
 	if ! _verifyListableEntity "${entity}"; then
-		closest_entity=$(_listPrefixedFunctions _list_| _fzf --filter "${entity}" | head -n 1)
+		closest_entity=$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)
 
 		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
 			entity=${closest_entity}
@@ -861,12 +861,12 @@ cmd_share() {
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
-			--export)
-				shift && FLAG_EXPORT=1
-				;;
-			*)
-				shift
-				;;
+		--export)
+			shift && FLAG_EXPORT=1
+			;;
+		*)
+			shift
+			;;
 		esac
 	done
 
@@ -925,12 +925,12 @@ cmd_update() {
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
-			--unstable)
-				shift && FLAG_UNSTABLE=1
-				;;
-			*)
-				shift
-				;;
+		--unstable)
+			shift && FLAG_UNSTABLE=1
+			;;
+		*)
+			shift
+			;;
 		esac
 	done
 
@@ -1013,20 +1013,20 @@ REST_ARGS=()
 
 while [[ $# -gt 0 ]]; do
 	case "${1}" in
-		-p|--project)
-			OPTION_PROJECT="${2}"
-			[[ "${2}" ]] || _errorExit "${1} requires a value"
-			shift
-			shift
-			;;
-		*)
-			if [[ -z "${COMMAND}" ]]; then
-				COMMAND="${1}"
-			else
-				REST_ARGS+=("${1}")
-			fi
-			shift
-			;;
+	-p | --project)
+		OPTION_PROJECT="${2}"
+		[[ "${2}" ]] || _errorExit "${1} requires a value"
+		shift
+		shift
+		;;
+	*)
+		if [[ -z "${COMMAND}" ]]; then
+			COMMAND="${1}"
+		else
+			REST_ARGS+=("${1}")
+		fi
+		shift
+		;;
 	esac
 done
 

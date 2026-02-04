@@ -894,7 +894,9 @@ cmd_start() {
 	_checkProjectDirectory
 
 	_print_step "Starting environment"
-	_startProject "${PROJECT_DIRECTORY}"
+	if ! _startProject "${PROJECT_DIRECTORY}"; then
+		exit 1
+	fi
 
 	_print_step "Printing published ports"
 	_getServicePorts "${PROJECT_DIRECTORY}"

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec kubectl apply -f /src/liferayextensions.yaml

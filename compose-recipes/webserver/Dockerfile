@@ -1,6 +1,4 @@
-FROM owasp/modsecurity-crs:nginx AS modsec_source
-
-# --- Stage 1: Builder (SSL Only) ---
+ARG WEBSERVER_MODSECURITY_ENABLED=false
 
 FROM alpine/openssl AS builder
 
@@ -19,17 +17,17 @@ RUN mkdir -p ssl && \
         -addext "subjectAltName=$SAN"; \
     fi
 
-# Stage 2: Final Nginx Image
-
-FROM nginx:1.26.3
-
-# 1. Direct Template Deployment 🏗️
+FROM nginx:1.26.3 AS nginx_modsecurity_enabled_false
 
 COPY templates/config/base.conf.template /etc/nginx/templates/default.conf.template
 COPY templates/config/*.conf.template /etc/nginx/templates/partials/
-
-# 2. Explicit SSL & ModSecurity Deployment 🛡️
-
 COPY --from=builder /build/ssl/* /etc/nginx/certs/
-COPY --from=modsec_source /etc/modsecurity.d/owasp-crs/crs-setup.conf* /etc/nginx/modsec/
-COPY --from=modsec_source /etc/modsecurity.d/owasp-crs/rules/ /etc/nginx/modsec/rules/
+
+FROM owasp/modsecurity-crs:nginx AS nginx_modsecurity_enabled_true
+
+COPY templates/config/base.conf.template /etc/nginx/templates/conf.d/default.conf.template
+COPY templates/config/*.conf.template /etc/nginx/templates/conf.d/partials/
+COPY --from=builder --chown=nginx:nginx /build/ssl/* /etc/nginx/certs/
+
+FROM nginx_modsecurity_enabled_${WEBSERVER_MODSECURITY_ENABLED} AS nginx
+FROM nginx

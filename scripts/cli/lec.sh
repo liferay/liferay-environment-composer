@@ -416,6 +416,32 @@ _verifyListableEntity() {
 # General helper functions
 #
 
+_clean() {
+	local project_directory="${1}"
+
+	(
+		cd "${project_directory}" || exit
+
+		_print_step "Removing manually deleted worktrees"
+		_git worktree prune
+
+		_print_step "Stopping environment and deleting volumes"
+		./gradlew stop -Plr.docker.environment.clear.volume.data=true
+
+		_print_step "Cleaning the Gradle build"
+		./gradlew clean
+
+		local project_name="$(_getComposeProjectName "${project_directory}")"
+
+		if _projectHasDockerImage "${project_name}"; then
+			_print_step "Removing Docker images..."
+			_listDockerImages "${project_name}" | xargs -I{} docker image rm -f {}
+		fi
+
+		_print_success "Done"
+	)
+}
+
 _getComposeProjectName() {
 	local projectDir="${1}"
 
@@ -529,6 +555,21 @@ _isReleaseVersion() {
 	local liferay_version="${1}"
 
 	_listReleases | grep -q "^${liferay_version}$"
+}
+
+_listDockerImages() {
+	local project_name="${1}"
+
+	if [[ -z "${project_name}" ]]; then
+		return
+	fi
+
+	docker image ls --format {{.Repository}} | grep -F "${project_name}-" | grep "^${project_name}"
+}
+_projectHasDockerImage() {
+	local project_name="${1}"
+
+	_listDockerImages "${project_name}" | grep -q .
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
@@ -651,41 +692,23 @@ _cmd_setVersion() {
 cmd_clean() {
 	_checkProjectDirectory
 
-	(
-		cd "${PROJECT_DIRECTORY}" || exit
+ 	local project_name="$(_getComposeProjectName "${project_directory}")"
 
-		local docker_images
-		docker_images="$(docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $1}')"
+	if _projectHasDockerImage "${project_name}"; then
+		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
+		echo ""
+		printf "${C_YELLOW}%s${C_NC}\n" "$(_listDockerImages "${project_name}")"
+		echo ""
+	else
+		_print_warn "This will stop the Docker compose project and remove the Docker volumes."
+	fi
 
-		if [[ "${docker_images}" ]]; then
-			_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
-			echo ""
-			printf "${C_YELLOW}%s${C_NC}\n" "${docker_images}"
-			echo ""
-		else
-			_print_warn "This will stop the Docker compose project and remove the Docker volumes."
-		fi
+	if ! _confirm "Do you want to continue?"; then
+		return
+	fi
 
-		if ! _confirm "Do you want to continue?"; then
-			return
-		fi
-
-		_print_step "Removing manually deleted worktrees"
-		_git worktree prune
-
-		_print_step "Stopping environment and deleting volumes"
-		./gradlew stop -Plr.docker.environment.clear.volume.data=true
-
-		_print_step "Cleaning the Gradle build"
-		./gradlew clean
-
-		if [[ "${docker_images}" ]]; then
-			_print_step "Removing Docker images..."
-			docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $3}' | xargs -I{} docker image rm {}
-		fi
-
-		_print_success "Done"
-	)
+	_clean "${PROJECT_DIRECTORY}"
+	
 }
 cmd_exportData() {
 	_checkProjectDirectory
@@ -850,6 +873,7 @@ cmd_remove() {
 
 	for worktree in ${worktrees}; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
+		_clean "${worktree}"
 		_removeWorktree "${worktree}"
 		echo
 	done

@@ -854,6 +854,9 @@ cmd_remove() {
 		echo
 	done
 }
+cmd_rm() {
+	cmd_remove
+}
 cmd_share() {
 	_checkProjectDirectory
 

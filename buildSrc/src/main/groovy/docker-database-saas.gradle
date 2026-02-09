@@ -5,6 +5,8 @@ import groovy.json.JsonSlurper
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
+import java.util.Arrays
+import java.util.stream.Collectors
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -417,6 +419,52 @@ ext {
 	}
 }
 
+tasks.register("addCloudSQLScriptToDumpsVolume") {
+	onlyIf("using MySQL or PostgreSQL") {
+		config.useDatabaseMySQL || config.useDatabasePostgreSQL
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doLast {
+		File globalVariableScript = file("dumps/0.sql")
+
+		if (config.useDatabaseMySQL) {
+			Map<String, String> newVariables = [
+				"max_allowed_packet": String.valueOf(1L << 30),
+				"autocommit": "0",
+				"unique_checks": "0",
+				"foreign_key_checks": "0",
+				"innodb_stats_auto_recalc": "0",
+			]
+
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << newVariables.collect {
+					Map.Entry<String, String> entry ->
+
+					"SET GLOBAL ${entry.key}=${entry.value};"
+				}.join("\n") << ";"
+
+				initSQLOutputStream << ["lportal", "dxpcloud", "cloudsqlimport"].collect {
+					String userName ->
+
+					"create user if not exists ${userName} identified by 'lportal';\ngrant all on *.* to '${userName}'@'%';\n"
+				}.join("\n")
+			}
+		}
+		else {
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << "create role cloudsqlsuperuser with login superuser password 'lportal';"
+			}
+		}
+	}
+}
+
 tasks.register("copyLiferayLXCRepositoryConfigurations") {
 	dependsOn ":updateLXCRepository"
 
@@ -478,109 +526,100 @@ tasks.register("decryptCloudBackupDatabase") {
 	}
 }
 
-tasks.register("copyDatabaseDumpsToDumpsVolume") {
-	dependsOn ":decryptCloudBackupDatabase"
-
-	onlyIf("using an external database") {
-		config.useDatabase
-	}
-	onlyIf("there is a database dump file") {
-		!Util.isEmpty(project.fileTree("dumps"))
+tasks.register("importPostgreSQLBinaryDump") {
+	onlyIf("using PostgreSQL database") {
+		config.useDatabasePostgreSQL
 	}
 
-	doFirst {
-		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+	doLast {
+		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split("\s+")
 
-		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
-			return;
+		String[] binaryDumpFileNames = Arrays.stream(backupFileNames)
+			.filter(fileName -> fileName.endsWith(".dump") || file.endsWith(".dmp"))
+			.toArray(String[]::new)
+
+		if (binaryDumpFileNames.length > 1) {
+			throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
 		}
 
-		String dumpsVolumeName = "${config.namespace}_dumps"
+		if (binaryDumpFileNames.length > 0) {
+			String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
 
-		if (getExistingVolumeNames().contains(dumpsVolumeName)) {
-			waitForCommand("docker compose down database")
-			waitForCommand("docker volume rm ${dumpsVolumeName}")
-		}
+			if (databaseInitialized.trim() == "[]") {
+				println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
 
-		waitForCommand("docker compose build database")
-		waitForCommand("docker compose create database")
-
-		fileTree("dumps") {
-			include "**/*"
-			exclude "**/.gitkeep"
-		}.forEach {
-			File dumpFile ->
-
-			println dumpFile
-
-			if (config.useDatabaseMariaDB || config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
-				String oldPath = dumpFile.absolutePath
-				String newPath = null
-
-				if (dumpFile.name.endsWith(".gz") && !dumpFile.name.endsWith(".sql.gz")) {
-					newPath = "${oldPath.substring(0, oldPath.length() - 3)}.sql.gz"
-				}
-				else if (!dumpFile.name.contains(".")) {
-					newPath = "${dumpFile.absolutePath}.sql"
-				}
-
-				if (newPath != null) {
-					dumpFile.renameTo(newPath)
-					dumpFile = file(newPath)
-				}
+				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
+			} else {
+				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
 			}
-
-			addToVolume(dumpsVolumeName, dumpFile)
-		}
-
-		println "Loading database backup into database dumps volume"
-
-		File globalVariableScript = file("0.sql")
-
-		if (config.useDatabaseMySQL) {
-			Map<String, String> newVariables = [
-				"max_allowed_packet": String.valueOf(1L << 30),
-				"autocommit": "0",
-				"unique_checks": "0",
-				"foreign_key_checks": "0",
-				"innodb_stats_auto_recalc": "0",
-			]
-
-			globalVariableScript.withOutputStream {
-				BufferedOutputStream initSQLOutputStream ->
-
-				initSQLOutputStream << newVariables.collect {
-					Map.Entry<String, String> entry ->
-
-					"SET GLOBAL ${entry.key}=${entry.value};"
-				}.join("\n") << ";"
-
-				initSQLOutputStream << ["lportal", "dxpcloud", "cloudsqlimport"].collect {
-					String userName ->
-
-					"create user if not exists ${userName} identified by 'lportal';\ngrant all on *.* to '${userName}'@'%';\n"
-				}.join("\n")
-			}
-		}
-		else if (config.useDatabasePostgreSQL) {
-			globalVariableScript.withOutputStream {
-				BufferedOutputStream initSQLOutputStream ->
-
-				initSQLOutputStream << "create role cloudsqlsuperuser with login superuser password 'lportal';"
-			}
-		}
-
-		if (globalVariableScript.exists()) {
-			addToVolume(dumpsVolumeName, globalVariableScript)
-
-			globalVariableScript.delete()
 		}
 	}
 }
 
-tasks.register("importDatabaseDumps") {
-	dependsOn ":copyDatabaseDumpsToDumpsVolume"
+tasks.register("prepareArchivedSQLFiles") {
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+	onlyIf("using MariaDB, MySQL, or PostgreSQL") {
+		config.useDatabaseMariaDB || config.useDatabaseMySQL || config.useDatabasePostgreSQL
+	}
 
+	doFirst {
+		project.fileTree("dumps") {
+			include "**/*.gz"
+			include "**/*.bz2"
+			exclude "**/.gitkeep"
+		}.forEach {
+			File dumpFile ->
+
+			String oldPath = dumpFile.absolutePath
+			String newPath = null
+
+			String dumpFileName = dumpFile.name
+
+			if (dumpFileName.matches(/.*\.(bz2|gz)/) && !dumpFileName.matches(/.*\.sql\.(bz2|gz)/)) {
+				String fileExtension = oldPath.split(/\./)[-1]
+
+				newPath = oldPath.replace(fileExtension, ".sql.${fileExtension}")
+			}
+			else if (!dumpFileName.contains(".")) {
+				newPath = "${dumpFile.absolutePath}.sql"
+			}
+
+			if (newPath != null) {
+				dumpFile.renameTo(newPath)
+			}
+		}
+	}
+}
+
+tasks.register("resetDatabaseGlobalValues") {
+	onlyIf("using a MySQL or MariaDB database") {
+		config.useDatabaseMariaDB || config.useDatabaseMySQL
+	}
+
+	doLast {
+		waitForContainer("database")
+
+		Map<String, String> oldVariables = [
+			"max_allowed_packet": String.valueOf(1L << 26),
+			"autocommit": "1",
+			"unique_checks": "1",
+			"foreign_key_checks": "1",
+			"innodb_stats_auto_recalc": "1",
+		]
+
+		String query = oldVariables.collect {
+			Map.Entry<String, String> oldVariable ->
+
+			"SET GLOBAL ${oldVariable.key}=${oldVariable.value};\n"
+		}.join("")
+
+		executeSQLQuery(query)
+	}
+}
+
+tasks.register("prepareDatabaseForLocalDevelopment") {
 	onlyIf("using an external database") {
 		config.useDatabase
 	}
@@ -589,69 +628,7 @@ tasks.register("importDatabaseDumps") {
 	}
 
 	doFirst {
-		FileCollection backupFiles = project.fileTree(config.dataDirectory)
-
-		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
-			println "Skipping database dumps import because a data backup will be imported from ${config.dataDirectory}"
-
-			return;
-		}
-
-		if (config.useDatabaseSQLServer) {
-			FileCollection dumpFiles = project.fileTree("dumps") {
-				include "**/*.bacpac"
-				include "**/*.bak"
-			}
-
-			if (dumpFiles.size() > 1) {
-				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-			}
-		}
-
-		println "Initializing database via first start scripts"
-
 		waitForContainer("database")
-
-		if (config.useDatabaseMySQL) {
-			Map<String, String> oldVariables = [
-				"max_allowed_packet": String.valueOf(1L << 26),
-				"autocommit": "1",
-				"unique_checks": "1",
-				"foreign_key_checks": "1",
-				"innodb_stats_auto_recalc": "1",
-			]
-
-			String query = oldVariables.collect {
-				Map.Entry<String, String> oldVariable ->
-
-				"SET GLOBAL ${oldVariable.key}=${oldVariable.value};\n"
-			}.join("")
-
-			executeSQLQuery(query)
-		}
-
-		if (config.useDatabasePostgreSQL) {
-			FileCollection binaryDumpFiles = project.fileTree("dumps") {
-				include "**/*.dmp"
-				include "**/*.dump"
-			}
-
-			if (!Util.isEmpty(binaryDumpFiles)) {
-				if (binaryDumpFiles.size() > 1) {
-					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-				}
-
-				String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
-
-				if (databaseInitialized.trim() == "[]") {
-					println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
-
-					waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
-				} else {
-					println "Database ${config.databaseName} already initialized, skipping dump binary restore."
-				}
-			}
-		}
 
 		println "Attempting to update database for local development"
 

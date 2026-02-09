@@ -420,6 +420,8 @@ ext {
 }
 
 tasks.register("addCloudSQLScriptToDumpsVolume") {
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+
 	onlyIf("using MySQL or PostgreSQL") {
 		config.useDatabaseMySQL || config.useDatabasePostgreSQL
 	}
@@ -474,6 +476,9 @@ tasks.register("copyLiferayLXCRepositoryConfigurations") {
 }
 
 tasks.register("importPostgreSQLBinaryDump") {
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+	dependsOn ":decompressArchiveFilesInDumpsVolume"
+
 	onlyIf("using PostgreSQL database") {
 		config.useDatabasePostgreSQL
 	}
@@ -541,13 +546,14 @@ tasks.register("prepareArchivedSQLFiles") {
 }
 
 tasks.register("resetDatabaseGlobalValues") {
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+	dependsOn ":decompressArchiveFilesInDumpsVolume"
+
 	onlyIf("using a MySQL or MariaDB database") {
 		config.useDatabaseMariaDB || config.useDatabaseMySQL
 	}
 
 	doLast {
-		waitForContainer("database")
-
 		Map<String, String> oldVariables = [
 			"max_allowed_packet": String.valueOf(1L << 26),
 			"autocommit": "1",
@@ -567,6 +573,12 @@ tasks.register("resetDatabaseGlobalValues") {
 }
 
 tasks.register("prepareDatabaseForLocalDevelopment") {
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+	dependsOn ":decompressArchiveFilesInDumpsVolume"
+
+	mustRunAfter ":resetDatabaseGlobalValues"
+	mustRunAfter ":importPostgreSQLBinaryDump"
+
 	onlyIf("using an external database") {
 		config.useDatabase
 	}

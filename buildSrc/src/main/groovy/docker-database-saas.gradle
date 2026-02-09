@@ -473,59 +473,6 @@ tasks.register("copyLiferayLXCRepositoryConfigurations") {
 	}
 }
 
-tasks.register("decryptCloudBackupDatabase") {
-	onlyIf("using an external database") {
-		config.useDatabase
-	}
-	onlyIf("there is a database dump file") {
-		!Util.isEmpty(project.fileTree("dumps"))
-	}
-
-	doFirst {
-		FileCollection decryptedBackups = project.fileTree("dumps") {
-			include "**/*.sql"
-			include "**/*.sql.gz"
-			include "**/*.gz"
-		}
-
-		if (!Util.isEmpty(decryptedBackups)) {
-			print("Found existing unencrypted backups in dumps/ folder")
-
-			return
-		}
-
-		FileCollection encryptedBackups = project.fileTree("dumps") {
-			include "*.7z"
-			exclude "*doclib*"
-		}
-
-		if (Util.isEmpty(encryptedBackups)) {
-			encryptedBackups = project.fileTree("dumps") {
-				include "*.zip"
-				exclude "*doclib*"
-			}
-		}
-
-		if (encryptedBackups.isEmpty()) {
-			return
-		}
-		else if (encryptedBackups.size() != 1) {
-			throw new GradleException("Aborting because multiple potential backups where found in the dumps/ folder")
-		}
-
-		if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
-			println "Extracting LXC database backup (using password specified in gradle.properties)"
-
-			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p${config.lxcBackupPassword}")
-		}
-		else {
-			println "Extracting LXC database backup (assuming no password, because none was set in gradle.properties)"
-
-			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p")
-		}
-	}
-}
-
 tasks.register("importPostgreSQLBinaryDump") {
 	onlyIf("using PostgreSQL database") {
 		config.useDatabasePostgreSQL
@@ -628,11 +575,157 @@ tasks.register("prepareDatabaseForLocalDevelopment") {
 	}
 
 	doFirst {
-		waitForContainer("database")
-
 		println "Attempting to update database for local development"
 
 		updateDatabaseForLocalDevelopment()
+	}
+}
+
+tasks.register("decompressArchiveFilesInDumpsVolume") {
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doLast {
+		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
+			file -> file.name.toString() != ".gitkeep"
+		).collect(Collectors.toList())
+
+		List<File> archiveFiles = dumpFiles.findAll {
+			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
+		}
+
+		if (archiveFiles.size() == 0) {
+			return
+		}
+
+		File archiveFile = archiveFiles[0]
+
+		String archiveFileName = archiveFile.name
+
+		String userString = config.useDatabaseSQLServer ? "--user 10001:10001" : ""
+
+		println "Decompressing database archive file into dumps volume"
+
+		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		if (archiveFileName.endsWith("zip") || archiveFileName.endsWith("7z")) {
+			boolean isEncrypted = waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest l -slt /target/${archiveFileName}").contains("Encrypted = +")
+
+			String lxcBackupPassword = ""
+
+			if (isEncrypted) {
+				if (!config.lxcBackupPassword) {
+					throw new GradleException("failed to decrypt archive as no LXC backup password as provided")
+				}
+
+				lxcBackupPassword = config.lxcBackupPassword
+			}
+
+			waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest x -aos /target/${archiveFileName} -o/target -p${lxcBackupPassword}")
+		}
+
+		String busyboxCommand = ""
+
+		if (archiveFileName.endsWith("tar.gz") || archiveFileName.endsWith("tgz")) {
+			busyboxCommand = "tar xzf /target/${archiveFileName} -C /target"
+		}
+		else if (archiveFileName.endsWith("gz")) {
+			busyboxCommand = "gzip -d /target/${archiveFileName}"
+		}
+
+		if (archiveFileName.endsWith("tar.bz2") || archiveFileName.endsWith("tbz")) {
+			busyboxCommand = "tar xjf /target/${archiveFileName} -C /target"
+		}
+		else if (archiveFileName.endsWith("bz2")) {
+			busyboxCommand = "bzip2 -d /target/${archiveFileName}"
+		}
+
+		if (archiveFileName.endsWith("tar")) {
+			busyboxCommand = "tar xf /target/${archiveFileName} -C /target"
+		}
+
+		if (busyboxCommand != "") {
+			waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target busybox:latest sh -c '${busyboxCommand}'")
+		}
+
+		waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target busybox:latest sh -c 'rm -rf /target/${archiveFileName}'")
+
+		waitForContainer("database")
+	}
+}
+
+tasks.register("copyDumpsFilesToDumpsVolume") {
+	dependsOn ":prepareArchivedSQLFiles"
+
+	onlyIf("using an external database") {
+		config.useDatabase
+	}
+	onlyIf("there is a database dump file") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
+
+	doLast {
+		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+
+		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
+			println "Skipping database dumps import because a data backup will be imported from ${config.dataDirectory}"
+
+			return;
+		}
+
+		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
+			file -> file.name.toString() != ".gitkeep"
+		).collect(Collectors.toList())
+
+		List<File> archiveFiles = dumpFiles.findAll {
+			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
+		}
+
+		if (archiveFiles.size() > 1) {
+			throw new GradleException("failed to prepare dumps volume as multiple archive files were found in dumps directory")
+		}
+
+		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		if (getExistingVolumeNames().contains(dumpsVolumeName)) {
+			waitForCommand("docker compose down database")
+			waitForCommand("docker volume rm ${dumpsVolumeName}")
+		}
+
+		waitForCommand("docker compose build database")
+		waitForCommand("docker compose create database")
+
+		if (archiveFiles.size() == 0) {
+			println "Copying raw database files into dumps volume"
+
+			if (config.useDatabaseSQLServer) {
+				List<File> db2BackupFiles = dumpFiles.findAll {
+					file -> file.name.matches(/.*\.(bacpac|bak)/)
+				}
+
+				if (db2BackupFiles.size() > 1) {
+					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+				}
+			}
+
+			dumpFiles.each {
+				File dumpFile ->
+
+				addToVolume(dumpsVolumeName, dumpFile)
+			}
+
+			return
+		}
+
+		println "Copying database archive file into dumps volume"
+
+		addToVolume(dumpsVolumeName, archiveFiles[0])
 	}
 }
 

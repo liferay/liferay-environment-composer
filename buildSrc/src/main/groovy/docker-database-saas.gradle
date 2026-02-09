@@ -6,9 +6,9 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 import java.util.Arrays
-import java.util.stream.Collectors
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 ext {
 	FALSE_SQL_VALUE = config.useDatabaseSQLServer ? "'false'" : "false"
@@ -493,8 +493,8 @@ tasks.register("importPostgreSQLBinaryDump") {
 		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split("\s+")
 
 		String[] binaryDumpFileNames = Arrays.stream(backupFileNames)
-			.filter(fileName -> fileName.endsWith(".dump") || file.endsWith(".dmp"))
-			.toArray(String[]::new)
+		.filter(fileName -> fileName.endsWith(".dump") || file.endsWith(".dmp"))
+		.toArray(String[]::new)
 
 		if (binaryDumpFileNames.length > 1) {
 			throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")

@@ -477,11 +477,13 @@ _removeWorktree() {
 	_print_success "Project ${worktree_name} removed"
 }
 _selectLiferayRelease() {
-	local promptMessage="Select a Liferay release"
+	local promptMessage="Select a Liferay release."
 
 	if [ -d "${LXC_REPOSITORY_PATH}" ]; then
-		promptMessage="${promptMessage} or LXC ID"
+		promptMessage="${promptMessage} or LXC ID."
 	fi
+
+	promptMessage="${promptMessage} Supports fuzzy matching, enter partial keywords to filter results."
 
 	local delimiter=" :: "
 
@@ -839,7 +841,7 @@ cmd_list() {
 }
 cmd_remove() {
 	local worktrees
-	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple). Supports fuzzy matching, enter partial keywords to filter results.")"
 	_cancelIfEmpty "${worktrees}"
 
 	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"

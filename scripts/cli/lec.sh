@@ -431,9 +431,11 @@ _clean() {
 		_print_step "Cleaning the Gradle build"
 		./gradlew clean
 
-		if _isDockerImage; then
+		local project_name="$(_getComposeProjectName "${project_directory}")"
+
+		if _projectHasDockerImages "${project_name}"; then
 			_print_step "Removing Docker images..."
-			docker image ls | grep "^$(_getComposeProjectName "${project_directory}")" | awk '{print $3}' | xargs -I{} docker image rm {}
+			_listDockerImages "${project_name}" | xargs -I{} docker image rm -f {}
 		fi
 
 		_print_success "Done"
@@ -548,17 +550,6 @@ _tailProjectLogs() {
 		docker compose logs -f
 	)
 }
-_isDockerImage() {
-	local docker_images
-	
-	docker_images=$(docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $1}')
-
-	if [[ "${docker_images}" ]]; then
-		return 0
-	fi
-
-	return 1
-}
 _isLXCVersion() {
 	local lxc_version="${1}"
 
@@ -577,6 +568,21 @@ _isReleaseVersion() {
 	local liferay_version="${1}"
 
 	_listReleases | grep -q "^${liferay_version}$"
+}
+
+_listDockerImages() {
+	local project_name="${1}"
+
+	if [[ -z "${project_name}" ]]; then
+		return
+	fi
+
+	docker image ls --format {{.Repository}} | grep -i -F "${project_name}" | grep -i "^${project_name}-"
+}
+_projectHasDockerImages() {
+	local projectName="${1}"
+
+	_listDockerImages "${projectName}" &>/dev/null
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
@@ -698,11 +704,15 @@ _cmd_setVersion() {
 
 cmd_clean() {
 	_checkProjectDirectory
- 
-	if _isDockerImage; then
+
+ 	local project_name
+	
+	project_name="$(_getComposeProjectName "${PROJECT_DIRECTORY}")"
+
+	if _projectHasDockerImages "${project_name}"; then
 		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
 		echo ""
-		printf "${C_YELLOW}%s${C_NC}\n" "${docker_images}"
+		printf "${C_YELLOW}%s${C_NC}\n" "$(_listDockerImages "${project_name}")"
 		echo ""
 	else
 		_print_warn "This will stop the Docker compose project and remove the Docker volumes."

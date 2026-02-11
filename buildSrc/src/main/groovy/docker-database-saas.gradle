@@ -695,8 +695,8 @@ tasks.register("copyDumpsFilesToDumpsVolume") {
 	}
 	onlyIf("there is a database dump file") {
 		!Util.isEmpty(project.fileTree("dumps") {
-			exclude "**/.gitkeep"
-		})
+				exclude "**/.gitkeep"
+			})
 	}
 
 	doLast {

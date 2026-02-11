@@ -486,6 +486,9 @@ tasks.register("importPostgreSQLBinaryDump") {
 	onlyIf("using PostgreSQL database") {
 		config.useDatabasePostgreSQL
 	}
+	onlyIf("dumps directory is not empty") {
+		!Util.isEmpty(project.fileTree("dumps"))
+	}
 
 	doLast {
 		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split("\s+")
@@ -687,7 +690,9 @@ tasks.register("copyDumpsFilesToDumpsVolume") {
 		config.useDatabase
 	}
 	onlyIf("there is a database dump file") {
-		!Util.isEmpty(project.fileTree("dumps"))
+		!Util.isEmpty(project.fileTree("dumps") {
+			exclude "**/.gitkeep"
+		})
 	}
 
 	doLast {

@@ -561,6 +561,8 @@ tasks.register("resetDatabaseGlobalValues") {
 	}
 
 	doLast {
+		println "resetting global global values for ${config.databaseType}"
+
 		Map<String, String> oldVariables = [
 			"max_allowed_packet": String.valueOf(1L << 26),
 			"autocommit": "1",

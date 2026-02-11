@@ -626,9 +626,9 @@ tasks.register("decompressArchiveFilesInDumpsVolume") {
 
 		String userString = config.useDatabaseSQLServer ? "--user 10001:10001" : ""
 
-		println "Decompressing database archive file into dumps volume"
-
 		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		String withDecryption = ""
 
 		if (archiveFileName.endsWith("zip") || archiveFileName.endsWith("7z")) {
 			boolean isEncrypted = waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest l -slt /target/${archiveFileName}").contains("Encrypted = +")
@@ -641,7 +641,11 @@ tasks.register("decompressArchiveFilesInDumpsVolume") {
 				}
 
 				lxcBackupPassword = config.lxcBackupPassword
+
+				withDecryption = "with decryption"
 			}
+
+			println "Decompressing database archive file into dumps volume ${withDecryption}"
 
 			waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest x -aos /target/${archiveFileName} -o/target -p${lxcBackupPassword}")
 		}

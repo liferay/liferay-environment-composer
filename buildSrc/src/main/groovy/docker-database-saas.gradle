@@ -637,7 +637,7 @@ tasks.register("decompressArchiveFilesInDumpsVolume") {
 
 			if (isEncrypted) {
 				if (!config.lxcBackupPassword) {
-					throw new GradleException("failed to decrypt archive as no LXC backup password as provided")
+					throw new GradleException("failed to decrypt archive as no LXC backup password was provided")
 				}
 
 				lxcBackupPassword = config.lxcBackupPassword

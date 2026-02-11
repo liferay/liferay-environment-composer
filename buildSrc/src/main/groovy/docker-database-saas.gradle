@@ -491,7 +491,7 @@ tasks.register("importPostgreSQLBinaryDump") {
 	}
 
 	doLast {
-		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split("\s+")
+		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split(/\n/)
 
 		String[] binaryDumpFileNames = Arrays.stream(backupFileNames)
 		.filter(fileName -> fileName.endsWith(".dump") || fileName.endsWith(".dmp"))

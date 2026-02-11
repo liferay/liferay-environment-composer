@@ -505,9 +505,9 @@ tasks.register("importPostgreSQLBinaryDump") {
 			String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
 
 			if (databaseInitialized.trim() == "[]") {
-				println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
+				println "Attempting to restore binary dump file: ${binaryDumpFileNames[0]} with database name: ${config.databaseName}..."
 
-				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
+				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFileNames[0]}")
 			} else {
 				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
 			}

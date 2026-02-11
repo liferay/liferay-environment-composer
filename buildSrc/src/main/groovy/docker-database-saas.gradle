@@ -465,9 +465,7 @@ tasks.register("addCloudSQLScriptToDumpsVolume") {
 			}
 		}
 
-		String dumpsVolumeName = "${config.namespace}_dumps"
-
-		addToVolume(dumpsVolumeName, globalVariableScript)
+		addToVolume("${config.namespace}_dumps", globalVariableScript)
 
 		delete globalVariableScript
 	}

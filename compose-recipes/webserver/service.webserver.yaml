@@ -1,0 +1,18 @@
+services:
+    webserver:
+        build:
+            args:
+                PROTOCOL: ${WEBSERVER_PROTOCOL:-http}
+                WEBSERVER_HOSTNAMES: ${WEBSERVER_HOSTNAMES:-localhost}
+                WEBSERVER_MODSECURITY_ENABLED: ${WEBSERVER_MODSECURITY_ENABLED:-false}
+            context: ./compose-recipes/webserver
+        container_name: ${NAMESPACE}-webserver
+        depends_on:
+            liferay:
+                condition: service_healthy
+        environment:
+            -   PROTOCOL=${WEBSERVER_PROTOCOL:-http}
+            -   WEBSERVER_HOSTNAMES=${WEBSERVER_HOSTNAMES:-localhost}
+            -   WEBSERVER_UPSTREAM_FILE=upstream.conf
+        ports:
+            -   "${WEBSERVER_HOST_PORT}:${WEBSERVER_CONTAINER_PORT}"

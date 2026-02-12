@@ -265,7 +265,8 @@ buildDockerImage {
 	dependsOn ":prepareJDBCDriver"
 	dependsOn ":prepareSAXParser"
 
-	mustRunAfter ":importDatabaseDumps"
+	mustRunAfter ":copyDumpsFilesToDumpsVolume"
+	mustRunAfter ":decompressArchiveFilesInDumpsVolume"
 }
 
 clean {
@@ -297,9 +298,14 @@ composeUp {
 		!config.composeFiles.isEmpty()
 	}
 
-	dependsOn ":buildDockerImage"
 	dependsOn ":importContainerData"
-	dependsOn ":importDatabaseDumps"
+	dependsOn ":copyDumpsFilesToDumpsVolume"
+	dependsOn ":addCloudSQLScriptToDumpsVolume"
+	dependsOn ":decompressArchiveFilesInDumpsVolume"
+	dependsOn ":resetDatabaseGlobalValues"
+	dependsOn ":importPostgreSQLBinaryDump"
+	dependsOn ":prepareDatabaseForLocalDevelopment"
+	dependsOn ":buildDockerImage"
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"

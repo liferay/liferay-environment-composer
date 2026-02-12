@@ -32,6 +32,8 @@ ext {
 	executeSQLQuery = {
 		String sql, String schema = null ->
 
+		schema = config.databaseSchemaName
+
 		if (!config.useDatabase) {
 			throw new GradleException("Database service not detected")
 		}

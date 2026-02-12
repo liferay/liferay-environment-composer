@@ -425,7 +425,20 @@ _getServicePorts() {
 	local projectDir="${1}"
 	local serviceName="${2}"
 	# shellcheck disable=SC2016
-	local template='table NAME\tCONTAINER PORT\tHOST PORT\tWEB LINK\n{{$name := .Name}}{{range .Publishers}}{{if eq .URL "0.0.0.0"}}{{$name}}\t{{.TargetPort}}\t{{.PublishedPort}}\t{{if eq .PublishedPort 443}}https://localhost:{{.PublishedPort}}{{else}}http://localhost:{{.PublishedPort}}{{end}}\n{{end}}{{end}}'
+	local template
+
+	read -r -d '' template <<- 'EOF'
+	table NAME	CONTAINER PORT	HOST PORT	WEB LINK
+	{{$name := .Name -}}
+
+	{{range .Publishers -}}
+
+	{{if eq .URL "0.0.0.0" -}}
+		{{$name}}	{{.TargetPort}}	{{.PublishedPort}}	{{if eq .PublishedPort 443}}https{{else}}http{{end}}://localhost:{{.PublishedPort}}
+	{{end -}}
+
+	{{end -}}
+	EOF
 
 	(
 		cd "${projectDir}" || exit 1

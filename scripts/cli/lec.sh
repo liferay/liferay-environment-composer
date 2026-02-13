@@ -854,7 +854,7 @@ cmd_list() {
 		closest_entity="$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)"
 
 		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
-			entity=${closest_entity}
+			entity="${closest_entity}"
 		else
 			_print_error "Cannot list ${C_YELLOW}${entity}${C_NC}. Showing listable entities..."
 

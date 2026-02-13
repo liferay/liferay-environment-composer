@@ -55,13 +55,13 @@ C_RESET=""
 C_YELLOW=""
 
 if [[ -z "${LEC_COLORS_DISABLED}" ]] && tput setaf 1 >/dev/null 2>&1; then
-	C_BLUE=$(tput setaf 6)
-	C_BOLD=$(tput bold)
-	C_GREEN=$(tput setaf 2)
-	C_NC=$(tput op)
-	C_RED=$(tput setaf 1)
-	C_RESET=$(tput sgr0)
-	C_YELLOW=$(tput setaf 3)
+	C_BLUE="$(tput setaf 6)"
+	C_BOLD="$(tput bold)"
+	C_GREEN="$(tput setaf 2)"
+	C_NC="$(tput op)"
+	C_RED="$(tput setaf 1)"
+	C_RESET="$(tput sgr0)"
+	C_YELLOW="$(tput setaf 3)"
 fi
 
 _print() {
@@ -432,7 +432,7 @@ _clean() {
 		./gradlew clean
 
 		local project_name
-		project_name=$(_getComposeProjectName "${project_directory}")
+		project_name="$(_getComposeProjectName "${project_directory}")"
 
 		if _projectHasDockerImages "${project_name}"; then
 			_print_step "Removing Docker images..."
@@ -698,7 +698,7 @@ cmd_clean() {
 	_checkProjectDirectory
 
  	local project_name
-	project_name=$(_getComposeProjectName "${PROJECT_DIRECTORY}")
+	project_name="$(_getComposeProjectName "${PROJECT_DIRECTORY}")"
 
 	if _projectHasDockerImages "${project_name}"; then
 		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
@@ -729,7 +729,7 @@ cmd_exportData() {
 		fi
 
 		local exportedDataRelativeDir
-		exportedDataRelativeDir=$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")
+		exportedDataRelativeDir="$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")"
 
 		_print_success "Container data exported to ${PROJECT_DIRECTORY}/${exportedDataRelativeDir}"
 	)
@@ -851,7 +851,7 @@ cmd_list() {
 	fi
 
 	if ! _verifyListableEntity "${entity}"; then
-		closest_entity=$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)
+		closest_entity="$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)"
 
 		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
 			entity=${closest_entity}
@@ -1004,8 +1004,8 @@ cmd_update() {
 
 	_git fetch "${remote}" --tags
 
-	current_tag=$(_git describe --tags 2>/dev/null)
-	latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
+	current_tag="$(_git describe --tags 2>/dev/null)"
+	latest_tag="$(_git tag --list 'v*' | sort -V | tail -1)"
 
 	if [[ "${current_tag}" == "${latest_tag}" ]]; then
 		_print_success "Current version ${C_BLUE}${current_tag}${C_NC} is up to date"

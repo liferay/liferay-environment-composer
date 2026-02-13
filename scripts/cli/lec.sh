@@ -477,13 +477,13 @@ _removeWorktree() {
 	_print_success "Project ${worktree_name} removed"
 }
 _selectLiferayRelease() {
-	local promptMessage="Select a Liferay release."
+	local promptMessage="Select a Liferay release"
 
 	if [ -d "${LXC_REPOSITORY_PATH}" ]; then
-		promptMessage="${promptMessage} or LXC ID."
+		promptMessage="${promptMessage} or LXC ID"
 	fi
 
-	promptMessage="${promptMessage} Supports fuzzy matching, enter partial keywords to filter results."
+	promptMessage="${promptMessage}. Supports fuzzy matching, enter partial keywords to filter results."
 
 	local delimiter=" :: "
 

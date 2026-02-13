@@ -55,13 +55,13 @@ C_RESET=""
 C_YELLOW=""
 
 if [[ -z "${LEC_COLORS_DISABLED}" ]] && tput setaf 1 >/dev/null 2>&1; then
-	C_BLUE=$(tput setaf 6)
-	C_BOLD=$(tput bold)
-	C_GREEN=$(tput setaf 2)
-	C_NC=$(tput op)
-	C_RED=$(tput setaf 1)
-	C_RESET=$(tput sgr0)
-	C_YELLOW=$(tput setaf 3)
+	C_BLUE="$(tput setaf 6)"
+	C_BOLD="$(tput bold)"
+	C_GREEN="$(tput setaf 2)"
+	C_NC="$(tput op)"
+	C_RED="$(tput setaf 1)"
+	C_RESET="$(tput sgr0)"
+	C_YELLOW="$(tput setaf 3)"
 fi
 
 _print() {
@@ -416,6 +416,33 @@ _verifyListableEntity() {
 # General helper functions
 #
 
+_clean() {
+	local project_directory="${1}"
+
+	(
+		cd "${project_directory}" || exit
+
+		_print_step "Removing manually deleted worktrees"
+		_git worktree prune
+
+		_print_step "Stopping environment and deleting volumes"
+		./gradlew stop -Plr.docker.environment.clear.volume.data=true
+
+		_print_step "Cleaning the Gradle build"
+		./gradlew clean
+
+		local project_name
+		project_name="$(_getComposeProjectName "${project_directory}")"
+
+		if _projectHasDockerImages "${project_name}"; then
+			_print_step "Removing Docker images..."
+			_listDockerImages "${project_name}" | xargs -I{} docker image rm -f {}
+		fi
+
+		_print_success "Done"
+	)
+}
+
 _getComposeProjectName() {
 	local projectDir="${1}"
 
@@ -471,15 +498,6 @@ _removeWorktree() {
 	local worktree="${1:?Worktree directory required}"
 
 	local worktree_name="${worktree##*/}"
-
-	if [[ -d "${worktree}" ]]; then
-		_print_step "Shutting down project and removing Docker volumes..."
-		(
-			cd "${worktree}" || exit 1
-
-			./gradlew stop -Plr.docker.environment.clear.volume.data=true
-		)
-	fi
 
 	_print_step "Removing project dir..."
 	_git worktree remove --force "${worktree_name}"
@@ -542,6 +560,21 @@ _isReleaseVersion() {
 	local liferay_version="${1}"
 
 	_listReleases | grep -q "^${liferay_version}$"
+}
+
+_listDockerImages() {
+	local project_name="${1}"
+
+	if [[ -z "${project_name}" ]]; then
+		return
+	fi
+
+	docker image ls --format "{{.Repository}}" | grep -i -F "${project_name}" | grep -i "^${project_name}-"
+}
+_projectHasDockerImages() {
+	local projectName="${1}"
+
+	_listDockerImages "${projectName}" &>/dev/null
 }
 _verifyLiferayVersion() {
 	local liferay_version="${1}"
@@ -664,41 +697,24 @@ _cmd_setVersion() {
 cmd_clean() {
 	_checkProjectDirectory
 
-	(
-		cd "${PROJECT_DIRECTORY}" || exit
+ 	local project_name
+	project_name="$(_getComposeProjectName "${PROJECT_DIRECTORY}")"
 
-		local docker_images
-		docker_images="$(docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $1}')"
+	if _projectHasDockerImages "${project_name}"; then
+		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
+		echo ""
+		printf "${C_YELLOW}%s${C_NC}\n" "$(_listDockerImages "${project_name}")"
+		echo ""
+	else
+		_print_warn "This will stop the Docker compose project and remove the Docker volumes."
+	fi
 
-		if [[ "${docker_images}" ]]; then
-			_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"
-			echo ""
-			printf "${C_YELLOW}%s${C_NC}\n" "${docker_images}"
-			echo ""
-		else
-			_print_warn "This will stop the Docker compose project and remove the Docker volumes."
-		fi
+	if ! _confirm "Do you want to continue?"; then
+		return
+	fi
 
-		if ! _confirm "Do you want to continue?"; then
-			return
-		fi
-
-		_print_step "Removing manually deleted worktrees"
-		_git worktree prune
-
-		_print_step "Stopping environment and deleting volumes"
-		./gradlew stop -Plr.docker.environment.clear.volume.data=true
-
-		_print_step "Cleaning the Gradle build"
-		./gradlew clean
-
-		if [[ "${docker_images}" ]]; then
-			_print_step "Removing Docker images..."
-			docker image ls | grep "^$(_getComposeProjectName "${PROJECT_DIRECTORY}")" | awk '{print $3}' | xargs -I{} docker image rm {}
-		fi
-
-		_print_success "Done"
-	)
+	_clean "${PROJECT_DIRECTORY}"
+	
 }
 cmd_exportData() {
 	_checkProjectDirectory
@@ -713,7 +729,7 @@ cmd_exportData() {
 		fi
 
 		local exportedDataRelativeDir
-		exportedDataRelativeDir=$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")
+		exportedDataRelativeDir="$(grep lr.docker.environment.data.directory gradle-local.properties | sed "s,.*=,,g")"
 
 		_print_success "Container data exported to ${PROJECT_DIRECTORY}/${exportedDataRelativeDir}"
 	)
@@ -792,6 +808,7 @@ cmd_init() {
 		fi
 
 		_print_step "Cleaning up left over project data..."
+		_clean "${existing_worktree_path}"
 		_removeWorktree "${existing_worktree_path}"
 	fi
 
@@ -835,10 +852,10 @@ cmd_list() {
 	fi
 
 	if ! _verifyListableEntity "${entity}"; then
-		closest_entity=$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)
+		closest_entity="$(_listPrefixedFunctions _list_ | _fzf --filter "${entity}" | head -n 1)"
 
 		if _verifyListableEntity "${closest_entity}" && _confirm "Entity \"${entity}\" is unknown. Use closest entity \"${closest_entity}\" instead?"; then
-			entity=${closest_entity}
+			entity="${closest_entity}"
 		else
 			_print_error "Cannot list ${C_YELLOW}${entity}${C_NC}. Showing listable entities..."
 
@@ -863,6 +880,7 @@ cmd_remove() {
 
 	for worktree in ${worktrees}; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
+		_clean "${worktree}"
 		_removeWorktree "${worktree}"
 		echo
 	done
@@ -990,8 +1008,8 @@ cmd_update() {
 
 	_git fetch "${remote}" --tags
 
-	current_tag=$(_git describe --tags 2>/dev/null)
-	latest_tag=$(_git tag --list 'v*' | sort -V | tail -1)
+	current_tag="$(_git describe --tags 2>/dev/null)"
+	latest_tag="$(_git tag --list 'v*' | sort -V | tail -1)"
 
 	if [[ "${current_tag}" == "${latest_tag}" ]]; then
 		_print_success "Current version ${C_BLUE}${current_tag}${C_NC} is up to date"

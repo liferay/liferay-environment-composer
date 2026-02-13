@@ -578,7 +578,7 @@ _listDockerImages() {
 		return
 	fi
 
-	docker image ls --format {{.Repository}} | grep -i -F "${project_name}" | grep -i "^${project_name}-"
+	docker image ls --format "{{.Repository}}" | grep -i -F "${project_name}" | grep -i "^${project_name}-"
 }
 _projectHasDockerImages() {
 	local projectName="${1}"

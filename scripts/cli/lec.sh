@@ -431,7 +431,8 @@ _clean() {
 		_print_step "Cleaning the Gradle build"
 		./gradlew clean
 
-		local project_name="$(_getComposeProjectName "${project_directory}")"
+		local project_name
+		project_name=$(_getComposeProjectName "${project_directory}")
 
 		if _projectHasDockerImages "${project_name}"; then
 			_print_step "Removing Docker images..."
@@ -706,8 +707,7 @@ cmd_clean() {
 	_checkProjectDirectory
 
  	local project_name
-	
-	project_name="$(_getComposeProjectName "${PROJECT_DIRECTORY}")"
+	project_name=$(_getComposeProjectName "${PROJECT_DIRECTORY}")
 
 	if _projectHasDockerImages "${project_name}"; then
 		_print_warn "This will stop the Docker compose project, remove the Docker volumes, and remove the following Docker images:"

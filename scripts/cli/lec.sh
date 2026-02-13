@@ -499,15 +499,6 @@ _removeWorktree() {
 
 	local worktree_name="${worktree##*/}"
 
-	if [[ -d "${worktree}" ]]; then
-		_print_step "Shutting down project and removing Docker volumes..."
-		(
-			cd "${worktree}" || exit 1
-
-			./gradlew stop -Plr.docker.environment.clear.volume.data=true
-		)
-	fi
-
 	_print_step "Removing project dir..."
 	_git worktree remove --force "${worktree_name}"
 

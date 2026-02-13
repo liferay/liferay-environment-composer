@@ -116,6 +116,7 @@ _printHelpAndExit() {
 		  exportData                                Export container data for a Composer project
 		  list [<entity>]                           List entities of a various types
 		  remove, rm                                Completely tear down and remove one or more Composer projects
+		  restart                                   Stops a Composer project and then immediately starts it
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
@@ -866,6 +867,10 @@ cmd_remove() {
 		_removeWorktree "${worktree}"
 		echo
 	done
+}
+cmd_restart() {
+	cmd_stop "${@}"
+	cmd_start "${@}"
 }
 cmd_rm() {
 	cmd_remove "${@}"

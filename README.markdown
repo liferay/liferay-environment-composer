@@ -15,6 +15,7 @@ To shut down the environment, run `./gradlew stop`.
 ### Liferay features overview
 
 - [Set the Liferay Docker image version](#set-the-liferay-docker-image-version)
+- [Deploy folder location](#deploy-folder-location)
 - [Deploy OSGi configs](#deploy-osgi-configs)
 - [Deploy portal-ext.properties](#deploy-portal-ext.properties)
 - [Deploy hotfixes](#deploy-hotfixes)
@@ -110,6 +111,16 @@ This will override the Docker image version that is determined from the `liferay
 
 ```properties
 liferay.workspace.docker.image.liferay=liferay/dxp:7.2.10-sp8
+```
+
+#### Deploy folder location
+
+Place deployable Liferay files normally placed in the `/deploy` directory in a Liferay project in the `./configs/common/deploy/` directory. Some examples include license files, themes, portlets, and OSGi modules. They will be included in the built Liferay image.
+
+Deployable files:
+
+```
+./configs/common/deploy/com.liferay.apio.samples.portlet-1.0.0.jar
 ```
 
 #### Deploy OSGi configs

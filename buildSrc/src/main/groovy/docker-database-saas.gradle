@@ -281,6 +281,78 @@ ext {
 		}
 	}
 
+	decompressArchiveFilesInDumpsVolume = {
+		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
+			file -> file.name.toString() != ".gitkeep"
+		).collect(Collectors.toList())
+
+		List<File> archiveFiles = dumpFiles.findAll {
+			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
+		}
+
+		if (archiveFiles.size() == 0) {
+			return
+		}
+
+		File archiveFile = archiveFiles[0]
+
+		String archiveFileName = archiveFile.name
+
+		String userString = config.useDatabaseSQLServer ? "--user 10001:10001" : ""
+
+		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		String withDecryption = ""
+
+		if (archiveFileName.endsWith("zip") || archiveFileName.endsWith("7z")) {
+			boolean isEncrypted = waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest l -slt /target/${archiveFileName}").contains("Encrypted = +")
+
+			String lxcBackupPassword = ""
+
+			if (isEncrypted) {
+				if (!config.lxcBackupPassword) {
+					throw new GradleException("failed to decrypt archive as no LXC backup password was provided")
+				}
+
+				lxcBackupPassword = config.lxcBackupPassword
+
+				withDecryption = "with decryption"
+			}
+
+			println "Decompressing database archive file into dumps volume ${withDecryption}"
+
+			waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target backplane/7z:latest x -aos /target/${archiveFileName} -o/target -p${lxcBackupPassword}")
+		}
+
+		String busyboxCommand = ""
+
+		if (archiveFileName.endsWith("tar.gz") || archiveFileName.endsWith("tgz")) {
+			busyboxCommand = "tar xzf /target/${archiveFileName} -C /target"
+		}
+		else if (archiveFileName.endsWith("gz")) {
+			busyboxCommand = "gzip -d /target/${archiveFileName}"
+		}
+
+		if (archiveFileName.endsWith("tar.bz2") || archiveFileName.endsWith("tbz")) {
+			busyboxCommand = "tar xjf /target/${archiveFileName} -C /target"
+		}
+		else if (archiveFileName.endsWith("bz2")) {
+			busyboxCommand = "bzip2 -d /target/${archiveFileName}"
+		}
+
+		if (archiveFileName.endsWith("tar")) {
+			busyboxCommand = "tar xf /target/${archiveFileName} -C /target"
+		}
+
+		if (busyboxCommand != "") {
+			waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target busybox:latest sh -c '${busyboxCommand}'")
+		}
+
+		waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target busybox:latest sh -c 'rm -rf /target/${archiveFileName}'")
+
+		waitForContainer("database")
+	}
+
 	deleteMeantForProductionOnlyConfigurations = {
 		String schema ->
 
@@ -663,6 +735,8 @@ tasks.register("importDatabaseDumps") {
 		if (config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
 			addCloudSQLScriptToDumpsVolume()
 		}
+
+		decompressArchiveFilesInDumpsVolume()
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			resetDatabaseGlobalValues()

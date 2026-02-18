@@ -750,8 +750,6 @@ tasks.register("copyDatabaseDumpsToDumpsVolume") {
 }
 
 tasks.register("importDatabaseDumps") {
-	dependsOn ":copyDatabaseDumpsToDumpsVolume"
-
 	onlyIf("using an external database") {
 		config.useDatabase
 	}
@@ -760,71 +758,19 @@ tasks.register("importDatabaseDumps") {
 	}
 
 	doFirst {
-		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+		copyDumpsFilesToDumpsVolume()
 
-		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
-			println "Skipping database dumps import because a data backup will be imported from ${config.dataDirectory}"
-
-			return;
+		if (config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
+			addCloudSQLScriptToDumpsVolume()
 		}
 
-		if (config.useDatabaseSQLServer) {
-			FileCollection dumpFiles = project.fileTree("dumps") {
-				include "**/*.bacpac"
-				include "**/*.bak"
-			}
-
-			if (dumpFiles.size() > 1) {
-				throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-			}
-		}
-
-		println "Initializing database via first start scripts"
-
-		waitForContainer("database")
-
-		if (config.useDatabaseMySQL) {
-			Map<String, String> oldVariables = [
-				"max_allowed_packet": String.valueOf(1L << 26),
-				"autocommit": "1",
-				"unique_checks": "1",
-				"foreign_key_checks": "1",
-				"innodb_stats_auto_recalc": "1",
-			]
-
-			String query = oldVariables.collect {
-				Map.Entry<String, String> oldVariable ->
-
-				"SET GLOBAL ${oldVariable.key}=${oldVariable.value};\n"
-			}.join("")
-
-			executeSQLQuery(query)
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
+			resetDatabaseGlobalValues()
 		}
 
 		if (config.useDatabasePostgreSQL) {
-			FileCollection binaryDumpFiles = project.fileTree("dumps") {
-				include "**/*.dmp"
-				include "**/*.dump"
-			}
-
-			if (!Util.isEmpty(binaryDumpFiles)) {
-				if (binaryDumpFiles.size() > 1) {
-					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-				}
-
-				String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
-
-				if (databaseInitialized.trim() == "[]") {
-					println "Attempting to restore binary dump file: ${binaryDumpFiles[0].name} with database name: ${config.databaseName}..."
-
-					waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFiles[0].name}")
-				} else {
-					println "Database ${config.databaseName} already initialized, skipping dump binary restore."
-				}
-			}
+			importPostgreSQLBinaryDump()
 		}
-
-		println "Attempting to update database for local development"
 
 		updateDatabaseForLocalDevelopment()
 	}

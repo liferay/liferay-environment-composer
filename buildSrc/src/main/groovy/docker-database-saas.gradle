@@ -13,6 +13,47 @@ ext {
 	SSO_CONFIGS = [".ldap.", ".multi.factor.authentication.", ".saml.", ".openid."]
 	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
 
+	addCloudSQLScriptToDumpsVolume = {
+		File globalVariableScript = file("0.sql")
+
+		if (config.useDatabaseMySQL) {
+			Map<String, String> newVariables = [
+				"max_allowed_packet": String.valueOf(1L << 30),
+				"autocommit": "0",
+				"unique_checks": "0",
+				"foreign_key_checks": "0",
+				"innodb_stats_auto_recalc": "0",
+			]
+
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << newVariables.collect {
+					Map.Entry<String, String> entry ->
+
+					"SET GLOBAL ${entry.key}=${entry.value};"
+				}.join("\n") << ";"
+
+				initSQLOutputStream << ["lportal", "dxpcloud", "cloudsqlimport"].collect {
+					String userName ->
+
+					"create user if not exists ${userName} identified by 'lportal';\ngrant all on *.* to '${userName}'@'%';\n"
+				}.join("\n")
+			}
+		}
+		else {
+			globalVariableScript.withOutputStream {
+				BufferedOutputStream initSQLOutputStream ->
+
+				initSQLOutputStream << "create role cloudsqlsuperuser with login superuser password 'lportal';"
+			}
+		}
+
+		addToVolume("${config.namespace}_dumps", globalVariableScript)
+
+		delete(globalVariableScript)
+	}
+
 	clearSingleSignOnConfigurations = {
 		String schema ->
 
@@ -24,6 +65,62 @@ ext {
 		truncateTables('Saml%', schema)
 
 		println "Deleted known problematic single sign on entries from schema ${schema}"
+	}
+
+	copyDumpsFilesToDumpsVolume = {
+		FileCollection backupFiles = project.fileTree(config.dataDirectory)
+
+		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
+			return;
+		}
+
+		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
+			file -> file.name.toString() != ".gitkeep"
+		).collect(Collectors.toList())
+
+		List<File> archiveFiles = dumpFiles.findAll {
+			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
+		}
+
+		if (archiveFiles.size() > 1) {
+			throw new GradleException("failed to prepare dumps volume as multiple archive files were found in dumps directory")
+		}
+
+		String dumpsVolumeName = "${config.namespace}_dumps"
+
+		if (getExistingVolumeNames().contains(dumpsVolumeName)) {
+			waitForCommand("docker compose down database")
+			waitForCommand("docker volume rm ${dumpsVolumeName}")
+		}
+
+		waitForCommand("docker compose build database")
+		waitForCommand("docker compose create database")
+
+		if (archiveFiles.size() == 0) {
+			println "Copying raw database files into dumps volume"
+
+			if (config.useDatabaseSQLServer) {
+				List<File> db2BackupFiles = dumpFiles.findAll {
+					file -> file.name.matches(/.*\.(bacpac|bak)/)
+				}
+
+				if (db2BackupFiles.size() > 1) {
+					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+				}
+			}
+
+			dumpFiles.each {
+				File dumpFile ->
+
+				addToVolume(dumpsVolumeName, dumpFile)
+			}
+
+			return
+		}
+
+		println "Copying database archive file into dumps volume"
+
+		addToVolume(dumpsVolumeName, archiveFiles[0])
 	}
 
 	copyLiferayLXCRepositoryConfiguration = {
@@ -249,6 +346,60 @@ ext {
 		return releaseInfo
 	}
 
+	importPostgreSQLBinaryDump = {
+		waitForContainer("database")
+
+		String[] backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split(/\n/)
+
+		String[] binaryDumpFileNames = Arrays.stream(backupFileNames)
+		.filter(fileName -> fileName.endsWith(".dump") || fileName.endsWith(".dmp"))
+		.toArray(String[]::new)
+
+		if (binaryDumpFileNames.length > 1) {
+			throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
+		}
+
+		if (binaryDumpFileNames.length > 0) {
+			String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
+
+			if (databaseInitialized.trim() == "[]") {
+				println "Attempting to restore binary dump file: ${binaryDumpFileNames[0]} with database name: ${config.databaseName}..."
+
+				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFileNames[0]}")
+			} else {
+				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
+			}
+		}
+	}
+
+	prepareArchivedSQLFiles = {
+		project.fileTree("dumps") {
+			include "**/*.gz"
+			include "**/*.bz2"
+			exclude "**/.gitkeep"
+		}.forEach {
+			File dumpFile ->
+
+			String oldPath = dumpFile.absolutePath
+			String newPath = null
+
+			String dumpFileName = dumpFile.name
+
+			if (dumpFileName.matches(/.*\.(bz2|gz)/) && !dumpFileName.matches(/.*\.sql\.(bz2|gz)/)) {
+				String fileExtension = oldPath.split(/\./)[-1]
+
+				newPath = oldPath.replace(fileExtension, ".sql.${fileExtension}")
+			}
+			else if (!dumpFileName.contains(".")) {
+				newPath = "${dumpFile.absolutePath}.sql"
+			}
+
+			if (newPath != null) {
+				dumpFile.renameTo(newPath)
+			}
+		}
+	}
+
 	reactivateDisabledUsers = {
 		String schema ->
 
@@ -265,6 +416,26 @@ ext {
 		executeSQLQuery("update User_ set password_ = '${config.liferayUserPassword}', passwordEncrypted = false, passwordReset = false, lockout = false", schema)
 
 		println "Reset all user passwords to '${config.liferayUserPassword}' in schema ${schema}"
+	}
+
+	resetDatabaseGlobalValues = {
+		println "resetting global global values for ${config.databaseType}"
+
+		Map<String, String> oldVariables = [
+			"max_allowed_packet": String.valueOf(1L << 26),
+			"autocommit": "1",
+			"unique_checks": "1",
+			"foreign_key_checks": "1",
+			"innodb_stats_auto_recalc": "1",
+		]
+
+		String query = oldVariables.collect {
+			Map.Entry<String, String> oldVariable ->
+
+			"SET GLOBAL ${oldVariable.key}=${oldVariable.value};\n"
+		}.join("")
+
+		executeSQLQuery(query)
 	}
 
 	sanitizeMailConfigurations = {

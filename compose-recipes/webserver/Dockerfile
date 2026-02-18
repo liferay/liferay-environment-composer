@@ -30,4 +30,12 @@ COPY templates/config/*.conf.template /etc/nginx/templates/conf.d/partials/
 COPY --from=builder --chown=nginx:nginx /build/ssl/* /etc/nginx/certs/
 
 FROM nginx_modsecurity_enabled_${WEBSERVER_MODSECURITY_ENABLED} AS nginx
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD if [ "$PROTOCOL" = "https" ]; then \
+        curl -fk https://localhost:8443/healthz; \
+    else \
+        curl -f http://localhost:8080/healthz; \
+    fi
+
 FROM nginx

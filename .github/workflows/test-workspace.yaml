@@ -1,0 +1,151 @@
+jobs:
+    test-workspace:
+        env:
+            DXP_VERSION: dxp-2025.q4.8
+            NAMESPACE: LPD-00000
+        name: ${{ matrix.name }}
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out code
+                uses: actions/checkout@v4
+            -   name: Set up JDK 11
+                uses: actions/setup-java@v4
+                with:
+                    distribution: temurin
+                    java-version: "11"
+            -   name: Cache Gradle packages
+                uses: actions/cache@v4
+                with:
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+            -   continue-on-error: true
+                name: Cache Docker Layers
+                uses: satackey/action-docker-layer-caching@v0.0.11
+            -   name: Create composer workspace directory
+                run: |
+                    LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR=${{ runner.temp }}/composer-workspace
+                    mkdir -p $LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR
+                    echo "LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR=$LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR" >> $GITHUB_ENV
+                    echo "LIFERAY_ENVIRONMENT_COMPOSER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+            -   name: Print GitHub Env File
+                run: cat $GITHUB_ENV
+            -   env:
+                    GRADLE_OPTS: >-
+                        -Dorg.gradle.project.lr.docker.environment.service.enabled[webserver]=${{ matrix.webserver }}
+                        -Dorg.gradle.project.lr.docker.environment.web.server.modsecurity.enabled=${{ matrix.modsecurity }}
+                        -Dorg.gradle.project.lr.docker.environment.web.server.protocol=${{ matrix.http_protocol }}
+                name: Start Workspace
+                run: |
+                    echo "--- Debug Info: Start ---"
+                    echo "Matrix webserver: ${{ matrix.webserver }}"
+                    echo "Matrix modsecurity: ${{ matrix.modsecurity }}"
+                    echo "Matrix http_protocol: ${{ matrix.http_protocol }}"
+                    echo "---"
+                    # For reliability in scripts, use a function instead of an alias.
+                    lec() {
+                      "${LIFERAY_ENVIRONMENT_COMPOSER_HOME}/scripts/cli/lec.sh" "$@"
+                    }
+
+                    echo "Running 'lec init'..."
+                    lec init $NAMESPACE $DXP_VERSION --start
+            -   if: matrix.webserver == 'true' && matrix.http_protocol == 'http'
+                name: Test Webserver (HTTP)
+                run: |
+                    echo "Testing webserver with HTTP..."
+                    sleep 10 
+                    curl -I --fail http://localhost
+                    curl -f http://localhost | grep '<link data-senna-track="temporary" href="http://localhost" rel="canonical" />'
+                    echo "Webserver is responding on HTTP and generating correct URLs."
+            -   if: matrix.webserver == 'true' && matrix.http_protocol == 'https'
+                name: Test Webserver (HTTPS)
+                run: |
+                    echo "Testing webserver with HTTPS..."
+                    sleep 10 
+                    # Use -k to ignore self-signed certificates
+                    curl -I -k --fail https://localhost
+                    curl -fk https://localhost | grep '<link data-senna-track="temporary" href="https://localhost" rel="canonical" />'
+                    echo "Webserver is responding on HTTPS and generating correct URLs."
+            -   if: matrix.webserver == 'false'
+                name: Test Liferay directly (no webserver)
+                run: |
+                    echo "Testing Liferay on port 8080..."
+                    curl -I --fail http://localhost:8080
+                    curl -f http://localhost:8080 | grep '<link data-senna-track="temporary" href="http://localhost:8080" rel="canonical" />'
+                    # Verify that the webserver port is not responding
+                    ! curl -I --fail http://localhost
+                    echo "Liferay is responding on 8080 and generating correct URLs, and port 80 is not in use."
+            -   if: matrix.modsecurity == 'true' && matrix.http_protocol == 'http'
+                name: Test ModSecurity (HTTP)
+                run: |
+                    echo "Testing ModSecurity with HTTP..."
+                    sleep 10
+                    # This command should fail. The '!' inverts the exit code.
+                    if ! curl -I --fail 'http://localhost?path=/etc/passwd'; then
+                      echo "ModSecurity correctly blocked the request."
+                    else
+                      echo "ERROR: ModSecurity did not block the request!"
+                      exit 1
+                    fi
+            -   if: matrix.modsecurity == 'true' && matrix.http_protocol == 'https'
+                name: Test ModSecurity (HTTPS)
+                run: |
+                    echo "Testing ModSecurity with HTTPS..."
+                    sleep 10
+                    # This command should fail. The '!' inverts the exit code.
+                    # Use -k to ignore self-signed certificates
+                    if ! curl -I -k --fail 'https://localhost?path=/etc/passwd'; then
+                      echo "ModSecurity correctly blocked the request."
+                    else
+                      echo "ERROR: ModSecurity did not block the request!"
+                      exit 1
+                    fi
+            -   if: always() # Always run this step to clean up
+                name: Stop Workspace
+                run: |
+                    if [ -d "$LIFERAY_ACTIVE_WORKSPACE_DIR" ]; then
+                      cd "$LIFERAY_ACTIVE_WORKSPACE_DIR"
+
+                      # For reliability, define a function that points to the repo's main script
+                      lec() {
+                        "${LIFERAY_ENVIRONMENT_COMPOSER_HOME}/scripts/cli/lec.sh" "$@"
+                      }
+
+                      lec stop
+                    else
+                      echo "Workspace directory not found, skipping stop."
+                    fi
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    -   http_protocol: http
+                        modsecurity: "false"
+                        name: No Webserver
+                        webserver: "false"
+                    -   http_protocol: http
+                        modsecurity: "false"
+                        name: Webserver HTTP
+                        webserver: "true"
+                    -   http_protocol: http
+                        modsecurity: "true"
+                        name: Webserver HTTP + ModSecurity
+                        webserver: "true"
+                    -   http_protocol: https
+                        modsecurity: "false"
+                        name: Webserver HTTPS
+                        webserver: "true"
+                    -   http_protocol: https
+                        modsecurity: "true"
+                        name: Webserver HTTPS + ModSecurity
+                        webserver: "true"
+            max-parallel: 1
+# .github/workflows/test-workspace.yaml
+name: Test Workspace
+on:
+    pull_request:
+    push:
+        branches: ["master"]

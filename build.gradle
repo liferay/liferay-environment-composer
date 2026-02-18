@@ -368,11 +368,13 @@ if (config.useWebserver) {
 
 	if (config.webserverProtocol == "http") {
 		environmentMap.put("WEBSERVER_CONTAINER_PORT", "8080")
+		environmentMap.put("LIFERAY_CONTAINER_PORT", "80")
 		environmentMap.put("WEBSERVER_HOST_PORT", environmentMap["WEBSERVER_HTTP_PORT"])
 	}
 
 	if (config.webserverProtocol == "https") {
 		environmentMap.put("WEBSERVER_CONTAINER_PORT", "8443")
+		environmentMap.put("LIFERAY_CONTAINER_PORT", "443")
 		environmentMap.put("WEBSERVER_HOST_PORT", environmentMap["WEBSERVER_HTTPS_PORT"])
 	}
 }

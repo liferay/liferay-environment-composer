@@ -284,25 +284,20 @@ ext {
 	}
 
 	decompressArchiveFilesInDumpsVolume = {
-		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
-			file -> file.name.toString() != ".gitkeep"
-		).collect(Collectors.toList())
+		String dumpsVolumeName = "${config.namespace}_dumps"
+		String userString = config.useDatabaseSQLServer ? "--user 10001:10001" : ""
+
+		List<String> dumpFiles = waitForCommand("docker run --rm ${userString} -v ${dumpsVolumeName}:/target busybox:latest ls /target").split(/\n/)
 
 		List<File> archiveFiles = dumpFiles.findAll {
-			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
+			file -> file.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
 		}
 
 		if (archiveFiles.size() == 0) {
 			return
 		}
 
-		File archiveFile = archiveFiles[0]
-
-		String archiveFileName = archiveFile.name
-
-		String userString = config.useDatabaseSQLServer ? "--user 10001:10001" : ""
-
-		String dumpsVolumeName = "${config.namespace}_dumps"
+		String archiveFileName = archiveFiles[0]
 
 		String withDecryption = ""
 

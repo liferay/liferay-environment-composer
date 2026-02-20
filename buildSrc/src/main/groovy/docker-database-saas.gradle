@@ -441,34 +441,6 @@ ext {
 		}
 	}
 
-	prepareArchivedSQLFiles = {
-		project.fileTree("dumps") {
-			include "**/*.gz"
-			include "**/*.bz2"
-			exclude "**/.gitkeep"
-		}.forEach {
-			File dumpFile ->
-
-			String oldPath = dumpFile.absolutePath
-			String newPath = null
-
-			String dumpFileName = dumpFile.name
-
-			if (dumpFileName.matches(/.*\.(bz2|gz)/) && !dumpFileName.matches(/.*\.sql\.(bz2|gz)/)) {
-				String fileExtension = oldPath.split(/\./)[-1]
-
-				newPath = oldPath.replace(fileExtension, ".sql.${fileExtension}")
-			}
-			else if (!dumpFileName.contains(".")) {
-				newPath = "${dumpFile.absolutePath}.sql"
-			}
-
-			if (newPath != null) {
-				dumpFile.renameTo(newPath)
-			}
-		}
-	}
-
 	reactivateDisabledUsers = {
 		String schema ->
 
@@ -662,59 +634,6 @@ tasks.register("copyLiferayLXCRepositoryConfigurations") {
 
 	doFirst {
 		copyLiferayLXCRepositoryConfigurations();
-	}
-}
-
-tasks.register("decryptCloudBackupDatabase") {
-	onlyIf("using an external database") {
-		config.useDatabase
-	}
-	onlyIf("there is a database dump file") {
-		!Util.isEmpty(project.fileTree("dumps"))
-	}
-
-	doFirst {
-		FileCollection decryptedBackups = project.fileTree("dumps") {
-			include "**/*.sql"
-			include "**/*.sql.gz"
-			include "**/*.gz"
-		}
-
-		if (!Util.isEmpty(decryptedBackups)) {
-			print("Found existing unencrypted backups in dumps/ folder")
-
-			return
-		}
-
-		FileCollection encryptedBackups = project.fileTree("dumps") {
-			include "*.7z"
-			exclude "*doclib*"
-		}
-
-		if (Util.isEmpty(encryptedBackups)) {
-			encryptedBackups = project.fileTree("dumps") {
-				include "*.zip"
-				exclude "*doclib*"
-			}
-		}
-
-		if (encryptedBackups.isEmpty()) {
-			return
-		}
-		else if (encryptedBackups.size() != 1) {
-			throw new GradleException("Aborting because multiple potential backups where found in the dumps/ folder")
-		}
-
-		if (config.lxcBackupPassword != null && config.lxcBackupPassword.length() > 0) {
-			println "Extracting LXC database backup (using password specified in gradle.properties)"
-
-			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p${config.lxcBackupPassword}")
-		}
-		else {
-			println "Extracting LXC database backup (assuming no password, because none was set in gradle.properties)"
-
-			waitForCommand("7z x -aos ${encryptedBackups[0].absolutePath} -odumps/ -p")
-		}
 	}
 }
 

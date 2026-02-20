@@ -17,6 +17,17 @@ ext {
 
 		String targetName = sourceFile.name
 
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
+			if (targetName.matches(/.*\.(bz2|gz)/) && !(targetName.matches(/.*\.sql\.(bz2|gz)/) || targetName.contains(".tar."))) {
+				String fileExtension = targetName.split(/\./)[-1]
+
+				targetName = targetName.replace(fileExtension, "sql.${fileExtension}")
+			}
+			else if (!targetName.contains(".")) {
+				targetName = "${targetName}.sql"
+			}
+		}
+
 		println "Copying file ${sourcePath} to ${volumeName}"
 		waitForCommand("docker run --rm -v ${volumeName}:/target -v ${sourcePath}:/source/${targetName} busybox:latest sh -c 'cp --recursive --update /source/. /target/'")
 

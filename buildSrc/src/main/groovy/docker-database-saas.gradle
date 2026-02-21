@@ -8,7 +8,6 @@ import java.nio.file.StandardCopyOption
 import java.util.Arrays
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 ext {
 	FALSE_SQL_VALUE = config.useDatabaseSQLServer ? "'false'" : "false"
@@ -76,15 +75,15 @@ ext {
 			return;
 		}
 
-		List<File> dumpFiles = project.fileTree("dumps").files.stream().filter(
+		FileCollection dumpFiles = project.fileTree("dumps").filter(
 			file -> file.name.toString() != ".gitkeep"
-		).collect(Collectors.toList())
+		)
 
-		List<File> archiveFiles = dumpFiles.findAll {
+		FileCollection archiveFiles = dumpFiles.filter(
 			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
-		}
+		)
 
-		if (archiveFiles.size() > 1) {
+		if (archiveFiles.files.size() > 1) {
 			throw new GradleException("failed to prepare dumps volume as multiple archive files were found in dumps directory")
 		}
 
@@ -98,20 +97,20 @@ ext {
 		waitForCommand("docker compose build database")
 		waitForCommand("docker compose create database")
 
-		if (archiveFiles.size() == 0) {
+		if (archiveFiles.isEmpty()) {
 			println "Copying raw database files into dumps volume"
 
 			if (config.useDatabaseSQLServer) {
-				List<File> db2BackupFiles = dumpFiles.findAll {
+				FileCollection db2BackupFiles = dumpFiles.filter(
 					file -> file.name.matches(/.*\.(bacpac|bak)/)
-				}
+				)
 
-				if (db2BackupFiles.size() > 1) {
+				if (db2BackupFiles.files.size() > 1) {
 					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
 				}
 			}
 
-			dumpFiles.each {
+			dumpFiles.forEach {
 				File dumpFile ->
 
 				addToVolume(dumpsVolumeName, dumpFile)
@@ -122,7 +121,7 @@ ext {
 
 		println "Copying database archive file into dumps volume"
 
-		addToVolume(dumpsVolumeName, archiveFiles[0])
+		addToVolume(dumpsVolumeName, archiveFiles.getSingleFile())
 	}
 
 	copyLiferayLXCRepositoryConfiguration = {

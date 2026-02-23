@@ -421,6 +421,18 @@ ext {
 	}
 }
 
+tasks.register("executeSQLQuery") {
+	doLast {
+		String sqlQueryString = getProperty("sqlQuery")
+
+		if (!sqlQueryString) {
+			return
+		}
+
+		println executeSQLQuery(sqlQueryString, config.databaseName)
+	}
+}
+
 tasks.register("testFixProductVersion") {
 	doLast {
 		[

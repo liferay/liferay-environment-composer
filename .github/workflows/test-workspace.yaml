@@ -13,15 +13,24 @@ jobs:
                 with:
                     distribution: zulu
                     java-version: "21"
-            -   name: Cache Gradle packages
-                uses: actions/cache@v4
+            -   name: Cache Gradle Wrapper Distribution (Restore)
+                id: cache-gradle-wrapper-restore
+                uses: actions/cache/restore@v4
                 with:
-                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    path: |
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-wrapper-
+            -   name: Cache Gradle Dependencies (Restore)
+                id: cache-gradle-dependencies-restore
+                uses: actions/cache/restore@v4
+                with:
                     path: |
                         ~/.gradle/caches
-                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-dependencies-${{ hashFiles('**/*.gradle*', '!**/gradle-wrapper.properties') }}
                     restore-keys: |
-                        ${{ runner.os }}-gradle-
+                        ${{ runner.os }}-gradle-dependencies-
             -   continue-on-error: true
                 name: Cache Docker Layers
                 uses: satackey/action-docker-layer-caching@v0.0.11
@@ -118,6 +127,20 @@ jobs:
                     else
                       echo "Workspace directory not found, skipping stop."
                     fi
+            -   name: Cache Gradle Wrapper Distribution (Save)
+                uses: actions/cache/save@v4
+                if: always()
+                with:
+                    key: ${{ steps.cache-gradle-wrapper-restore.outputs.cache-primary-key }}
+                    path: |
+                        ~/.gradle/wrapper
+            -   name: Cache Gradle Dependencies (Save)
+                uses: actions/cache/save@v4
+                if: always()
+                with:
+                    key: ${{ steps.cache-gradle-dependencies-restore.outputs.cache-primary-key }}
+                    path: |
+                        ~/.gradle/caches
         strategy:
             fail-fast: false
             matrix:

@@ -96,6 +96,10 @@ test_sqlserver_dump_formats() {
 
 _clean_dumps_dir
 
+if [[ "${CI}" == true ]]; then
+	_download_database_dumps
+fi
+
 test_database_archive_formats
 test_db2_dump_formats
 test_mariadb_dump

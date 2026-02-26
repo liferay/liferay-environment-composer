@@ -13,22 +13,22 @@ jobs:
                 with:
                     distribution: zulu
                     java-version: "21"
-            -   name: Cache Gradle Wrapper Distribution (Restore)
-                id: cache-gradle-wrapper-restore
+            -   id: cache-gradle-wrapper-restore
+                name: Cache Gradle Wrapper Distribution (Restore)
                 uses: actions/cache/restore@v4
                 with:
+                    key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
                     path: |
                         ~/.gradle/wrapper
-                    key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle-wrapper.properties') }}
                     restore-keys: |
                         ${{ runner.os }}-gradle-wrapper-
-            -   name: Cache Gradle Dependencies (Restore)
-                id: cache-gradle-dependencies-restore
+            -   id: cache-gradle-dependencies-restore
+                name: Cache Gradle Dependencies (Restore)
                 uses: actions/cache/restore@v4
                 with:
+                    key: ${{ runner.os }}-gradle-dependencies-${{ hashFiles('**/*.gradle*', '!**/gradle-wrapper.properties') }}
                     path: |
                         ~/.gradle/caches
-                    key: ${{ runner.os }}-gradle-dependencies-${{ hashFiles('**/*.gradle*', '!**/gradle-wrapper.properties') }}
                     restore-keys: |
                         ${{ runner.os }}-gradle-dependencies-
             -   continue-on-error: true
@@ -127,16 +127,16 @@ jobs:
                     else
                       echo "Workspace directory not found, skipping stop."
                     fi
-            -   name: Cache Gradle Wrapper Distribution (Save)
+            -   if: always()
+                name: Cache Gradle Wrapper Distribution (Save)
                 uses: actions/cache/save@v4
-                if: always()
                 with:
                     key: ${{ steps.cache-gradle-wrapper-restore.outputs.cache-primary-key }}
                     path: |
                         ~/.gradle/wrapper
-            -   name: Cache Gradle Dependencies (Save)
+            -   if: always()
+                name: Cache Gradle Dependencies (Save)
                 uses: actions/cache/save@v4
-                if: always()
                 with:
                     key: ${{ steps.cache-gradle-dependencies-restore.outputs.cache-primary-key }}
                     path: |
@@ -171,8 +171,8 @@ name: Test Webserver Service
 on:
     pull_request:
         paths:
-            - 'compose-recipes/webserver/**'
+            -   'compose-recipes/webserver/**'
     push:
         branches: ["master"]
         paths:
-            - 'compose-recipes/webserver/**'
+            -   'compose-recipes/webserver/**'

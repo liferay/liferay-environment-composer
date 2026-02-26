@@ -1,5 +1,5 @@
 jobs:
-    test-workspace:
+    test-webserver-service:
         env:
             DXP_VERSION: dxp-2025.q4.8
             NAMESPACE: LPD-00000
@@ -167,7 +167,7 @@ jobs:
                         webserver: "true"
             max-parallel: 1
 # .github/workflows/test-workspace.yaml
-name: Test Workspace
+name: Test Webserver Service
 on:
     pull_request:
         paths:

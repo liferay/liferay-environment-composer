@@ -170,5 +170,9 @@ jobs:
 name: Test Workspace
 on:
     pull_request:
+        paths:
+            - 'compose-recipes/webserver/**'
     push:
         branches: ["master"]
+        paths:
+            - 'compose-recipes/webserver/**'

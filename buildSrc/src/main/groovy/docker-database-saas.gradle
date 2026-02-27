@@ -68,12 +68,6 @@ ext {
 	}
 
 	copyDumpsFilesToDumpsVolume = {
-		FileCollection backupFiles = project.fileTree(config.dataDirectory)
-
-		if (config.dataDirectory != null && !config.dataDirectory.isEmpty() && !Util.isEmpty(backupFiles)) {
-			return;
-		}
-
 		FileCollection dumpFiles = project.fileTree("dumps").filter(
 			file -> file.name.toString() != ".gitkeep"
 		)
@@ -639,6 +633,9 @@ tasks.register("importDatabaseDumps") {
 	}
 	onlyIf("there is a database dump file") {
 		!Util.isEmpty(project.fileTree("dumps"))
+	}
+	onlyIf("the data directory is empty") {
+		Util.isEmpty(project.fileTree(config.dataDirectory))
 	}
 
 	doFirst {

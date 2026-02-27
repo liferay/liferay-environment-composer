@@ -61,23 +61,15 @@ jobs:
 
                     echo "Running 'lec init'..."
                     lec init $NAMESPACE $DXP_VERSION --start
-            -   if: matrix.webserver == 'true' && matrix.http_protocol == 'http'
-                name: Test Webserver (HTTP)
+            -   if: matrix.webserver == 'true'
+                name: Test Webserver (${{matrix.http_protocol}})
                 run: |
-                    echo "Testing webserver with HTTP..."
-                    sleep 10 
-                    curl -I --fail http://localhost
-                    curl -f http://localhost | grep '<link data-senna-track="temporary" href="http://localhost" rel="canonical" />'
-                    echo "Webserver is responding on HTTP and generating correct URLs."
-            -   if: matrix.webserver == 'true' && matrix.http_protocol == 'https'
-                name: Test Webserver (HTTPS)
-                run: |
-                    echo "Testing webserver with HTTPS..."
+                    echo "Testing webserver with ${{matrix.http_protocol}}..."
                     sleep 10 
                     # Use -k to ignore self-signed certificates
-                    curl -I -k --fail https://localhost
-                    curl -fk https://localhost | grep '<link data-senna-track="temporary" href="https://localhost" rel="canonical" />'
-                    echo "Webserver is responding on HTTPS and generating correct URLs."
+                    curl -I -k --fail ${{matrix.http_protocol}}://localhost
+                    curl -fk ${{matrix.http_protocol}}://localhost | grep '<link data-senna-track="temporary" href="${{matrix.http_protocol}}://localhost" rel="canonical" />'
+                    echo "Webserver is responding on ${{matrix.http_protocol}} and generating correct URLs."
             -   if: matrix.webserver == 'false'
                 name: Test Liferay directly (no webserver)
                 run: |
@@ -87,26 +79,14 @@ jobs:
                     # Verify that the webserver port is not responding
                     ! curl -I --fail http://localhost
                     echo "Liferay is responding on 8080 and generating correct URLs, and port 80 is not in use."
-            -   if: matrix.modsecurity == 'true' && matrix.http_protocol == 'http'
-                name: Test ModSecurity (HTTP)
+            -   if: matrix.modsecurity == 'true'
+                name: Test ModSecurity (${{matrix.http_protocol}})
                 run: |
-                    echo "Testing ModSecurity with HTTP..."
-                    sleep 10
-                    # This command should fail. The '!' inverts the exit code.
-                    if ! curl -I --fail 'http://localhost?path=/etc/passwd'; then
-                      echo "ModSecurity correctly blocked the request."
-                    else
-                      echo "ERROR: ModSecurity did not block the request!"
-                      exit 1
-                    fi
-            -   if: matrix.modsecurity == 'true' && matrix.http_protocol == 'https'
-                name: Test ModSecurity (HTTPS)
-                run: |
-                    echo "Testing ModSecurity with HTTPS..."
+                    echo "Testing ModSecurity with ${{matrix.http_protocol}}..."
                     sleep 10
                     # This command should fail. The '!' inverts the exit code.
                     # Use -k to ignore self-signed certificates
-                    if ! curl -I -k --fail 'https://localhost?path=/etc/passwd'; then
+                    if ! curl -I -k --fail '${{matrix.http_protocol}}://localhost?path=/etc/passwd'; then
                       echo "ModSecurity correctly blocked the request."
                     else
                       echo "ERROR: ModSecurity did not block the request!"

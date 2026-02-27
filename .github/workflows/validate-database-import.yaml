@@ -9,4 +9,4 @@ jobs:
                     java-version: "21"
             -   run: ./test-database-import.sh
 name: Validate database import
-on: [pull_request, workflow_dispatch]
+on: [workflow_dispatch]

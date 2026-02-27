@@ -72,12 +72,8 @@ ext {
 			file -> file.name.toString() != ".gitkeep"
 		)
 
-		FileCollection archiveFiles = dumpFiles.filter(
-			file -> file.name.matches(/.*\.(gz|tar\.gz|tgz|bz2|tar\.bz2|tbz|zip|7z)/)
-		)
-
-		if (archiveFiles.files.size() > 1) {
-			throw new GradleException("failed to prepare dumps volume as multiple archive files were found in dumps directory")
+		if (dumpFiles.files.size() > 1) {
+			throw new GradleException("failed to prepare dumps volume as multiple files were found in dumps directory")
 		}
 
 		String dumpsVolumeName = "${config.namespace}_dumps"
@@ -90,31 +86,9 @@ ext {
 		waitForCommand("docker compose build database")
 		waitForCommand("docker compose create database")
 
-		if (archiveFiles.isEmpty()) {
-			println "Copying raw database files into dumps volume"
+		println "Copying database dump file into dumps volume"
 
-			if (config.useDatabaseSQLServer) {
-				FileCollection db2BackupFiles = dumpFiles.filter(
-					file -> file.name.matches(/.*\.(bacpac|bak)/)
-				)
-
-				if (db2BackupFiles.files.size() > 1) {
-					throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-				}
-			}
-
-			dumpFiles.forEach {
-				File dumpFile ->
-
-				addToVolume(dumpsVolumeName, dumpFile)
-			}
-
-			return
-		}
-
-		println "Copying database archive file into dumps volume"
-
-		addToVolume(dumpsVolumeName, archiveFiles.getSingleFile())
+		addToVolume(dumpsVolumeName, dumpFiles.getSingleFile())
 	}
 
 	copyLiferayLXCRepositoryConfiguration = {

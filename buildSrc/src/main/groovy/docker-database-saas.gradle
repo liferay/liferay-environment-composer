@@ -386,7 +386,9 @@ ext {
 
 		List<String> backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split(/\n/)
 
-		List<String> binaryDumpFileNames = backupFileNames.findAll { fileName -> fileName.endsWith(".dump") || fileName.endsWith(".dmp") }
+		List<String> binaryDumpFileNames = backupFileNames.findAll {
+			fileName -> fileName.endsWith(".dump") || fileName.endsWith(".dmp")
+		}
 
 		if (binaryDumpFileNames.size() > 1) {
 			throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")

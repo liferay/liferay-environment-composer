@@ -29,15 +29,12 @@ _stop_composer() {
 }
 
 _test_import_dump() {
-	local inputFilePath=${1}
+	local databaseType=${1}
+	local inputFilePath=${2}
 
-	local filepath=testDependencies/${inputFilepath}
+	echo "Testing ${inputFilePath}..."
 
-	echo "Testing ${filepath}..."
-
-	local IFS="/" && read -r fileType databaseType file <<< ${filepath//*testDependencies\//}
-
-	cp "testDependencies/${fileType}/${databaseType}/${file}" "dumps/${file}"
+	cp "./testDependencies/${inputFilePath}" "dumps/${inputFilePath//*\//}"
 
 	./gradlew clean start -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled[${databaseType}]=true -Plr.docker.environment.lxc.backup.password=12345 &> /dev/null
 
@@ -74,25 +71,25 @@ fi
 
 # General archive tests
 
-_test_import_dump archives/mysql/lportal_mysql.gz
-_test_import_dump archives/mysql/lportal_mysql.sql.7z
-_test_import_dump archives/mysql/lportal_mysql.sql.bz2
-_test_import_dump archives/mysql/lportal_mysql.sql.gz
-_test_import_dump archives/mysql/lportal_mysql.sql.tar.bz2
-_test_import_dump archives/mysql/lportal_mysql.sql.tar.gz
-_test_import_dump archives/mysql/lportal_mysql.sql.tbz
-_test_import_dump archives/mysql/lportal_mysql.sql.tgz
-_test_import_dump archives/mysql/lportal_mysql.sql.zip
-_test_import_dump archives/mysql/lportal_mysql_encrypted.sql.7z
-_test_import_dump archives/mysql/lportal_mysql_encrypted.sql.zip
+_test_import_dump mysql archives/mysql/lportal_mysql.gz
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.7z
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.bz2
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.gz
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.tar.bz2
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.tar.gz
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.tbz
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.tgz
+_test_import_dump mysql archives/mysql/lportal_mysql.sql.zip
+_test_import_dump mysql archives/mysql/lportal_mysql_encrypted.sql.7z
+_test_import_dump mysql archives/mysql/lportal_mysql_encrypted.sql.zip
 
 # Database specific tests
 
-_test_import_dump archives/sqlserver/lportal.bak.gz
-_test_import_dump archives/db2/db2move_lst.tar.gz
-_test_import_dump archives/db2/LPORTAL.0.db2admin.DBPART000.20260130234412.001.7z
-_test_import_dump raw/mariadb/lportal_mariadb.sql
-_test_import_dump raw/mysql/lportal_mysql.sql
-_test_import_dump raw/postgres/lportal_psql.dump
-_test_import_dump raw/postgres/lportal_psql.sql
-_test_import_dump raw/sqlserver/lportal.bacpac
+_test_import_dump sqlserver archives/sqlserver/lportal.bak.gz
+_test_import_dump db2 archives/db2/db2move_lst.tar.gz
+_test_import_dump db2 archives/db2/LPORTAL.0.db2admin.DBPART000.20260130234412.001.7z
+_test_import_dump mariadb raw/mariadb/lportal_mariadb.sql
+_test_import_dump mysql raw/mysql/lportal_mysql.sql
+_test_import_dump postgres raw/postgres/lportal_psql.dump
+_test_import_dump postgres raw/postgres/lportal_psql.sql
+_test_import_dump sqlserver raw/sqlserver/lportal.bacpac

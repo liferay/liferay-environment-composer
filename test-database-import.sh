@@ -3,11 +3,13 @@
 _clean_dumps_dir() {
 	local dumpsFiles=("$(ls dumps)")
 
-	if (( ${#dumpsFiles[@]} > 0 )) && [[ "${dumpsFiles[0]}" != "" ]]; then
-		for dumpsFile in "${dumpsFiles[@]}"; do
-			rm "dumps/${dumpsFile}"
-		done
+	if [[ "${dumpsFiles[0]}" == "" ]]; then
+		return
 	fi
+
+	for dumpsFile in "${dumpsFiles[@]}"; do
+		rm "dumps/${dumpsFile}"
+	done
 }
 
 _download_database_dumps() {

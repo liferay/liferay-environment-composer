@@ -29,45 +29,41 @@ _stop_composer() {
 }
 
 _test_import_dump() {
-	local inputFilepath=${1}
+	local inputFilePath=${1}
 
-	local filepaths=($(ls ./testDependencies/${inputFilepath}))
+	local filepath=testDependencies/${inputFilepath}
 
-	local filepath
+	echo "Testing ${filepath}..."
 
-	 for filepath in ${filepaths[@]}; do
-		echo "Testing ${filepath}..."
+	local IFS="/" && read -r fileType databaseType file <<< ${filepath//*testDependencies\//}
 
-		local IFS="/" && read -r fileType databaseType file <<< ${filepath//*testDependencies\//}
+	cp "testDependencies/${fileType}/${databaseType}/${file}" "dumps/${file}"
 
-		cp "testDependencies/${fileType}/${databaseType}/${file}" "dumps/${file}"
+	./gradlew clean start -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled[${databaseType}]=true -Plr.docker.environment.lxc.backup.password=12345 &> /dev/null
 
-		./gradlew clean start -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled[${databaseType}]=true -Plr.docker.environment.lxc.backup.password=12345 &> /dev/null
+	local status=$?
 
-		local status=$?
-
-		if [[ ${status} != 0 ]]; then
-			echo "[FAILED]"
-
-			_stop_composer ${databaseType}
-
-			_clean_dumps_dir
-
-			continue
-		fi
-
-		local sqlQueryOutput=$(./gradlew executeSQLQuery -Plr.docker.environment.service.enabled[${databaseType}]=true -PsqlQuery="select urlTitle from JournalArticle;")
-
-		if [[ ${sqlQueryOutput} =~ "test-web-content-title" ]]; then
-			echo "[PASSED]"
-		else
-			echo "[FAILED]"
-		fi
+	if [[ ${status} != 0 ]]; then
+		echo "[FAILED]"
 
 		_stop_composer ${databaseType}
 
 		_clean_dumps_dir
-	done
+
+		return
+	fi
+
+	local sqlQueryOutput=$(./gradlew executeSQLQuery -Plr.docker.environment.service.enabled[${databaseType}]=true -PsqlQuery="select urlTitle from JournalArticle;")
+
+	if [[ ${sqlQueryOutput} =~ "test-web-content-title" ]]; then
+		echo "[PASSED]"
+	else
+		echo "[FAILED]"
+	fi
+
+	_stop_composer ${databaseType}
+
+	_clean_dumps_dir
 }
 
 _clean_dumps_dir

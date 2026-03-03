@@ -29,7 +29,7 @@ _download_database_dumps() {
 _stop_composer() {
 	local databaseType=${1}
 
-	./gradlew stop -Plr.docker.environment.clear.volume.data=true -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled["${databaseType}"]=true &> /dev/null
+	./gradlew stop -Plr.docker.environment.clear.volume.data=true -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled["${databaseType}"]=true &>/dev/null
 }
 
 _test_import_dump() {
@@ -40,7 +40,7 @@ _test_import_dump() {
 
 	cp "./testDependencies/${inputFilePath}" "dumps/${inputFilePath//*\//}"
 
-	./gradlew clean start -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled["${databaseType}"]=true -Plr.docker.environment.lxc.backup.password=12345 &> /dev/null
+	./gradlew clean start -Plr.docker.environment.service.enabled[liferay]=false -Plr.docker.environment.service.enabled["${databaseType}"]=true -Plr.docker.environment.lxc.backup.password=12345 &>/dev/null
 
 	local status=$?
 

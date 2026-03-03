@@ -91,11 +91,11 @@ _test_import_dump mysql archives/mysql/lportal_mysql_encrypted.sql.zip
 
 # Database specific tests
 
-_test_import_dump sqlserver archives/sqlserver/lportal.bak.gz
 _test_import_dump db2 archives/db2/db2move_lst.tar.gz
 _test_import_dump db2 archives/db2/LPORTAL.0.db2admin.DBPART000.20260130234412.001.7z
 _test_import_dump mariadb raw/mariadb/lportal_mariadb.sql
 _test_import_dump mysql raw/mysql/lportal_mysql.sql
 _test_import_dump postgres raw/postgres/lportal_psql.dump
 _test_import_dump postgres raw/postgres/lportal_psql.sql
+_test_import_dump sqlserver archives/sqlserver/lportal.bak.gz
 _test_import_dump sqlserver raw/sqlserver/lportal.bacpac

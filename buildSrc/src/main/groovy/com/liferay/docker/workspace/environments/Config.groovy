@@ -281,7 +281,8 @@ class Config {
 				include "*.properties" 
 				include "**/*.properties" 
 			}.files.forEach {
-				File file -> 
+				File file ->
+
 				file.withInputStream { portalExtProperties.load(it) }
 			}
 

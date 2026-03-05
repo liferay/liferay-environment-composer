@@ -272,6 +272,30 @@ class Config {
 			this.useDatabaseSQLServer = true
 		}
 
+		if (this.useDatabase) {
+			this.databaseDriverName = this.databaseType
+		} else {
+			Properties portalExtProperties = new Properties()
+
+			project.fileTree("configs/common/") { 
+				include "*.properties" 
+				include "**/*.properties" 
+			}.files.forEach {
+				File file -> 
+				file.withInputStream { portalExtProperties.load(it) }
+			}
+
+			def jdbcDriverClassName = portalExtProperties.get("jdbc.default.driverClassName")
+
+			if (jdbcDriverClassName == "com.ibm.db2.jcc.DB2Driver") {
+				this.databaseDriverName = "db2"
+			}
+
+			if (jdbcDriverClassName == "com.microsoft.sqlserver.jdbc.SQLServerDriver") {
+				this.databaseDriverName = "sqlserver"
+			}
+		}	
+
 		if (this.services.contains("webserver")) {
 			this.useWebserver = true
 		}
@@ -393,6 +417,7 @@ class Config {
 	public int clusterNodes = 0
 	public List<Map<String, String>> companyVirtualHosts = null
 	public List<String> composeFiles = new ArrayList<String>()
+	public String databaseDriverName = ""
 	public String databaseName = "lportal"
 	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false

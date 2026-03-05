@@ -205,7 +205,7 @@ tasks.register("checkForLiferayLicense") {
 	}
 }
 
-Configuration dbDriverConfiguration = configurations.findByName(config.databaseType)
+Configuration dbDriverConfiguration = configurations.findByName(config.databaseDriverName)
 
 tasks.register("prepareJDBCDriver", Copy) {
 	onlyIf("using the Liferay service") {
@@ -218,6 +218,7 @@ tasks.register("prepareJDBCDriver", Copy) {
 	from {
 		dbDriverConfiguration
 	}
+
 	into "configs/common/tomcat/webapps/ROOT/WEB-INF/shielded-container-lib"
 }
 

@@ -116,7 +116,7 @@ _printHelpAndExit() {
 		  exportData                                Export container data for a Composer project
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
-		  remove, rm                                Completely tear down and remove one or more Composer projects
+		  remove, rm [<project identifier>]         Completely tear down and remove one or more Composer projects
 		  restart [--clean]                         Restarts a running Composer project. The "--clean" flag removes Docker volumes and images during the shutdown.
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
@@ -126,7 +126,7 @@ _printHelpAndExit() {
 
 		${C_BOLD}FLAGS:${C_RESET}
 		  -p, --project PROJECT_IDENTIFIER          Pass in a project directory or name to commands that operate on a project. If not provided, the current working
-		                                            is used. Supported commands are: clean, exportData, importDLStructure, share, start, and stop.
+		                                            is used. Supported commands are: clean, exportData, importDLStructure, remove, share, start, and stop.
 
 		${C_BOLD}SHELL FUNCTIONS:${C_RESET}
 		  lecd [project name]                       Jump to a project

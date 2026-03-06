@@ -271,7 +271,7 @@ tasks.register("validateHotfixURLs") {
 		String mismatchedHotfixURL = config.hotfixURLs.find {
 			String hotfixURL ->
 
-			!hotfixURL.contains("/${liferayVersion}/")
+			!(hotfixURL.contains(liferayVersion) || hotfixURL.contains("/${liferayVersion}/"))
 		}
 
 		if (mismatchedHotfixURL != null) {

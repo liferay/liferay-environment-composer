@@ -263,6 +263,10 @@ _getProjectDir() {
 	local projectDir
 	local projectLocator="${1}"
 
+	if [[ -z "${projectLocator}" ]]; then
+		return 1
+	fi
+
 	projectDir="$(_getProjectRoot "${projectLocator}")"
 	if [[ -d "${projectDir}" ]]; then
 		echo "${projectDir}"

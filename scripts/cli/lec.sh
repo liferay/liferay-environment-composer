@@ -913,9 +913,18 @@ cmd_ports() {
 cmd_remove() {
 	local worktrees=()
 
-	while IFS= read -r line; do
-		worktrees+=("$line")
-	done < <(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")
+	if [[ "${OPTION_PROJECT}" ]]; then
+		_checkProjectDirectory
+
+		worktrees+=("${PROJECT_DIRECTORY}")
+	fi
+
+	if [[ "${#worktrees[@]}" -eq 0 ]]; then
+		while IFS= read -r line; do
+			worktrees+=("$line")
+		done < <(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")
+	fi
+
 	_cancelIfEmpty "${worktrees[*]}"
 
 	# shellcheck disable=SC2059

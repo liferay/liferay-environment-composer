@@ -1,14 +1,10 @@
 #!/bin/bash
 
 _clean_dumps_dir() {
-	local dumpsFiles=("$(ls dumps)")
-
-	if [[ "${dumpsFiles[0]}" == "" ]]; then
-		return
-	fi
-
-	for dumpsFile in "${dumpsFiles[@]}"; do
-		rm "dumps/${dumpsFile}"
+	for file in dumps/*; do
+		if [[ -e "${file}" ]]; then
+			rm -rf "${file}"
+		fi
 	done
 }
 

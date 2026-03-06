@@ -911,12 +911,24 @@ cmd_ports() {
 	_getServicePorts "${PROJECT_DIRECTORY}" "${serviceName}"
 }
 cmd_remove() {
+	local locator="${1}"
 	local worktrees=()
 
 	if [[ "${OPTION_PROJECT}" ]]; then
 		_checkProjectDirectory
 
 		worktrees+=("${PROJECT_DIRECTORY}")
+	fi
+
+	if [[ "${#worktrees[@]}" -eq 0 && "${locator}" ]]; then
+		local projectDir
+		projectDir="$(_getProjectDir "${locator}")"
+
+		if [[ ! -d "${projectDir}" ]]; then
+			_errorExit "Cannot get a valid project for ${locator}"
+		fi
+
+		worktrees+=("${projectDir}")
 	fi
 
 	if [[ "${#worktrees[@]}" -eq 0 ]]; then

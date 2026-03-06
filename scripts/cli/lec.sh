@@ -925,7 +925,10 @@ cmd_remove() {
 
 			worktrees+=("${project_dir}")
 		done
-	else
+	fi
+
+	# If no worktrees were specified via arguments or found, prompt for interactive selection
+	if [[ "${#worktrees[@]}" -eq 0 ]]; then
 		local selections
 		selections="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
 

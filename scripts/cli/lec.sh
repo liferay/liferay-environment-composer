@@ -927,7 +927,7 @@ cmd_remove() {
 cmd_restart() {
 	_checkProjectDirectory
 
-	local FLAG_CLEAN
+	local FLAG_CLEAN=0
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in

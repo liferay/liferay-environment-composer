@@ -43,3 +43,4 @@
 /scripts/cli/dependencies
 /shared_workspaces
 test-results
+testDependencies/**/*

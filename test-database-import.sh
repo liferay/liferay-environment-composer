@@ -9,12 +9,12 @@ _clean_dumps_dir() {
 }
 
 _download_database_dumps() {
-	local urls=("$(curl -s https://storage.googleapis.com/storage/v1/b/liferay-devtools/o?prefix=liferay-environment-composer/test-resources/database-support-tests | jq -r '.items[] | select(.name | contains(".")) | .mediaLink')")
+	# shellcheck disable=SC2207
+	local urls=($(curl -s https://storage.googleapis.com/storage/v1/b/liferay-devtools/o?prefix=liferay-environment-composer/test-resources/database-support-tests | jq -r '.items[] | select(.name | contains(".")) | .mediaLink'))
 
 	local baseUrl="https://storage.googleapis.com/download/storage/v1/b/liferay-devtools/o/liferay-environment-composer%2Ftest-resources%2Fdatabase-support-tests%2F"
 
-	# shellcheck disable=SC2068
-	for url in ${urls[@]}; do
+	for url in "${urls[@]}"; do
 		local filepathUrl
 
 		filepathUrl=$(echo "${url//${baseUrl}/}" | sed -e 's@%2F@/@g' -e 's@?.*@@g')

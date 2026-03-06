@@ -1,0 +1,15 @@
+name: Run lec.sh remove tests
+on:
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    test-remove-command:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   name: Build and Run Tests
+                run: |
+                    docker build -t lec-tests -f scripts/tests/Dockerfile .
+                    docker run --rm lec-tests

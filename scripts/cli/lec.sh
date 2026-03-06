@@ -666,7 +666,7 @@ _cmd_fn() {
 	"${1}" "${@:2}"
 }
 _cmd_gw() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
@@ -712,7 +712,7 @@ _cmd_setupLocalFzf() {
 	_fzf --version
 }
 _cmd_setVersion() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	local liferay_version
 
@@ -727,7 +727,7 @@ _cmd_setVersion() {
 #
 
 cmd_clean() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
  	local project_name
 	project_name="$(_getComposeProjectName "${PROJECT_DIRECTORY}")"
@@ -749,7 +749,7 @@ cmd_clean() {
 	
 }
 cmd_exportData() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	_print_step "Exporting container data..."
 
@@ -767,7 +767,7 @@ cmd_exportData() {
 	)
 }
 cmd_importDLStructure() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	local sourceDir="${1}"
 	local targetDir="${PROJECT_DIRECTORY}/configs/common/data/document_library"
@@ -900,7 +900,7 @@ cmd_list() {
 	_list_"${entity}"
 }
 cmd_ports() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	local serviceName="${1}"
 
@@ -925,7 +925,7 @@ cmd_remove() {
 	done
 }
 cmd_restart() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	local FLAG_CLEAN=0
 
@@ -968,7 +968,7 @@ cmd_rm() {
 	cmd_remove "${@}"
 }
 cmd_share() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	local FLAG_EXPORT=0
 
@@ -1004,7 +1004,7 @@ cmd_share() {
 	)
 }
 cmd_start() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	_print_step "Starting environment"
 	if ! _startProject "${PROJECT_DIRECTORY}"; then
@@ -1018,7 +1018,7 @@ cmd_start() {
 	_tailProjectLogs "${PROJECT_DIRECTORY}"
 }
 cmd_stop() {
-	_checkProjectDirectory
+	_checkProjectDirectory "${PWD}"
 
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
@@ -1121,7 +1121,7 @@ cmd_version() {
 _check_dependencies
 
 COMMAND=""
-OPTION_PROJECT="${PWD}"
+OPTION_PROJECT=""
 REST_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -1143,10 +1143,20 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+#
+# Helper function to check for a valid project directory.
+#
+# It resolves the locator into a global PROJECT_DIRECTORY variable.
+# It prioritizes the explicitly provided -p/--project flag (OPTION_PROJECT).
+# If no flag is provided, it uses the first argument ($1) as a fallback.
+# It will exit with an error if no valid project can be determined.
+#
 _checkProjectDirectory() {
-	PROJECT_DIRECTORY="$(_getProjectDir "${OPTION_PROJECT}")"
+	local locator="${OPTION_PROJECT:-$1}"
 
-	test -d "${PROJECT_DIRECTORY}" || _errorExit "Cannot get a valid project for ${OPTION_PROJECT}"
+	PROJECT_DIRECTORY="$(_getProjectDir "${locator}")"
+
+	test -d "${PROJECT_DIRECTORY}" || _errorExit "Cannot get a valid project for ${locator}"
 
 	echo "Project directory: ${C_BOLD}${PROJECT_DIRECTORY}${C_RESET}" 1>&2
 }

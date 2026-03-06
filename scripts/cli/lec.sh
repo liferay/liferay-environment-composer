@@ -116,7 +116,7 @@ _printHelpAndExit() {
 		  exportData                                Export container data for a Composer project
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
-		  remove, rm                                Completely tear down and remove one or more Composer projects
+		  remove, rm [<project>...]                 Completely tear down and remove one or more Composer projects. If no project is provided, a selection menu is shown.
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
@@ -906,8 +906,25 @@ cmd_ports() {
 	_getServicePorts "${PROJECT_DIRECTORY}" "${serviceName}"
 }
 cmd_remove() {
-	local worktrees
-	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+	local worktrees=""
+
+	if [[ $# -gt 0 ]]; then
+		local worktree_arg
+		for worktree_arg in "${@}"; do
+			local project_dir
+			project_dir="$(_getProjectDir "${worktree_arg}")"
+
+			if [[ -z "${project_dir}" ]]; then
+				_print_error "Cannot get a valid project for ${worktree_arg}"
+				return 1
+			fi
+
+			worktrees="${worktrees} ${project_dir}"
+		done
+	else
+		worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+	fi
+
 	_cancelIfEmpty "${worktrees}"
 
 	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
@@ -1110,28 +1127,30 @@ _checkProjectDirectory() {
 	echo "Project directory: ${C_BOLD}${PROJECT_DIRECTORY}${C_RESET}" 1>&2
 }
 
-if [[ -z "${COMMAND}" ]]; then
-	_printHelpAndExit
-fi
-
-PRIVATE_COMMAND="_cmd_${COMMAND}"
-if [[ $(type -t "${PRIVATE_COMMAND}") == function ]]; then
-	"${PRIVATE_COMMAND}" "${REST_ARGS[@]}"
-	exit
-fi
-
-if ! _verifyCommand "${COMMAND}"; then
-	CLOSEST_COMMAND="$(_getClosestCommand "${COMMAND}")"
-
-	if _verifyCommand "${CLOSEST_COMMAND}" && _confirm "Command \"${COMMAND}\" is unknown. Use closest command \"${CLOSEST_COMMAND}\"?"; then
-		COMMAND="${CLOSEST_COMMAND}"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	if [[ -z "${COMMAND}" ]]; then
+		_printHelpAndExit
 	fi
-fi
 
-if ! _verifyCommand "${COMMAND}"; then
-	_print_error "Invalid command: \"${COMMAND}\" "
-	echo
-	_printHelpAndExit
-fi
+	PRIVATE_COMMAND="_cmd_${COMMAND}"
+	if [[ $(type -t "${PRIVATE_COMMAND}") == function ]]; then
+		"${PRIVATE_COMMAND}" "${REST_ARGS[@]}"
+		exit
+	fi
 
-"cmd_${COMMAND}" "${REST_ARGS[@]}"
+	if ! _verifyCommand "${COMMAND}"; then
+		CLOSEST_COMMAND="$(_getClosestCommand "${COMMAND}")"
+
+		if _verifyCommand "${CLOSEST_COMMAND}" && _confirm "Command \"${COMMAND}\" is unknown. Use closest command \"${CLOSEST_COMMAND}\"?"; then
+			COMMAND="${CLOSEST_COMMAND}"
+		fi
+	fi
+
+	if ! _verifyCommand "${COMMAND}"; then
+		_print_error "Invalid command: \"${COMMAND}\" "
+		echo
+		_printHelpAndExit
+	fi
+
+	"cmd_${COMMAND}" "${REST_ARGS[@]}"
+fi

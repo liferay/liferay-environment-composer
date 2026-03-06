@@ -117,6 +117,7 @@ _printHelpAndExit() {
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm                                Completely tear down and remove one or more Composer projects
+		  restart [--clean]                         Stops a Composer project and then immediately starts it. The "--clean" flag runs the clean command on the project before restarting it.
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
@@ -922,6 +923,46 @@ cmd_remove() {
 		_removeWorktree "${worktree}"
 		echo
 	done
+}
+cmd_restart() {
+	_checkProjectDirectory
+
+	local FLAG_CLEAN
+
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+		--clean)
+			shift && FLAG_CLEAN=1
+			;;
+		*)
+			shift
+			;;
+		esac
+	done
+	
+	if [[ "${FLAG_CLEAN}" -gt 0 ]]; then
+		_clean "${PROJECT_DIRECTORY}"
+	else
+		(
+			cd "${PROJECT_DIRECTORY}" || exit
+
+			_print_step "Stopping environment ${C_BLUE}${PROJECT_DIRECTORY}${C_NC}"
+			./gradlew stop
+
+			_print_success "Done"
+		)
+	fi
+
+	_print_step "Starting environment"
+	if ! _startProject "${PROJECT_DIRECTORY}"; then
+		exit 1
+	fi
+
+	_print_step "Printing published ports"
+	_getServicePorts "${PROJECT_DIRECTORY}"
+
+	_print_step "Tailing logs"
+	_tailProjectLogs "${PROJECT_DIRECTORY}"
 }
 cmd_rm() {
 	cmd_remove "${@}"

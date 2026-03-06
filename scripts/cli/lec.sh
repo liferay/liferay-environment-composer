@@ -117,7 +117,7 @@ _printHelpAndExit() {
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm                                Completely tear down and remove one or more Composer projects
-		  restart [--clean]                         Stops a Composer project and then immediately starts it. The "--clean" flag runs the clean command on the project before restarting it.
+		  restart [--clean]                         Restarts a running Composer project. The "--clean" flag removes Docker volumes and images during the shutdown.
 		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec

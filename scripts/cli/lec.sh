@@ -390,7 +390,7 @@ _listSaaSEnvironments() {
 	find "${LXC_REPOSITORY_PATH}/automation/environment-descriptors" -name '*.json' | sed -E 's,^.*/([^/]*).json$,\1,g'
 }
 _listWorktrees() {
-	_git worktree list --porcelain | grep worktree | awk '{print $2}'
+	_git worktree list --porcelain | grep "^worktree " | sed "s/^worktree //g"
 }
 
 #
@@ -481,7 +481,7 @@ _getServicePorts() {
 _getWorktreeDir() {
 	local worktree_name="${1}"
 
-	_listWorktrees | grep "/${worktree_name}$"
+	_listWorktrees | grep -E "(^|/)${worktree_name}$"
 }
 _list_projects() {
 	_listWorktrees
@@ -906,34 +906,50 @@ cmd_ports() {
 	_getServicePorts "${PROJECT_DIRECTORY}" "${serviceName}"
 }
 cmd_remove() {
-	local worktrees=""
+	local worktrees=()
 
 	if [[ $# -gt 0 ]]; then
 		local worktree_arg
 		for worktree_arg in "${@}"; do
 			local project_dir
-			project_dir="$(_getProjectDir "${worktree_arg}")"
+			project_dir="$(_getProjectDir "${worktree_arg}" 2>/dev/null || echo "")"
+
+			if [[ -z "${project_dir}" ]] && [[ -d "${worktree_arg}" ]]; then
+				project_dir="$(cd "${worktree_arg}" && pwd)"
+			fi
 
 			if [[ -z "${project_dir}" ]]; then
 				_print_error "Cannot get a valid project for ${worktree_arg}"
 				return 1
 			fi
 
-			worktrees="${worktrees} ${project_dir}"
+			worktrees+=("${project_dir}")
 		done
 	else
-		worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+		local selections
+		selections="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
+
+		_cancelIfEmpty "${selections}"
+
+		while read -r line; do
+			[[ -n "${line}" ]] && worktrees+=("${line}")
+		done <<< "${selections}"
 	fi
 
-	_cancelIfEmpty "${worktrees}"
+	if [[ "${#worktrees[@]}" -eq 0 ]]; then
+		return
+	fi
 
-	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
+	printf "${C_BOLD}Projects to be removed:\n\n"
+	printf "${C_YELLOW}%s${C_NC}\n" "${worktrees[@]}"
+	printf "\n"
 
 	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
 		return 1
 	fi
 
-	for worktree in ${worktrees}; do
+	local worktree
+	for worktree in "${worktrees[@]}"; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
 		_clean "${worktree}"
 		_removeWorktree "${worktree}"

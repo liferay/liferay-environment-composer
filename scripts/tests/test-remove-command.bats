@@ -48,11 +48,11 @@ docker() {
     return 0
 }
 
-@test "cmd_remove removes a project specified by argument" {
+@test "cmd_remove removes a project specified by argument (absolute path)" {
     local test_project_name="lec-test-arg"
     local test_project_path="${LEC_WORKSPACES_DIR}/${test_project_name}"
 
-    # Setup: Create a dummy project directory with compose-recipes to be recognized as a project root
+    # Setup: Create a dummy project directory
     mkdir -p "${test_project_path}/compose-recipes"
     echo "#!/bin/sh" > "${test_project_path}/gradlew"
     chmod +x "${test_project_path}/gradlew"
@@ -60,6 +60,22 @@ docker() {
     # Configure mock to "see" this worktree
     MOCK_WORKTREES="worktree ${test_project_path}"
 
+    # Act
+    cmd_remove "${test_project_path}"
+
+    # Assert
+    [ ! -d "${test_project_path}" ]
+}
+
+@test "cmd_remove removes a project specified by argument (even if not detected as project root)" {
+    local test_project_name="lec-test-non-root"
+    local test_project_path="${LEC_WORKSPACES_DIR}/${test_project_name}"
+
+    # Setup: Create a directory WITHOUT compose-recipes
+    mkdir -p "${test_project_path}"
+    echo "#!/bin/sh" > "${test_project_path}/gradlew"
+    chmod +x "${test_project_path}/gradlew"
+    
     # Act
     cmd_remove "${test_project_path}"
 
@@ -86,6 +102,25 @@ docker() {
 
     # Act: Call cmd_remove without arguments
     cmd_remove
+
+    # Assert
+    [ ! -d "${test_project_path}" ]
+}
+
+@test "cmd_remove removes project with spaces in name" {
+    local test_project_name="lec-test with spaces"
+    local test_project_path="${LEC_WORKSPACES_DIR}/${test_project_name}"
+
+    # Setup: Create dummy project directory
+    mkdir -p "${test_project_path}/compose-recipes"
+    echo "#!/bin/sh" > "${test_project_path}/gradlew"
+    chmod +x "${test_project_path}/gradlew"
+    
+    # Configure mock to "see" this worktree
+    MOCK_WORKTREES="worktree ${test_project_path}"
+
+    # Act
+    cmd_remove "${test_project_path}"
 
     # Assert
     [ ! -d "${test_project_path}" ]

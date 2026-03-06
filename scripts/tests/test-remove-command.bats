@@ -44,6 +44,18 @@ _git() {
     return 0
 }
 
+# Override _listRunningProjects to avoid docker calls in test environment
+_listRunningProjects() {
+    return 0
+}
+
+# Override _clean to avoid actual execution but simulate directory removal
+# In reality, _clean only stops containers and cleans volumes.
+# _removeWorktree is what actually deletes the directory.
+_clean() {
+    return 0
+}
+
 docker() {
     return 0
 }
@@ -54,16 +66,15 @@ docker() {
 
     # Setup: Create a dummy project directory
     mkdir -p "${test_project_path}/compose-recipes"
-    echo "#!/bin/sh" > "${test_project_path}/gradlew"
-    chmod +x "${test_project_path}/gradlew"
     
     # Configure mock to "see" this worktree
     MOCK_WORKTREES="worktree ${test_project_path}"
 
     # Act
-    cmd_remove "${test_project_path}"
+    run cmd_remove "${test_project_path}"
 
     # Assert
+    [ "$status" -eq 0 ]
     [ ! -d "${test_project_path}" ]
 }
 
@@ -73,13 +84,16 @@ docker() {
 
     # Setup: Create a directory WITHOUT compose-recipes
     mkdir -p "${test_project_path}"
-    echo "#!/bin/sh" > "${test_project_path}/gradlew"
-    chmod +x "${test_project_path}/gradlew"
+    
+    # We must mock _removeWorktree because it uses 'git worktree remove' which won't work on non-worktree dirs
+    # But cmd_remove calls _removeWorktree anyway.
+    # Actually, in our mock _git, it already does rm -rf.
     
     # Act
-    cmd_remove "${test_project_path}"
+    run cmd_remove "${test_project_path}"
 
     # Assert
+    [ "$status" -eq 0 ]
     [ ! -d "${test_project_path}" ]
 }
 
@@ -89,8 +103,6 @@ docker() {
 
     # Setup: Create dummy project directory
     mkdir -p "${test_project_path}/compose-recipes"
-    echo "#!/bin/sh" > "${test_project_path}/gradlew"
-    chmod +x "${test_project_path}/gradlew"
     
     # Configure mock to "see" this worktree
     MOCK_WORKTREES="worktree ${test_project_path}"
@@ -101,9 +113,10 @@ docker() {
     }
 
     # Act: Call cmd_remove without arguments
-    cmd_remove
+    run cmd_remove
 
     # Assert
+    [ "$status" -eq 0 ]
     [ ! -d "${test_project_path}" ]
 }
 
@@ -113,15 +126,14 @@ docker() {
 
     # Setup: Create dummy project directory
     mkdir -p "${test_project_path}/compose-recipes"
-    echo "#!/bin/sh" > "${test_project_path}/gradlew"
-    chmod +x "${test_project_path}/gradlew"
     
     # Configure mock to "see" this worktree
     MOCK_WORKTREES="worktree ${test_project_path}"
 
     # Act
-    cmd_remove "${test_project_path}"
+    run cmd_remove "${test_project_path}"
 
     # Assert
+    [ "$status" -eq 0 ]
     [ ! -d "${test_project_path}" ]
 }

@@ -912,7 +912,7 @@ cmd_remove() {
 		local worktree_arg
 		for worktree_arg in "${@}"; do
 			local project_dir
-			project_dir="$(_getProjectDir "${worktree_arg}" 2>/dev/null || echo "")"
+			project_dir="$(_getProjectDir "${worktree_arg}" 2>/dev/null)"
 
 			if [[ -z "${project_dir}" ]] && [[ -d "${worktree_arg}" ]]; then
 				project_dir="$(cd "${worktree_arg}" && pwd)"
@@ -940,9 +940,9 @@ cmd_remove() {
 		return
 	fi
 
-	printf "${C_BOLD}Projects to be removed:\n\n"
-	printf "${C_YELLOW}%s${C_NC}\n" "${worktrees[@]}"
-	printf "\n"
+	printf "${C_BOLD}Projects to be removed:${C_RESET}\n\n"
+	printf "${C_YELLOW}%s${C_RESET}\n" "${worktrees[@]}"
+	echo ""
 
 	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
 		return 1
@@ -953,7 +953,7 @@ cmd_remove() {
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
 		_clean "${worktree}"
 		_removeWorktree "${worktree}"
-		echo
+		echo ""
 	done
 }
 cmd_rm() {

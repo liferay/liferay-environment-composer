@@ -907,17 +907,23 @@ cmd_ports() {
 	_getServicePorts "${PROJECT_DIRECTORY}" "${serviceName}"
 }
 cmd_remove() {
-	local worktrees
-	worktrees="$(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")"
-	_cancelIfEmpty "${worktrees}"
+	local worktrees=()
 
-	printf "${C_BOLD}Projects to be removed:\n\n${C_YELLOW}%s${C_RESET}\n\n" "${worktrees}"
+	while IFS= read -r line; do
+		worktrees+=("$line")
+	done < <(_listWorktrees | grep -E -v "^${LIFERAY_ENVIRONMENT_COMPOSER_HOME}$" | _selectMultiple "Choose projects to remove (Tab to select multiple)")
+	_cancelIfEmpty "${worktrees[*]}"
+
+	# shellcheck disable=SC2059
+	printf "${C_BOLD}Projects to be removed:\n\n${C_RESET}"
+	printf "${C_BOLD}${C_YELLOW}%s${C_RESET}\n" "${worktrees[@]}"
+	echo ""
 
 	if ! _confirm "Are you sure you want to remove them? This cannot be undone."; then
 		return 1
 	fi
 
-	for worktree in ${worktrees}; do
+	for worktree in "${worktrees[@]}"; do
 		_print_step "Removing project ${C_YELLOW}${worktree}${C_NC}"
 		_clean "${worktree}"
 		_removeWorktree "${worktree}"

@@ -17,7 +17,8 @@ _download_database_dumps() {
 
 	local baseUrl="https://storage.googleapis.com/download/storage/v1/b/liferay-devtools/o/liferay-environment-composer%2Ftest-resources%2Fdatabase-support-tests%2F"
 
-	for url in "${urls[@]}"; do
+	# shellcheck disable=SC2068
+	for url in ${urls[@]}; do
 		local filepathUrl
 
 		filepathUrl=$(echo "${url//${baseUrl}/}" | sed -e 's@%2F@/@g' -e 's@?.*@@g')

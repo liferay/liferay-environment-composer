@@ -920,7 +920,7 @@ cmd_remove() {
 		worktrees+=("${PROJECT_DIRECTORY}")
 	fi
 
-	if [[ "${#worktrees[@]}" -eq 0 && "${locator}" ]]; then
+	if [[ "${locator}" ]]; then
 		local projectDir
 		projectDir="$(_getProjectDir "${locator}")"
 

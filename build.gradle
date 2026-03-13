@@ -8,6 +8,7 @@ plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
 	id "docker-common"
 	id "docker-database-saas"
+	id "docker-keycloak"
 	id "docker-liferay-bundle"
 }
 
@@ -278,6 +279,7 @@ buildDockerImage {
 }
 
 clean {
+	dependsOn ":cleanPrepareKeycloakSecurityArtifacts"
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareSAXParser"
@@ -292,6 +294,10 @@ dockerDeploy {
 	dependsOn ":prepareSAXParser"
 	dependsOn ":prepareXugglerJar"
 	dependsOn ":prepareYourKitAgent"
+}
+
+composeBuild {
+	dependsOn ":prepareKeycloakSecurityArtifacts"
 }
 
 composeUp {
@@ -379,6 +385,16 @@ if (config.useWebserver) {
 	}
 }
 
+if (config.useKeycloak) {
+	if (environmentMap["LIFERAY_PORT"].contains("-")) {
+		throw new GradleException("Detected port range for Liferay. Please provide a specific port for Liferay.")
+	}
+
+	if (environmentMap["KEYCLOAK_PORT"].contains("-")) {
+		throw new GradleException("Detected port range for Keycloak. Please provide a specific port for Keycloak.")
+	}
+}
+
 file("versions.env").withInputStream {
 	versionsFile ->
 
@@ -408,5 +424,5 @@ dockerCompose {
 	waitForTcpPorts = false
 
 	// DEBUG: Set to true if container startup is failing
-	retainContainersOnStartupFailure = false
+	retainContainersOnStartupFailure = true
 }

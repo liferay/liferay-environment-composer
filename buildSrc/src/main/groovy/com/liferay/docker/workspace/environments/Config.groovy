@@ -242,6 +242,8 @@ class Config {
 			this.mediaPreviewEnabled = mediaPreviewEnabledProperty
 		}
 
+		this.useKeycloak = this.services.contains("keycloak")
+
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
@@ -462,6 +464,7 @@ class Config {
 	public boolean useDatabaseMySQL = false
 	public boolean useDatabasePostgreSQL = false
 	public boolean useDatabaseSQLServer = false
+	public boolean useKeycloak = false
 	public boolean useLiferay = false
 	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"

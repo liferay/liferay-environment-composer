@@ -387,11 +387,11 @@ if (config.useWebserver) {
 
 if (config.useKeycloak) {
 	if (environmentMap["LIFERAY_PORT"].contains("-")) {
-		throw new GradleException("Detected port range for Liferay. Please provide a specific port for Liferay.")
+		throw new GradleException("Detected port range for Liferay. Please provide a single port for Liferay when using keycloak.")
 	}
 
 	if (environmentMap["KEYCLOAK_PORT"].contains("-")) {
-		throw new GradleException("Detected port range for Keycloak. Please provide a specific port for Keycloak.")
+		throw new GradleException("Detected port range for Keycloak. Please provide a single port for Keycloak.")
 	}
 }
 

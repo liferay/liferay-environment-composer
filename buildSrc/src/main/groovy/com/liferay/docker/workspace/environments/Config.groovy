@@ -154,6 +154,12 @@ class Config {
 			this.isARM = true
 		}
 
+		String dockerImageLiferayVersionProperty = project.findProperty("liferay.workspace.docker.image.liferay")
+
+		if (dockerImageLiferayVersionProperty.contains("nightly")) {
+			this.isNightly = true
+		}
+
 		String namespaceProperty = project.findProperty("lr.docker.environment.namespace")
 
 		if (namespaceProperty != null) {
@@ -434,6 +440,7 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
+	public boolean isNightly = false
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null

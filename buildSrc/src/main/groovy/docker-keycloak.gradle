@@ -1,0 +1,40 @@
+tasks.register("prepareKeycloakSecurityArtifacts") {
+	onlyIf("using keycloak") {
+		config.useKeycloak
+	}
+
+	outputs.files(
+		project.file("compose-recipes/keycloak/conf/server.crt"),
+		project.file("compose-recipes/keycloak/conf/server.key"),
+		project.file("keystore.p12")
+	)
+
+	outputs.upToDateWhen {
+		false
+	}
+
+	doLast {
+		File certDir = project.file("compose-recipes/keycloak/conf")
+		File certFile = project.file("${certDir}/server.crt")
+		File keyFile = project.file("${certDir}/server.key")
+
+		exec {
+			commandLine 'openssl', 'req', '-x509',
+			'-nodes',
+			'-days', '365',
+			'-newkey', 'rsa:2048',
+			'-keyout', keyFile,
+			'-out', certFile,
+			'-config', project.file("${certDir}/openssl.cnf")
+		}
+
+		exec {
+			commandLine 'openssl', 'pkcs12', '-export',
+			'-in', certFile,
+			'-inkey', keyFile,
+			'-out', project.file("keystore.p12"),
+			'-name', "liferay-alias",
+			'-passout', 'pass:'
+		}
+	}
+}

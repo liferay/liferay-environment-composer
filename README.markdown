@@ -267,6 +267,7 @@ You may also need to configure the endpoint URL by setting the value for the `lr
 
 ```properties
 lr.docker.environment.s3.endpoint=
+```
 
 #### Enable media previews
 

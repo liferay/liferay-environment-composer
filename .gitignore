@@ -18,12 +18,15 @@
 **/dist
 **/node_modules
 **/node_modules_cache
+**/*server.crt
+**/*server.key
 **/test-coverage
 **/tmp
 .DS_Store
 .env
 .gradle
 .idea
+keystore.p12
 /bundles
 /containerLogs
 /data/*

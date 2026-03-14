@@ -28,6 +28,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable LibreOffice integration](#enable-libreoffice-integration)
 - [Configure document library store](#configure-document-library-store)
 - [Enable media previews](#enable-media-previews)
+- [Configure Liferay SAML with Keycloak as IdP](#configure-liferay-saml-with-keycloak-as-idp)
 
 ### Database features overview
 
@@ -280,6 +281,59 @@ You can enable media previews in Liferay by setting the `lr.docker.environment.m
 lr.docker.environment.preview.media.enabled=true
 
 ```
+
+#### Configure Liferay SAML with Keycloak as IdP
+
+You can enable the keycloak service by setting the `lr.docker.environment.service.enabled[keycloak]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+lr.docker.environment.service.enabled[keycloak]=true
+```
+
+Additionally, the Liferay service **must** run on a single port, rather than on a range of ports. To do this, change the value of `LIFERAY_PORT` from `8080-8089` to a single value in `ports.env`.
+
+After Composer starts up, you will need to manually configure Liferay SAML to connect to Keycloak as the IdP.
+
+1. Navigate to Liferay SAML admin portlet
+
+1. Under the **Certificate and Private Key** in the **General** tab, click **Create Certificate** button
+
+1. Click the **Import Certificate** tab
+
+1. Select the `keystore.p12` file generated in the root directory of the Composer project
+
+1. Complete certificate import process
+
+1. Navigate to the **Identity Provider Connections** tab
+
+1. Click **Add Identity Provider**
+
+1. Provide the following details:
+    - Name: (provide name)
+    - Entity ID: `http://localhost:<KEYCLOAK_PORT>/realms/master` (this value can be found by accessing the metadata URL later in these steps)
+    - Enabled: true
+    - Metadata URL: `http://keycloak:<KEYCLOAK_PORT>/realms/master/protocol/saml/descriptor`
+        - \* Note: This URL should be *internal* to the docker network; to access it outside of the Docker network (i.e., on your host machine, replace `keycloak` with `localhost`)
+    - Attribute Mapping
+        - | Section | User Field Expression | SAML Attribute |
+          |:------------------|:----------------------|:---------------|
+          | Basic User Fields | emailAddress | email |
+          | Basic User Fields | firstName | firstName |
+          | Basic User Fields | lastName | lastName |
+          | Basic User Fields | screenName | username |
+          | User Memberships | userGroups | userGroups |
+
+1. Click **Save** button
+
+Users will need to be added in Keycloak in order for successful logins
+
+1. Navigate to `http://localhost:<KEYCLOAK_PORT>`
+
+1. Log in as `admin:admin`
+
+From there, follow the steps from the Keycloak [administrator guide](https://www.keycloak.org/docs/latest/server_admin/index.html#assembly-managing-users_server_administration_guide) to add users.
 
 ### Java Virtual Machine features overview
 

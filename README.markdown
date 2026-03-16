@@ -300,6 +300,15 @@ lr.docker.environment.service.enabled[mysql]=true
 
 ```
 
+##### Default login info
+
+```properties
+
+username=root
+password=
+
+```
+
 #### Enable PostgreSQL 16.3
 
 Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or `1` in `gradle.properties`.
@@ -309,6 +318,15 @@ Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or 
 ```properties
 
 lr.docker.environment.service.enabled[postgres]=true
+
+```
+
+##### Default login info
+
+```properties
+
+username=liferay
+password=password
 
 ```
 
@@ -324,6 +342,15 @@ lr.docker.environment.service.enabled[db2]=true
 
 ```
 
+##### Default login info
+
+```properties
+
+username=db2admin
+password=lportal
+
+```
+
 #### Enable MariaDB 10.6
 
 Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`.
@@ -336,6 +363,15 @@ lr.docker.environment.service.enabled[mariadb]=true
 
 ```
 
+##### Default login info
+
+```properties
+
+username=root
+password=
+
+```
+
 #### Enable SQL Server 2022
 
 Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or `1` in `gradle.properties`.
@@ -345,6 +381,15 @@ Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or
 ```properties
 
 lr.docker.environment.service.enabled[sqlserver]=true
+
+```
+
+##### Default login info
+
+```properties
+
+username=sa
+password=Liferay123
 
 ```
 

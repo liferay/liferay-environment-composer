@@ -424,5 +424,5 @@ dockerCompose {
 	waitForTcpPorts = false
 
 	// DEBUG: Set to true if container startup is failing
-	retainContainersOnStartupFailure = true
+	retainContainersOnStartupFailure = false
 }

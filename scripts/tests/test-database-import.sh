@@ -1,5 +1,14 @@
 #!/bin/bash
 
+WORKSPACE_DIR="$(git rev-parse --show-toplevel)"
+
+TESTS_DIR="${WORKSPACE_DIR}/scripts/tests"
+
+TEST_RESOURCES_DIR="${TESTS_DIR}/resources/test-database-import"
+if [[ ! -d "${TEST_RESOURCES_DIR}" ]]; then
+	mkdir -p "${TEST_RESOURCES_DIR}"
+fi
+
 _clean_dumps_dir() {
 	for file in dumps/*; do
 		if [[ -e "${file}" ]]; then

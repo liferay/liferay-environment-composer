@@ -24,3 +24,7 @@ services:
             timeout: 5s
         ports:
             -   ${KEYCLOAK_PORT}:${KEYCLOAK_PORT}
+        volumes:
+            -   keycloak:/opt/keycloak/data/h2
+volumes:
+    keycloak:

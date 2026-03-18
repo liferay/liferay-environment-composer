@@ -41,6 +41,7 @@
 /plugins-sdk/dist
 /plugins-sdk/lib
 /scripts/cli/dependencies
+/scripts/tests/resources/
 /shared_workspaces
 test-results
 testDependencies/**/*

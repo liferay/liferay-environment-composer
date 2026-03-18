@@ -659,6 +659,11 @@ _writeProperty() {
 # PRIVATE COMMAND DEFINITIONS
 #
 
+_cmd_bats() {
+	export BATS_FILE_EXTENSION="test.sh"
+
+	"${LEC_REPO_ROOT}/scripts/vendor/bats/bin/bats" "${@}"
+}
 _cmd_commands() {
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Public Commands:"
 	_listPublicCommands | sed 's,^,  ,g'

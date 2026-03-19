@@ -74,6 +74,10 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable Glowroot](#enable-glowroot)
 - [Enable YourKit](#enable-yourkit)
 
+### LDAP features overview
+
+- [Enabled the ldap service](#enable-the-ldap-service)
+
 ### Sharing features overview
 - [Zip up the workspace to share the setup](#zip-up-the-workspace-to-share-the-setup)
 
@@ -644,6 +648,20 @@ You can provide the download URL of the preferred YourKit version zip in the `lr
 
 ```properties
 lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip
+```
+
+### LDAP Features
+
+#### Enable the ldap service
+
+Set the `lr.docker.environment.service.enabled[ldap]` property to `true` or `1` in `gradle.properties`.
+
+`gradle.properties`:
+
+```properties
+
+lr.docker.environment.service.enabled[ldap]=true
+
 ```
 
 ### Sharing Features

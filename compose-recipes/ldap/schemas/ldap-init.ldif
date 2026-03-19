@@ -1,0 +1,18 @@
+#Define Admins group membership
+changetype: add
+cn: Admins
+dn: cn=Admins,ou=Groups,dc=liferay,dc=com
+objectclass: groupOfUniqueNames
+uniqueMember: cn=admin,dc=liferay,dc=com
+
+#Define Groups
+changetype: add
+dn: ou=Groups,dc=liferay,dc=com
+objectclass: organizationalUnit
+ou: Groups
+
+#Define Users
+changetype: add
+dn: ou=Users,dc=liferay,dc=com
+objectclass: organizationalUnit
+ou: Users

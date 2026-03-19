@@ -1,0 +1,25 @@
+services:
+    ldap:
+        build: ./compose-recipes/ldap
+        command: --copy-service
+        container_name: ${NAMESPACE}-ldap
+        environment:
+            LDAP_ADMIN_PASSWORD: test
+            LDAP_BASE_DN: dc=liferay,dc=com
+            LDAP_DOMAIN: liferay.com
+            LDAP_ORGANISATION: Liferay Inc.
+        healthcheck:
+            interval: 10s
+            retries: 10
+            test: ldapsearch -x -H ldap://localhost -b "" -s base || exit 1
+            timeout: 5s
+        hostname: ldap.liferay.com
+        ports:
+            -   "${LDAP_PORT}:389"
+            -   "${LDAPS_PORT}:636"
+        volumes:
+            -   ldap-data:/var/lib/ldap
+            -   ldap-config:/etc/ldap/slapd.d
+volumes:
+    ldap-config:
+    ldap-data:

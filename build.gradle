@@ -8,6 +8,7 @@ plugins {
 	id "com.avast.gradle.docker-compose" version "0.17.10"
 	id "docker-common"
 	id "docker-database-saas"
+	id "docker-keycloak"
 	id "docker-liferay-bundle"
 }
 
@@ -278,6 +279,8 @@ buildDockerImage {
 }
 
 clean {
+	dependsOn ":cleanPrepareKeycloakSelfSignedCert"
+	dependsOn ":cleanPrepareLiferayKeystoreFile"
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareSAXParser"
@@ -292,6 +295,10 @@ dockerDeploy {
 	dependsOn ":prepareSAXParser"
 	dependsOn ":prepareXugglerJar"
 	dependsOn ":prepareYourKitAgent"
+}
+
+composeBuild {
+	dependsOn ":prepareLiferayKeystoreFile"
 }
 
 composeUp {
@@ -376,6 +383,16 @@ if (config.useWebserver) {
 		environmentMap.put("WEBSERVER_CONTAINER_PORT", "8443")
 		environmentMap.put("LIFERAY_CONTAINER_PORT", "443")
 		environmentMap.put("WEBSERVER_HOST_PORT", environmentMap["WEBSERVER_HTTPS_PORT"])
+	}
+}
+
+if (config.useKeycloak) {
+	if (environmentMap["LIFERAY_PORT"].contains("-")) {
+		throw new GradleException("Detected port range for Liferay. Please provide a single port for Liferay when using keycloak.")
+	}
+
+	if (environmentMap["KEYCLOAK_PORT"].contains("-")) {
+		throw new GradleException("Detected port range for Keycloak. Please provide a single port for Keycloak.")
 	}
 }
 

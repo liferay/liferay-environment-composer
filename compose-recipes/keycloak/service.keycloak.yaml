@@ -20,7 +20,7 @@ services:
             interval: 10s
             retries: 3
             start_period: 30s
-            test: ["CMD-SHELL", "exec 3<> /dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+            test: curl -s http://localhost:9000/health/ready | grep -q "UP"
             timeout: 5s
         ports:
             -   ${KEYCLOAK_PORT}:${KEYCLOAK_PORT}

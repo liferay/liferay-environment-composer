@@ -9,7 +9,7 @@ RUN microdnf update -y && microdnf install -y jq sed && \
     jq --arg a "$(cat /tmp/server.crt | sed '1d;$d' | sed -z 's/\n//g')" '(.clients[] | select(has("adminUrl"))).attributes."saml.encryption.certificate" = $a' /tmp/master-realm.json > /tmp/temp.json && mv /tmp/temp.json /tmp/master-realm.json && \
     sed -i "s@<LIFERAY_PORT>@${LIFERAY_PORT}@g" /tmp/master-realm.json
 
-FROM quay.io/keycloak/keycloak:26.5.4-0 as builder
+FROM quay.io/keycloak/keycloak:26.5.4-0 AS builder
 
 ENV KC_DB=dev-file
 ENV KC_HEALTH_ENABLED=true

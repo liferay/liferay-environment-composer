@@ -279,7 +279,8 @@ buildDockerImage {
 }
 
 clean {
-	dependsOn ":cleanPrepareKeycloakSecurityArtifacts"
+	dependsOn ":cleanPrepareKeycloakSelfSignedCert"
+	dependsOn ":cleanPrepareLiferayKeystoreFile"
 	dependsOn ":cleanPrepareJDBCDriver"
 	dependsOn ":cleanPrepareHotfixes"
 	dependsOn ":cleanPrepareSAXParser"
@@ -297,7 +298,7 @@ dockerDeploy {
 }
 
 composeBuild {
-	dependsOn ":prepareKeycloakSecurityArtifacts"
+	dependsOn ":prepareLiferayKeystoreFile"
 }
 
 composeUp {

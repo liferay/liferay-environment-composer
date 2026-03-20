@@ -4,9 +4,7 @@ ARG LIFERAY_PORT=8080
 
 COPY conf/* /tmp
 
-RUN microdnf update -y && microdnf install -y jq sed && \
-    jq --arg a "$(cat /tmp/server.crt | sed '1d;$d' | sed -z 's/\n//g')" '(.clients[] | select(has("adminUrl"))).attributes."saml.signing.certificate" = $a' /tmp/master-realm.json > /tmp/temp.json && mv /tmp/temp.json /tmp/master-realm.json && \
-    jq --arg a "$(cat /tmp/server.crt | sed '1d;$d' | sed -z 's/\n//g')" '(.clients[] | select(has("adminUrl"))).attributes."saml.encryption.certificate" = $a' /tmp/master-realm.json > /tmp/temp.json && mv /tmp/temp.json /tmp/master-realm.json && \
+RUN sed -i "s@<CERT>@$(grep -v '\-\-\-\-\-' /tmp/server.crt | sed -z 's:\n::g')@g" /tmp/master-realm.json && \
     sed -i "s@<LIFERAY_PORT>@${LIFERAY_PORT}@g" /tmp/master-realm.json
 
 FROM quay.io/keycloak/keycloak:26.5.4-0 AS builder

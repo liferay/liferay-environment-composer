@@ -1,16 +1,16 @@
+String keycloakConfDir = "compose-recipes/keycloak/conf"
+
 tasks.register("prepareKeycloakSelfSignedCert", Exec) {
 	onlyIf("using keycloak") {
 		config.useKeycloak
 	}
 
-	inputs.file("compose-recipes/keycloak/conf/openssl.cnf")
+	inputs.file("${keycloakConfDir}/openssl.cnf")
 
 	outputs.files(
-		"compose-recipes/keycloak/conf/server.crt",
-		"compose-recipes/keycloak/conf/server.key"
+		"${keycloakConfDir}/server.crt",
+		"${keycloakConfDir}/server.key"
 	)
-
-	String keycloakConfDir = "compose-recipes/keycloak/conf"
 
 	commandLine('openssl', 'req', '-x509',
 		'-nodes',
@@ -29,13 +29,11 @@ tasks.register("prepareLiferayKeystoreFile", Exec) {
 	}
 
 	inputs.files(
-		"compose-recipes/keycloak/conf/server.crt",
-		"compose-recipes/keycloak/conf/server.key"
+		"${keycloakConfDir}/server.crt",
+		"${keycloakConfDir}/server.key"
 	)
 
 	outputs.file("keystore.p12")
-
-	String keycloakConfDir = "compose-recipes/keycloak/conf"
 
 	commandLine('openssl', 'pkcs12', '-export',
 		'-in', project.file("${keycloakConfDir}/server.crt"),

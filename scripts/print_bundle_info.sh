@@ -14,7 +14,7 @@ if [[ -z ${PROJECT_NAME} ]]; then
 fi
 
 if [[ -z "${LIFERAY_VERSION}" ]]; then
-	LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version)"
+	LIFERAY_VERSION="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .liferay-version | sed 's,\-u,.u,g')"
 fi
 
 GIT_HASH="$(docker compose -p "${PROJECT_NAME}" exec liferay cat .githash)"

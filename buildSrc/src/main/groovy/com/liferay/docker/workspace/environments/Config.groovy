@@ -190,6 +190,10 @@ class Config {
 			this.dockerImageLiferayDXP = true
 		}
 
+		if (this.dockerImageLiferay.contains("nightly")) {
+			this.isNightly = true
+		}
+
 		this.liferayDockerImageId = "${this.namespace}-liferay"
 
 		String recaptchaEnabledProperty = project.findProperty("lr.docker.environment.recaptcha.enabled")
@@ -434,6 +438,7 @@ class Config {
 	public List<String> hotfixURLs = new ArrayList<String>()
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
+	public boolean isNightly = false
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null

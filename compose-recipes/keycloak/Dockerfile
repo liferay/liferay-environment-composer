@@ -4,7 +4,7 @@ ARG LIFERAY_PORT=8080
 
 COPY conf/* /tmp
 
-RUN sed -i "s@<CERT>@$(grep -v '\-\-\-\-\-' /tmp/server.crt | sed -z 's:\n::g')@g" /tmp/master-realm.json && \
+RUN sed -i "s@<CERT>@$(grep -e '-----' -v /tmp/server.crt | sed -z 's:\n::g')@g" /tmp/master-realm.json && \
     sed -i "s@<LIFERAY_PORT>@${LIFERAY_PORT}@g" /tmp/master-realm.json
 
 FROM quay.io/keycloak/keycloak:26.5.4-0 AS builder

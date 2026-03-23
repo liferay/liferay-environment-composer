@@ -33,7 +33,7 @@ tasks.register("prepareLiferayKeystoreFile", Exec) {
 		"compose-recipes/keycloak/conf/server.key"
 	)
 
-	outputs.file("keycloak.p12")
+	outputs.file("keystore.p12")
 
 	String keycloakConfDir = "compose-recipes/keycloak/conf"
 

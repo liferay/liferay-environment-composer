@@ -447,7 +447,10 @@ tasks.register("printBundleInfo", Exec) {
 	}
 
 	environment("LIFERAY_PRODUCT", config.dockerImageLiferayDXP ? "dxp" : "portal")
-	environment("LIFERAY_VERSION", gradle.liferayWorkspace.targetPlatformVersion)
+
+	if (!config.isNightly) {
+		environment("LIFERAY_VERSION", gradle.liferayWorkspace.targetPlatformVersion)
+	}
 
 	executable project.file("scripts/print_bundle_info.sh")
 }

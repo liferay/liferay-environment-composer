@@ -75,6 +75,8 @@ create_database() {
 	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
 
 	${_sqlcmd} -i /init/init.sql
+
+	touch /tmp/database_exists
 }
 
 /opt/mssql/bin/sqlservr &

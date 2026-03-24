@@ -45,7 +45,7 @@ tasks.register("prepareLiferayKeystoreFile", Exec) {
 		'-inkey', keyFile,
 		'-out', keystoreFile,
 		'-name', "liferay-alias",
-	'-passout', 'pass:')
+		'-passout', 'pass:')
 
 	doLast {
 		println "###############"

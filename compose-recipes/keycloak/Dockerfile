@@ -2,7 +2,8 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal AS toolbox
 
 ARG LIFERAY_PORT=8080
 
-COPY conf/* /tmp
+COPY build/server.crt /tmp
+COPY conf/master-realm.json /tmp
 
 RUN sed -i "s@<CERT>@$(grep -F -e '-----' -v /tmp/server.crt | sed -z 's:\n::g')@g" /tmp/master-realm.json && \
     sed -i "s@<LIFERAY_PORT>@${LIFERAY_PORT}@g" /tmp/master-realm.json

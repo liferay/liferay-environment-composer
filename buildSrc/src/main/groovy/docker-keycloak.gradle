@@ -1,24 +1,29 @@
-String keycloakConfDir = "compose-recipes/keycloak/conf"
+String keycloakDir = "compose-recipes/keycloak"
+
+String certFile = "${keycloakDir}/build/server.crt"
+String keyFile = "${keycloakDir}/build/server.key"
+String keystoreFile = "${keycloakDir}/build/keystore.p12"
+String opensslCnfFile = "${keycloakDir}/conf/openssl.cnf"
 
 tasks.register("prepareKeycloakSelfSignedCert", Exec) {
 	onlyIf("using keycloak") {
 		config.useKeycloak
 	}
 
-	inputs.file("${keycloakConfDir}/openssl.cnf")
+	inputs.file(opensslCnfFile)
 
 	outputs.files(
-		"${keycloakConfDir}/server.crt",
-		"${keycloakConfDir}/server.key"
+		certFile,
+		keyFile
 	)
 
 	commandLine('openssl', 'req', '-x509',
 		'-nodes',
 		'-days', '365',
 		'-newkey', 'rsa:2048',
-		'-keyout', project.file("${keycloakConfDir}/server.key"),
-		'-out', project.file("${keycloakConfDir}/server.crt"),
-		'-config', project.file("${keycloakConfDir}/openssl.cnf"))
+		'-keyout', keyFile,
+		'-out', certFile,
+		'-config', opensslCnfFile)
 }
 
 tasks.register("prepareLiferayKeystoreFile", Exec) {
@@ -29,16 +34,16 @@ tasks.register("prepareLiferayKeystoreFile", Exec) {
 	}
 
 	inputs.files(
-		"${keycloakConfDir}/server.crt",
-		"${keycloakConfDir}/server.key"
+		certFile,
+		keyFile
 	)
 
-	outputs.file("keystore.p12")
+	outputs.file(keystoreFile)
 
 	commandLine('openssl', 'pkcs12', '-export',
-		'-in', project.file("${keycloakConfDir}/server.crt"),
-		'-inkey', project.file("${keycloakConfDir}/server.key"),
-		'-out', project.file("keystore.p12"),
+		'-in', certFile,
+		'-inkey', keyFile,
+		'-out', keystoreFile,
 		'-name', "liferay-alias",
 	'-passout', 'pass:')
 }

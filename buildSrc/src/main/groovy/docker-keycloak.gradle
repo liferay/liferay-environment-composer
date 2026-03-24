@@ -46,4 +46,12 @@ tasks.register("prepareLiferayKeystoreFile", Exec) {
 		'-out', keystoreFile,
 		'-name', "liferay-alias",
 	'-passout', 'pass:')
+
+	doLast {
+		println "###############"
+		println ""
+		println "Generated keystore.p12 file path: ${keystoreFile}"
+		println ""
+		println "###############"
+	}
 }

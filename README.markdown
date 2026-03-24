@@ -302,7 +302,7 @@ After Composer starts up, you will need to manually configure Liferay SAML to co
 
 1. Click the **Import Certificate** tab
 
-1. Select the `keystore.p12` file generated in the root directory of the Composer project
+1. Select the `keystore.p12` file generated in the `compose-recipes/keystore/build` directory of the Composer project
 
 1. Complete certificate import process
 

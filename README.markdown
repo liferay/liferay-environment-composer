@@ -335,6 +335,8 @@ Users will need to be added in Keycloak in order for successful logins
 
 From there, follow the steps from the Keycloak [administrator guide](https://www.keycloak.org/docs/latest/server_admin/index.html#assembly-managing-users_server_administration_guide) to add users.
 
+**Note:** Keycloak is currently **NOT** supported with clustering in the Liferay service. This functionality will be added in the future.
+
 ### Java Virtual Machine features overview
 
 #### Use custom JVM arguments to improve performance

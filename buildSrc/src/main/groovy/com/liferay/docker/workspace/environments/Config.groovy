@@ -287,9 +287,9 @@ class Config {
 		} else {
 			Properties portalExtProperties = new Properties()
 
-			project.fileTree("configs/common/") { 
-				include "*.properties" 
-				include "**/*.properties" 
+			project.fileTree("configs/common/") {
+				include "*.properties"
+				include "**/*.properties"
 			}.files.forEach {
 				File file ->
 
@@ -305,7 +305,7 @@ class Config {
 			if (jdbcDriverClassName == "com.microsoft.sqlserver.jdbc.SQLServerDriver") {
 				this.databaseDriverName = "sqlserver"
 			}
-		}	
+		}
 
 		if (this.services.contains("webserver")) {
 			this.useWebserver = true

@@ -248,6 +248,10 @@ class Config {
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
 
+		if (this.useKeycloak && this.useClustering) {
+			throw new GradleException("This configuration is currently not supported. Please disable keycloak to continue using Liferay with clustering, or disable clustering in order to continue using Keycloak.")
+		}
+
 		if (this.services.contains("db2")) {
 			this.databaseType = "db2"
 			this.useDatabase = true

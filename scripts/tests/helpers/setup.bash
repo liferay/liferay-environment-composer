@@ -15,7 +15,14 @@ _timestamp() {
 }
 
 _writeProperty() {
-	_lec fn _writeProperty "${1}" "${2}" gradle.properties
+	local key="${1}"
+	local value="${2}"
+	local escapedKey="${key//[/\\[}"
+
+	escapedKey="${escapedKey//]/\\]}"
+
+	sed -E -i.bak "s,^#?${escapedKey}=.*$,${key}=${value//,/\,},g" gradle.properties
+	rm gradle.properties.bak
 }
 
 common_setup_file() {

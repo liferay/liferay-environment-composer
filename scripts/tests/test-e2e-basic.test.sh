@@ -34,7 +34,7 @@ teardown() {
 	running_count=$(docker compose ps -q | wc -l)
 
 	if [[ ${running_count} -lt 3 ]]; then
-		echo "[FAILED] expected at least 3 containers, got ${running_count}"
+		_debug "[FAILED] expected at least 3 containers, got ${running_count}"
 		docker compose ps
 		return 2
 	fi
@@ -51,7 +51,7 @@ teardown() {
 	es_health=$(curl -s "http://${es_host_port}/_cluster/health")
 
 	if [[ ! ${es_health} =~ "green" ]]; then
-		echo "[FAILED] Elasticsearch not healthy: ${es_health}"
+		_debug "[FAILED] Elasticsearch not healthy: ${es_health}"
 		return 3
 	fi
 
@@ -60,7 +60,7 @@ teardown() {
 	http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://${liferay_host_port}")
 
 	if [[ ${http_code} -lt 200 ]] || [[ ${http_code} -ge 400 ]]; then
-		echo "[FAILED] Liferay returned HTTP ${http_code}"
+		_debug "[FAILED] Liferay returned HTTP ${http_code}"
 		return 4
 	fi
 }

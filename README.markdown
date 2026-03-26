@@ -312,7 +312,7 @@ After Composer starts up, you will need to manually configure Liferay SAML to co
 
 1. Provide the following details:
     - Name: (provide name)
-    - Entity ID: `http://localhost:9080/realms/master` (this value can be found by accessing the metadata URL later in these steps)
+    - Entity ID: `http://localhost:9080/realms/master` (this value can be found by accessing the metadata URL later in these steps; if you have set the keycloak port to another value in `ports.env`, please replace `9080` with that port instead, here and in the other URLs below)
     - Enabled: true
     - Metadata URL: `http://keycloak:9080/realms/master/protocol/saml/descriptor`
         - \* Note: This URL should be *internal* to the docker network; to access it outside of the Docker network (i.e., on your host machine, replace `keycloak` with `localhost`.)

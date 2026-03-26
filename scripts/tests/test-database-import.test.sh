@@ -1,10 +1,9 @@
 #!/bin/bash
 
-_debug() {
-	if [[ "${DEBUG}" -gt 0 ]]; then
-		echo "    # ${*}" >&3
-	fi
-}
+load helpers/setup
+
+LEC_TEST_NAME_PREFIX="test-import"
+
 _download_database_dump() {
 	local filePath="${1}"
 	local baseUrl="https://storage.googleapis.com/liferay-devtools/liferay-environment-composer/test-resources/database-support-tests"
@@ -13,12 +12,6 @@ _download_database_dump() {
 		--create-dirs \
 		-o "${TEST_RESOURCES_DIR}/${filePath}" \
 		"${baseUrl}/${filePath}"
-}
-_lec() {
-	"${WORKSPACE_DIR}/scripts/cli/lec.sh" "${@}"
-}
-_timestamp() {
-	date +%s
 }
 
 _test_import_dump() {
@@ -34,10 +27,11 @@ _test_import_dump() {
 
 	cp "${TEST_RESOURCES_DIR}/${inputFilePath}" "./dumps/${inputFilePath//*\//}"
 
-	./gradlew clean importDatabaseDumps \
-		-Plr.docker.environment.lxc.backup.password=12345 \
-		-Plr.docker.environment.service.enabled["${databaseType}"]=true \
-		-Plr.docker.environment.service.enabled[liferay]=false
+	_writeProperty "lr.docker.environment.lxc.backup.password" "12345"
+	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
+	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
+
+	./gradlew clean importDatabaseDumps
 
 	local status=$?
 
@@ -47,9 +41,11 @@ _test_import_dump() {
 		return 1
 	fi
 
+	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
+
 	local sqlQueryOutput
 
-	sqlQueryOutput=$(./gradlew executeSQLQuery -Plr.docker.environment.service.enabled["${databaseType}"]=true -PsqlQuery="select urlTitle from JournalArticle;")
+	sqlQueryOutput=$(./gradlew executeSQLQuery -PsqlQuery="select urlTitle from JournalArticle;")
 
 	if [[ ! ${sqlQueryOutput} =~ "test-web-content-title" ]]; then
 		echo "[FAILED] expected data not found"
@@ -59,10 +55,7 @@ _test_import_dump() {
 }
 
 setup_file() {
-	_debug "TEARDOWN FILE ${BATS_TEST_NAME}"
-
-	WORKSPACE_DIR="$(git rev-parse --show-toplevel)"
-	export WORKSPACE_DIR
+	common_setup_file
 
 	BATS_TEST_NAME_PREFIX="Test import "
 	export BATS_TEST_NAME_PREFIX
@@ -75,33 +68,12 @@ setup_file() {
 		mkdir -p "${TEST_RESOURCES_DIR}"
 	fi
 	export TEST_RESOURCES_DIR
-
-	LIFERAY_ENVIRONMENT_COMPOSER_HOME="${WORKSPACE_DIR}"
-	export LIFERAY_ENVIRONMENT_COMPOSER_HOME
-
-	LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR="${BATS_SUITE_TMPDIR}"
-	export LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR
 }
 setup() {
-	_debug "SETUP ${BATS_TEST_NAME}"
-
-	local name
-	name="test-import-$(_timestamp)"
-
-	_lec init "${name}" dxp-2025.q4.12
-
-	TEST_WORKSPACE_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${name}"
-	export TEST_WORKSPACE_DIR
-
-	cd "${TEST_WORKSPACE_DIR}" || exit 1
+	common_setup
 }
 teardown() {
-	_debug "TEARDOWN ${BATS_TEST_NAME}"
-
-	docker compose down -v
-
-	_lec fn _clean "${TEST_WORKSPACE_DIR}"
-	_lec fn _removeWorktree "${TEST_WORKSPACE_DIR}"
+	common_teardown
 }
 
 # General archive tests

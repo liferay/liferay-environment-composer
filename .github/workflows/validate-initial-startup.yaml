@@ -1,0 +1,14 @@
+jobs:
+    validate-initial-startup:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+                with:
+                    submodules: true
+            -   uses: actions/setup-java@v4
+                with:
+                    distribution: zulu
+                    java-version: "21"
+            -   run: ./scripts/vendor/bats/bin/bats ./scripts/tests/test-initial-startup.test.sh
+name: Validate initial startup
+on: [workflow_dispatch]

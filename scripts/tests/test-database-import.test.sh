@@ -2,8 +2,6 @@
 
 load helpers/setup
 
-LEC_TEST_NAME_PREFIX="test-import"
-
 _download_database_dump() {
 	local filePath="${1}"
 	local baseUrl="https://storage.googleapis.com/liferay-devtools/liferay-environment-composer/test-resources/database-support-tests"
@@ -55,10 +53,10 @@ _test_import_dump() {
 }
 
 setup_file() {
-	common_setup_file
-
-	BATS_TEST_NAME_PREFIX="Test import "
+	BATS_TEST_NAME_PREFIX="Test import: "
 	export BATS_TEST_NAME_PREFIX
+
+	common_setup_file
 
 	TESTS_DIR="${WORKSPACE_DIR}/scripts/tests"
 	export TESTS_DIR

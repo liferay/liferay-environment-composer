@@ -43,6 +43,8 @@ _writeProperty() {
 }
 
 common_setup_file() {
+	_debug "SETUP ${BATS_TEST_FILE_NAME}"
+
 	WORKSPACE_DIR="$(git rev-parse --show-toplevel)"
 	export WORKSPACE_DIR
 

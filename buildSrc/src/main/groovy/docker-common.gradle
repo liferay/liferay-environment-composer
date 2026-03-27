@@ -210,6 +210,39 @@ ext {
 		return config.defaultCompanyVirtualHost["webId"]
 	}
 
+	getProjectBoundHostPorts = {
+		Set<Integer> boundPorts = new HashSet<>()
+
+		try {
+			String output = waitForCommand(
+				"docker ps --filter 'label=com.docker.compose.project=${config.namespace}' --format '{{.Ports}}'"
+			)
+
+			if (output.isEmpty()) {
+				return boundPorts
+			}
+
+			output.split("\n").each {
+				String line ->
+
+				line.split(",").each {
+					String portMapping ->
+
+					java.util.regex.Matcher matcher = (portMapping.trim() =~ /(?<hostPort>\d+)->/)
+
+					if (matcher.find()) {
+						boundPorts.add(matcher.group("hostPort") as Integer)
+					}
+				}
+			}
+		}
+		catch (Exception e) {
+			logger.info "Unable to query Docker for project ports: ${e.message}"
+		}
+
+		return boundPorts
+	}
+
 	getExistingVolumeNames = {
 		String volumeNameLines = waitForCommand("docker volume ls --filter 'name=^${config.namespace}_' --format '{{ .Name }}'")
 

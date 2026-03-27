@@ -21,6 +21,16 @@ _timestamp() {
 	date +%s
 }
 
+_normalize() {
+	local input="${1}"
+
+	echo "${input}" |
+	xargs |
+	tr '[:upper:]' '[:lower:]' |
+	tr -d '[:punct:][:special:]' |
+	tr '[:blank:]' '_'
+}
+
 _writeProperty() {
 	local key="${1}"
 	local value="${2}"

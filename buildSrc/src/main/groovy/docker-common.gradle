@@ -210,6 +210,35 @@ ext {
 		return config.defaultCompanyVirtualHost["webId"]
 	}
 
+	getFirstAvailablePort = {
+		Integer portLowest, Integer portHighest, Set<Integer> projectPorts ->
+
+		logger.info "Finding lowest available port in range: ${portLowest}-${portHighest}"
+
+		for (int port = portLowest; port <= portHighest; port++) {
+			if (projectPorts.contains(port)) {
+				logger.info "Port ${port} is bound by this project, reusing it."
+
+				return port
+			}
+
+			try {
+				ServerSocket socket = new ServerSocket(port)
+
+				socket.close()
+
+				logger.info "Port ${port} is available!"
+
+				return port
+			}
+			catch (IOException ex) {
+				logger.info "Port ${port} is in use by another process."
+			}
+		}
+
+		return null
+	}
+
 	getProjectBoundHostPorts = {
 		Set<Integer> boundPorts = new HashSet<>()
 

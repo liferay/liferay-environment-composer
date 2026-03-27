@@ -75,8 +75,10 @@ common_setup() {
 common_teardown() {
 	_debug "TEARDOWN ${BATS_TEST_NAME}"
 
-	docker compose down -v
+	if [[ -d "${TEST_WORKSPACE_DIR}" ]]; then
+		docker compose down -v
 
-	_lec fn _clean "${TEST_WORKSPACE_DIR}"
-	_lec fn _removeWorktree "${TEST_WORKSPACE_DIR}"
+		_lec fn _clean "${TEST_WORKSPACE_DIR}"
+		_lec fn _removeWorktree "${TEST_WORKSPACE_DIR}"
+	fi
 }

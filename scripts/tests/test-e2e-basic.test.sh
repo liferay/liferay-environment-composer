@@ -3,6 +3,9 @@
 load helpers/setup
 
 setup_file() {
+	BATS_TEST_NAME_PREFIX="End-to-end: "
+	export BATS_TEST_NAME_PREFIX
+
 	common_setup_file
 }
 
@@ -18,7 +21,7 @@ teardown() {
 	common_teardown
 }
 
-@test "End-to-end: Start environment with Liferay, MySQL, and Elasticsearch" {
+@test "Start environment with Liferay, MySQL, and Elasticsearch" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
 	if ! ./gradlew clean start; then

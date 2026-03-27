@@ -364,7 +364,34 @@ file("ports.env").withInputStream {
 
 	ports.load(portsFile)
 
-	environmentMap.putAll ports
+	if (config.useClustering) {
+		environmentMap.putAll ports
+
+		return
+	}
+
+	Set<Integer> projectPorts = getProjectBoundHostPorts()
+
+	environmentMap.putAll ports.collectEntries {
+		key, value ->
+
+		if (!value.contains("-")) {
+			return [key, value]
+		}
+
+		String[] parts = value.split("-")
+
+		Integer portLowest = parts[0] as Integer
+		Integer portHighest = parts[1] as Integer
+
+		Integer availablePort = getFirstAvailablePort(portLowest, portHighest, projectPorts)
+
+		if (availablePort == null) {
+			throw new GradleException("No free port found in range: ${value}. Please shut down other projects, or expand the port range in the ports.env file.")
+		}
+
+		return [key, availablePort.toString()]
+	}
 }
 
 if (config.useWebserver) {

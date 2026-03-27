@@ -56,8 +56,13 @@ common_setup_file() {
 common_setup() {
 	_debug "SETUP ${BATS_TEST_NAME}"
 
+	if [[ -z "${BATS_TEST_NAME_PREFIX}" ]]; then
+		echo "[ERROR] The BATS_TEST_NAME_PREFIX env variable must be set"
+		exit 1
+	fi
+
 	local name
-	name="${LEC_TEST_NAME_PREFIX}-$(_timestamp)"
+	name="$(_normalize "${BATS_TEST_NAME_PREFIX}")-${BATS_TEST_NUMBER}-$(_timestamp)"
 
 	_lec init "${name}" dxp-2025.q4.12
 

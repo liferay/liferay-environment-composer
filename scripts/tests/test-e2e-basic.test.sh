@@ -2,13 +2,6 @@
 
 load helpers/setup
 
-_getServicePort() {
-	local serviceName="${1}"
-	local internalPort="${2}"
-
-	docker compose port "${serviceName}" "${internalPort}" | sed 's,^.*:,,g'
-}
-
 setup_file() {
 	common_setup_file
 }

@@ -6,6 +6,13 @@ _debug() {
 	fi
 }
 
+_getServicePort() {
+	local serviceName="${1}"
+	local internalPort="${2}"
+
+	docker compose port "${serviceName}" "${internalPort}" | sed 's,^.*:,,g'
+}
+
 _lec() {
 	"${WORKSPACE_DIR}/scripts/cli/lec.sh" "${@}"
 }

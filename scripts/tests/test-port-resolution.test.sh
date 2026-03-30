@@ -40,12 +40,12 @@ setup() {
 }
 
 teardown() {
-	if [[ -n "${BLOCKER_DIR}" ]] && [[ -d "${BLOCKER_DIR}" ]]; then
+	if [[ -n "${BLOCKER_WORKSPACE_DIR}" ]] && [[ -d "${BLOCKER_WORKSPACE_DIR}" ]]; then
 		_debug "Cleaning up blocker project"
 
-		cd "${BLOCKER_DIR}" && docker compose down -v
-		_lec fn _clean "${BLOCKER_DIR}"
-		_lec fn _removeWorktree "${BLOCKER_DIR}"
+		cd "${BLOCKER_WORKSPACE_DIR}" && docker compose down -v
+		_lec fn _clean "${BLOCKER_WORKSPACE_DIR}"
+		_lec fn _removeWorktree "${BLOCKER_WORKSPACE_DIR}"
 
 		cd "${TEST_WORKSPACE_DIR}" || true
 	fi
@@ -113,10 +113,10 @@ teardown() {
 
 	_lec init "${blocker_name}" dxp-2025.q4.12
 
-	BLOCKER_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${blocker_name}"
-	export BLOCKER_DIR
+	BLOCKER_WORKSPACE_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${blocker_name}"
+	export BLOCKER_WORKSPACE_DIR
 
-	cd "${BLOCKER_DIR}"
+	cd "${BLOCKER_WORKSPACE_DIR}"
 
 	_setTestPortRanges
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
@@ -192,10 +192,10 @@ teardown() {
 
 	_lec init "${blocker_name}" dxp-2025.q4.12
 
-	BLOCKER_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${blocker_name}"
-	export BLOCKER_DIR
+	BLOCKER_WORKSPACE_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${blocker_name}"
+	export BLOCKER_WORKSPACE_DIR
 
-	cd "${BLOCKER_DIR}"
+	cd "${BLOCKER_WORKSPACE_DIR}"
 
 	_setTestPortRanges
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
@@ -229,13 +229,13 @@ teardown() {
 	fi
 
 	# Stop the blocker project, freeing port 48321
-	cd "${BLOCKER_DIR}"
+	cd "${BLOCKER_WORKSPACE_DIR}"
 
 	docker compose down -v
-	_lec fn _clean "${BLOCKER_DIR}"
-	_lec fn _removeWorktree "${BLOCKER_DIR}"
+	_lec fn _clean "${BLOCKER_WORKSPACE_DIR}"
+	_lec fn _removeWorktree "${BLOCKER_WORKSPACE_DIR}"
 
-	BLOCKER_DIR=""
+	BLOCKER_WORKSPACE_DIR=""
 
 	# Re-run gradle on our project — should reuse 48322, not drop to 48321
 	cd "${TEST_WORKSPACE_DIR}"

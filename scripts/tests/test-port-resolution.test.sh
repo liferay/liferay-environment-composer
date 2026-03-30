@@ -86,53 +86,20 @@ teardown() {
 @test "Ranges resolve to specific ports" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	./gradlew help
+	_resolvePorts
 
-	local liferay_port
-	liferay_port="$(_getEnvPort "LIFERAY_PORT")"
-
-	if [[ "${liferay_port}" == *"-"* ]]; then
-		_debug "[FAILED] LIFERAY_PORT is still a range: ${liferay_port}"
-		return 1
-	fi
-
-	local db_port
-	db_port="$(_getEnvPort "DATABASE_PORT")"
-
-	if [[ "${db_port}" == *"-"* ]]; then
-		_debug "[FAILED] DATABASE_PORT is still a range: ${db_port}"
-		return 2
-	fi
-
-	local es_port
-	es_port="$(_getEnvPort "ELASTICSEARCH_HTTP_PORT")"
-
-	if [[ "${es_port}" == *"-"* ]]; then
-		_debug "[FAILED] ELASTICSEARCH_HTTP_PORT is still a range: ${es_port}"
-		return 3
-	fi
+	_assertPortResolved "LIFERAY_PORT"
+	_assertPortResolved "DATABASE_PORT"
+	_assertPortResolved "ELASTICSEARCH_HTTP_PORT"
 }
 
 @test "Resolves to lowest port when all are free" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	./gradlew help
+	_resolvePorts
 
-	local liferay_port
-	liferay_port="$(_getEnvPort "LIFERAY_PORT")"
-
-	if [[ "${liferay_port}" != "48080" ]]; then
-		_debug "[FAILED] expected 48080, got ${liferay_port}"
-		return 1
-	fi
-
-	local db_port
-	db_port="$(_getEnvPort "DATABASE_PORT")"
-
-	if [[ "${db_port}" != "48321" ]]; then
-		_debug "[FAILED] expected 48321, got ${db_port}"
-		return 2
-	fi
+	_assertPortEquals "LIFERAY_PORT" "48080"
+	_assertPortEquals "DATABASE_PORT" "48321"
 }
 
 @test "Skips port occupied by another project" {
@@ -169,22 +136,9 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	./gradlew help
+	_resolvePorts
 
-	local test_db_port
-	test_db_port="$(_getEnvPort "DATABASE_PORT")"
-
-	_debug "Test project DATABASE_PORT: ${test_db_port}"
-
-	if [[ "${test_db_port}" == "${blocker_db_port}" ]]; then
-		_debug "[FAILED] test project resolved to same port as blocker: ${test_db_port}"
-		return 2
-	fi
-
-	if [[ "${test_db_port}" != "48322" ]]; then
-		_debug "[FAILED] expected 48322, got ${test_db_port}"
-		return 3
-	fi
+	_assertPortEquals "DATABASE_PORT" "48322"
 }
 
 @test "Ports are stable when project is running" {
@@ -202,7 +156,7 @@ teardown() {
 	local ports_before
 	ports_before="$(grep "PORT=" .env | sort)"
 
-	./gradlew help
+	_resolvePorts
 
 	local ports_after
 	ports_after="$(grep "PORT=" .env | sort)"
@@ -250,15 +204,7 @@ teardown() {
 		return 2
 	fi
 
-	local db_port_before
-	db_port_before="$(_getEnvPort "DATABASE_PORT")"
-
-	_debug "Test project DATABASE_PORT after first start: ${db_port_before}"
-
-	if [[ "${db_port_before}" != "48322" ]]; then
-		_debug "[FAILED] expected 48322 during initial start, got ${db_port_before}"
-		return 3
-	fi
+	_assertPortEquals "DATABASE_PORT" "48322"
 
 	# Stop the blocker project, freeing port 48321
 	cd "${BLOCKER_WORKSPACE_DIR}"
@@ -272,15 +218,7 @@ teardown() {
 	# Re-run gradle on our project — should reuse 48322, not drop to 48321
 	cd "${TEST_WORKSPACE_DIR}"
 
-	./gradlew help
+	_resolvePorts
 
-	local db_port_after
-	db_port_after="$(_getEnvPort "DATABASE_PORT")"
-
-	_debug "Test project DATABASE_PORT after blocker stopped: ${db_port_after}"
-
-	if [[ "${db_port_after}" != "48322" ]]; then
-		_debug "[FAILED] expected port to stay at 48322, got ${db_port_after}"
-		return 4
-	fi
+	_assertPortEquals "DATABASE_PORT" "48322"
 }

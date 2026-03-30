@@ -93,8 +93,11 @@ To shut down the environment, run `./gradlew stop`.
 - [Shut down environment](#shut-down-environment)
 - [Restart environment](#restart-environment)
 - [Export container data](#export-container-data)
+- [Execute a SQL query](#execute-a-sql-query)
 - [Zip the workspace for sharing](#zip-the-workspace-for-sharing)
 - [Export the Liferay logs, reports, and routes directories](#export-the-liferay-logs,-reports,-and-routes-directories)
+- [Print Liferay bundle info](#print-liferay-bundle-info)
+- [List admin users](#list-admin-users)
 - [Clean up prepared hotfixes](#clean-up-prepared-hotfixes)
 - [Clean up all prepared data and built Liferay Docker images](#clean-up-all-prepared-data-and-built-liferay-docker-images)
 
@@ -728,6 +731,14 @@ This will also stop the environment, so please see the previous note which descr
 ./gradlew exportContainerData
 ```
 
+#### Execute a SQL query
+
+```
+./gradlew executeSQLQuery -PsqlQuery="SELECT * FROM User_"
+```
+
+This executes a SQL query against the running database. This is intended for tests, but can be used as a general utility.
+
 #### Zip the workspace for sharing
 
 ```
@@ -741,6 +752,22 @@ This will also stop the environment, so please see the previous note which descr
 ```
 
 This will copy the logs, reports, and routes directories to the `./exports/liferay` directory on your machine (host machine).
+
+#### Print Liferay bundle info
+
+```
+./gradlew printBundleInfo
+```
+
+This prints version and product information about the running Liferay bundle.
+
+#### List admin users
+
+```
+./gradlew listAdminUsers
+```
+
+This lists administrator users and outputs login URLs for all companies.
 
 #### Clean up prepared hotfixes
 
@@ -778,16 +805,18 @@ This will provide the `lec` script alias and the `lecd` shell function.
 
 ### Script Usage
 
-Create a new workspaces:
+Create a new workspace:
 
 ```sh
-lec init # No args
+lec init # No args, prompts for ticket and version
 
 lec init LPP-12345 # Pass in the LPP ticket number
 
 lec init LPP-12345 dxp-2025.q3.0 # Pass in the LPP ticket number and the Liferay version
 
 lec init LPP-12345 abc1prd # Pass in the LPP ticket number and the SaaS environment name
+
+lec init LPP-12345 dxp-2025.q3.0 --start # Create and immediately start the project
 ```
 
 The `lec-init` shell function is the same as `lec init`, but will also jump to the new project after it is created.
@@ -804,10 +833,24 @@ Stop the workspace:
 lec stop # Shuts down the environment
 ```
 
+Restart the workspace:
+
+```sh
+lec restart # Restarts a running environment
+
+lec restart --clean # Removes Docker volumes and images during shutdown, then restarts
+```
+
 Stop the workspace and delete the Docker volumes:
 
 ```sh
 lec clean # Shuts down the environment and deletes the Docker volumes
+```
+
+Export container data:
+
+```sh
+lec exportData # Exports container data for the current project
 ```
 
 Print the exposed ports for the project's services:
@@ -822,11 +865,33 @@ Completely tear down and remove one or more Composer projects:
 lec remove # Choose one or more projects to remove
 ```
 
-List various entities
+Save a workspace for sharing:
+
+```sh
+lec share # Zip up the workspace for sharing
+
+lec share --export # Export container data before saving
+```
+
+List various entities:
 
 ```sh
 lec list # Displays entities that can be listed; `lec list <entity>` lists all entries of the selected entity.
 lec list releases # Displays all releases.
+```
+
+Check for updates:
+
+```sh
+lec update # Update to the latest stable release
+
+lec update --unstable # Update to the latest master branch
+```
+
+Print the current version:
+
+```sh
+lec version
 ```
 
 Jump to a workspace:
@@ -835,3 +900,15 @@ Jump to a workspace:
 lecd # Choose from a list
 lecd workspace-name # Pre-filter the list by name. If only one matches, jump there.
 ```
+
+#### Project flag
+
+Most commands that operate on a project accept the `-p` or `--project` flag to specify a project directory or name. If not provided, the current working directory is used.
+
+```sh
+lec start -p lec-LPP-12345 # Start a specific project by name
+
+lec stop --project /path/to/project # Stop a specific project by path
+```
+
+Supported commands: `clean`, `exportData`, `importDLStructure`, `remove`, `share`, `start`, and `stop`.

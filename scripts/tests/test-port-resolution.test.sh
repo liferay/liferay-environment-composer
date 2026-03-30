@@ -109,7 +109,8 @@ teardown() {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
 	# Start a blocker project that occupies the lowest port in the DATABASE_PORT range
-	local blocker_name="blocker-$(_timestamp)"
+	local blocker_name
+	blocker_name="blocker-$(_timestamp)"
 
 	_lec init "${blocker_name}" dxp-2025.q4.12
 
@@ -188,7 +189,8 @@ teardown() {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
 	# Start a blocker project to occupy the lowest DATABASE_PORT
-	local blocker_name="blocker-$(_timestamp)"
+	local blocker_name
+	blocker_name="blocker-$(_timestamp)"
 
 	_lec init "${blocker_name}" dxp-2025.q4.12
 

@@ -59,7 +59,7 @@ teardown() {
 	./gradlew help
 
 	local liferay_port
-	liferay_port=$(_getEnvPort "LIFERAY_PORT")
+	liferay_port="$(_getEnvPort "LIFERAY_PORT")"
 
 	if [[ "${liferay_port}" == *"-"* ]]; then
 		_debug "[FAILED] LIFERAY_PORT is still a range: ${liferay_port}"
@@ -67,7 +67,7 @@ teardown() {
 	fi
 
 	local db_port
-	db_port=$(_getEnvPort "DATABASE_PORT")
+	db_port="$(_getEnvPort "DATABASE_PORT")"
 
 	if [[ "${db_port}" == *"-"* ]]; then
 		_debug "[FAILED] DATABASE_PORT is still a range: ${db_port}"
@@ -75,7 +75,7 @@ teardown() {
 	fi
 
 	local es_port
-	es_port=$(_getEnvPort "ELASTICSEARCH_HTTP_PORT")
+	es_port="$(_getEnvPort "ELASTICSEARCH_HTTP_PORT")"
 
 	if [[ "${es_port}" == *"-"* ]]; then
 		_debug "[FAILED] ELASTICSEARCH_HTTP_PORT is still a range: ${es_port}"
@@ -89,7 +89,7 @@ teardown() {
 	./gradlew help
 
 	local liferay_port
-	liferay_port=$(_getEnvPort "LIFERAY_PORT")
+	liferay_port="$(_getEnvPort "LIFERAY_PORT")"
 
 	if [[ "${liferay_port}" != "48080" ]]; then
 		_debug "[FAILED] expected 48080, got ${liferay_port}"
@@ -97,7 +97,7 @@ teardown() {
 	fi
 
 	local db_port
-	db_port=$(_getEnvPort "DATABASE_PORT")
+	db_port="$(_getEnvPort "DATABASE_PORT")"
 
 	if [[ "${db_port}" != "48321" ]]; then
 		_debug "[FAILED] expected 48321, got ${db_port}"
@@ -128,7 +128,7 @@ teardown() {
 	fi
 
 	local blocker_db_port
-	blocker_db_port=$(_getEnvPort "DATABASE_PORT")
+	blocker_db_port="$(_getEnvPort "DATABASE_PORT")"
 
 	_debug "Blocker project DATABASE_PORT: ${blocker_db_port}"
 
@@ -141,7 +141,7 @@ teardown() {
 	./gradlew help
 
 	local test_db_port
-	test_db_port=$(_getEnvPort "DATABASE_PORT")
+	test_db_port="$(_getEnvPort "DATABASE_PORT")"
 
 	_debug "Test project DATABASE_PORT: ${test_db_port}"
 
@@ -169,12 +169,12 @@ teardown() {
 	fi
 
 	local ports_before
-	ports_before=$(grep "PORT=" .env | sort)
+	ports_before="$(grep "PORT=" .env | sort)"
 
 	./gradlew help
 
 	local ports_after
-	ports_after=$(grep "PORT=" .env | sort)
+	ports_after="$(grep "PORT=" .env | sort)"
 
 	if [[ "${ports_before}" != "${ports_after}" ]]; then
 		_debug "[FAILED] Ports changed between runs"
@@ -219,7 +219,7 @@ teardown() {
 	fi
 
 	local db_port_before
-	db_port_before=$(_getEnvPort "DATABASE_PORT")
+	db_port_before="$(_getEnvPort "DATABASE_PORT")"
 
 	_debug "Test project DATABASE_PORT after first start: ${db_port_before}"
 
@@ -243,7 +243,7 @@ teardown() {
 	./gradlew help
 
 	local db_port_after
-	db_port_after=$(_getEnvPort "DATABASE_PORT")
+	db_port_after="$(_getEnvPort "DATABASE_PORT")"
 
 	_debug "Test project DATABASE_PORT after blocker stopped: ${db_port_after}"
 

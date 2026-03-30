@@ -221,7 +221,9 @@ ext {
 
 				return port
 			}
+		}
 
+		for (int port = portLowest; port <= portHighest; port++) {
 			try {
 				ServerSocket socket = new ServerSocket(port)
 

@@ -2,10 +2,40 @@
 
 load helpers/setup
 
+_assertPortEquals() {
+	local key="${1}"
+	local expected="${2}"
+
+	local actual
+	actual="$(_getEnvPort "${key}")"
+
+	if [[ "${actual}" != "${expected}" ]]; then
+		_debug "[FAILED] ${key}: expected ${expected}, got ${actual}"
+		return 1
+	fi
+}
+
+_assertPortResolved() {
+	local key="${1}"
+
+	local value
+	value="$(_getEnvPort "${key}")"
+
+	if [[ "${value}" =~ - ]]; then
+		_debug "[FAILED] ${key} is still a range: ${value}"
+		return 1
+	fi
+}
+
 _getEnvPort() {
 	local key="${1}"
 
 	grep "^${key}=" .env | cut -d= -f2
+}
+
+_resolvePorts() {
+	# Port resolution runs during Gradle's configuration phase, so any task triggers it
+	./gradlew help
 }
 
 _setPortRange() {

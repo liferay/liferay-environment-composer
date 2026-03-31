@@ -22,7 +22,7 @@ _test_initial_startup() {
 
 	local sqlQueryOutput
 
-	sqlQueryOutput=$(./gradlew executeSQLQuery -PsqlQuery="select emailAddress from User_ where screenName = 'test';")
+	sqlQueryOutput="$(./gradlew executeSQLQuery -PsqlQuery="select emailAddress from User_ where screenName = 'test';")"
 
 	if [[ ! ${sqlQueryOutput} =~ test@liferay.com ]]; then
 		echo "[FAILED] expected data not found"
@@ -36,7 +36,7 @@ _test_initial_startup() {
 
 	local http_response_code
 
-	http_response_code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${liferay_port}")
+	http_response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${liferay_port}")"
 
 	if [[ ${http_response_code} != "200" ]]; then
 		echo "[FAILED] expected response code not found"

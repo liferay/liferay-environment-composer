@@ -30,9 +30,13 @@ _test_initial_startup() {
 		return 2
 	fi
 
+	local liferay_port
+
+	liferay_port="$(_getServicePort "liferay" "8080")"
+
 	local http_response_code
 
-	http_response_code="$(curl -s -o /dev/null -w' %{http_code}' http://localhost:8080)"
+	http_response_code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${liferay_port}")
 
 	if [[ ${http_response_code} != "200" ]]; then
 		echo "[FAILED] expected response code not found"

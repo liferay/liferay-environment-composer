@@ -7,9 +7,10 @@ _test_initial_startup() {
 
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	./gradlew clean start \
-		-Plr.docker.environment.service.enabled["${databaseType}"]=true \
-		-Plr.docker.environment.service.enabled[liferay]=true
+	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
+	_writeProperty "lr.docker.environment.service.enabled[liferay]" "true"
+
+	./gradlew clean start
 
 	local status=$?
 

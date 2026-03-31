@@ -244,6 +244,14 @@ class Config {
 
 		this.useKeycloak = this.services.contains("keycloak")
 
+		this.useLdap = this.services.contains("ldap")
+
+		Integer ldapUserCountProperty = project.findProperty("lr.docker.environment.ldap.users.count") as Integer
+
+		if (ldapUserCountProperty != null) {
+			this.ldapUserCount = ldapUserCountProperty
+		}
+
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
@@ -445,6 +453,7 @@ class Config {
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
 	public boolean isNightly = false
+	public int ldapUserCount = 0
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null
@@ -469,6 +478,7 @@ class Config {
 	public boolean useDatabasePostgreSQL = false
 	public boolean useDatabaseSQLServer = false
 	public boolean useKeycloak = false
+	public boolean useLdap = false
 	public boolean useLiferay = false
 	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"

@@ -1,0 +1,53 @@
+tasks.register("createUsers") {
+    onlyIf("using the LDAP service") {
+        config.useLdap
+    }
+    onlyIf("creating LDAP users") {
+        config.ldapUserCount > 0
+    }
+
+    doFirst {
+        waitForContainer("ldap")
+
+        Integer ldapUserCount = config.ldapUserCount
+
+        String ldapUrl = System.getenv("LDAP_URL") ?: "ldap://localhost"
+        String ldapBindDn = System.getenv("LDAP_BIND_DN") ?: "cn=admin,dc=liferay,dc=com"
+        String ldapAdminPassword = System.getenv("LDAP_ADMIN_PASSWORD") ?: "test"
+        String ldapBaseDn = System.getenv("LDAP_BASE_DN") ?: "dc=liferay,dc=com"
+
+        println "Creating ldif file"
+
+        File ldifFile = File.createTempFile("ldap-users-", ".ldif")
+        ldifFile.deleteOnExit()
+
+        ldifFile.withWriter {writer ->
+            for(int i=1;i<=ldapUserCount;i++) {
+                String username = "testuser${i}"
+                writer.write("""\
+dn: cn=${username},${ldapBaseDn}
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: ${username}
+sn: User${i}
+givenName: Test${i}
+mail: ${username}@liferay.com
+userPassword: test
+
+""")
+            }
+        }
+
+        println "Attempting to create ${ldapUserCount} users in the LDAP service..."
+
+        exec {
+            executable "docker"
+            args "compose", "exec", "-T", "ldap", "ldapadd", "-x", "-H", ldapUrl, "-D", ldapBindDn, "-w", ldapAdminPassword, "-c"
+            standardInput = new FileInputStream(ldifFile)
+        }
+
+        println "Finished creating ${ldapUserCount} LDAP users!"
+    }
+}

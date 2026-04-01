@@ -311,6 +311,7 @@ composeUp {
 	dependsOn ":importContainerData"
 	dependsOn ":importDatabaseDumps"
 	dependsOn ":createUsers"
+	dependsOn ":createGroups"
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"

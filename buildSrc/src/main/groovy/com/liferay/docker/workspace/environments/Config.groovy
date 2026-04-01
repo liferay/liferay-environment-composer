@@ -246,7 +246,19 @@ class Config {
 
 		this.useLdap = this.services.contains("ldap")
 
-		Integer ldapUserCountProperty = project.findProperty("lr.docker.environment.ldap.users.count") as Integer
+		String ldapGroupAssignmentStrategyProperty = project.findProperty("lr.docker.environment.ldap.group.assignment.strategy")
+
+		if (ldapGroupAssignmentStrategyProperty != null) {
+			this.ldapGroupAssignmentStrategy = ldapGroupAssignmentStrategyProperty
+		}
+
+		Integer ldapGroupCountProperty = project.findProperty("lr.docker.environment.ldap.group.count") as Integer
+
+		if (ldapGroupCountProperty != null) {
+			this.ldapGroupCount = ldapGroupCountProperty
+		}
+
+		Integer ldapUserCountProperty = project.findProperty("lr.docker.environment.ldap.user.count") as Integer
 
 		if (ldapUserCountProperty != null) {
 			this.ldapUserCount = ldapUserCountProperty
@@ -453,6 +465,8 @@ class Config {
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
 	public boolean isNightly = false
+	public String ldapGroupAssignmentStrategy = "all"
+	public int ldapGroupCount = 0
 	public int ldapUserCount = 0
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"

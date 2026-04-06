@@ -49,7 +49,7 @@ _getHttpStatus() {
 
 	local http_code
 
-	http_code="$(curl -s -o /dev/null -w "%{http_code}" "${url}")"
+	curl -s -o /dev/null -w "%{http_code}" "${url}"
 }
 
 _getServicePort() {

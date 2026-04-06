@@ -22,19 +22,7 @@ _test_initial_startup() {
 
 	_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
 
-	local liferay_port
-
-	liferay_port="$(_getServicePort "liferay" "8080")"
-
-	local http_response_code
-
-	http_response_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${liferay_port}")"
-
-	if [[ ${http_response_code} != "200" ]]; then
-		echo "[FAILED] expected response code not found"
-
-		return 3
-	fi
+	_assertLiferayStartup
 }
 
 setup_file() {

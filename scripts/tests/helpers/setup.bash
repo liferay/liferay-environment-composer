@@ -6,6 +6,21 @@ _debug() {
 	fi
 }
 
+_assertLiferayStartup() {
+	local liferayPort
+
+	liferayPort="$(_getServicePort "liferay" "8080")"
+
+	local http_code
+
+	http_code="$(_getHttpStatus "http://localhost:${liferayPort}")"
+
+	if (( http_code < 200 )) || (( http_code >= 400 )); then
+		_debug "[FAILED] Liferay returned HTTP ${http_code}"
+		return 3
+	fi
+}
+
 _assertSqlQueryOutputContains() {
 	local sqlQuery="${1}"
 	local expectedOutput="${2}"
@@ -19,6 +34,12 @@ _assertSqlQueryOutputContains() {
 
 		return 4
 	fi
+}
+
+_getHttpStatus() {
+	local http_code
+
+	http_code="$(curl -s -o /dev/null -w "%{http_code}" "${url}")"
 }
 
 _getServicePort() {

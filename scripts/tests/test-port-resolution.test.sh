@@ -120,10 +120,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	if ! ./gradlew clean start; then
-		_debug "[FAILED] blocker project could not start"
-		return 1
-	fi
+	_assertComposerStartup
 
 	local blocker_db_port
 	blocker_db_port="$(_getEnvPort "DATABASE_PORT")"
@@ -147,11 +144,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	if ! ./gradlew clean start; then
-		_debug "[FAILED] could not start"
-		_debug "$(cat .env)"
-		return 1
-	fi
+	_assertComposerStartup
 
 	local ports_before
 	ports_before="$(grep "PORT=" .env | sort)"
@@ -187,10 +180,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	if ! ./gradlew clean start; then
-		_debug "[FAILED] blocker project could not start"
-		return 1
-	fi
+	_assertComposerStartup
 
 	# Switch to our test project and start it — should get 48322 since blocker has 48321
 	cd "${TEST_WORKSPACE_DIR}"
@@ -198,11 +188,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	if ! ./gradlew clean start; then
-		_debug "[FAILED] test project could not start"
-		_debug "$(cat .env)"
-		return 2
-	fi
+	_assertComposerStartup
 
 	_assertPortEquals "DATABASE_PORT" "48322"
 

@@ -25,7 +25,7 @@ _assertLiferayStartup() {
 
 	if (( http_code < 200 )) || (( http_code >= 400 )); then
 		_debug "[FAILED] Liferay returned HTTP ${http_code}"
-		return 3
+		return 1
 	fi
 }
 
@@ -40,7 +40,7 @@ _assertSqlQueryOutputContains() {
 	if [[ ! ${sqlQueryOutput} =~ ${expectedOutput} ]]; then
 		echo "[FAILED] expected data not found"
 
-		return 4
+		return 1
 	fi
 }
 

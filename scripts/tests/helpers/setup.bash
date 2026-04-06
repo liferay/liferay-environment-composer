@@ -73,7 +73,7 @@ _normalize() {
 	echo "${input}" |
 	xargs |
 	tr '[:upper:]' '[:lower:]' |
-	tr -d '[:punct:][:special:]' |
+	tr -d '[:punct:]' |
 	tr '[:blank:]' '_'
 }
 

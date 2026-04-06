@@ -1,3 +1,9 @@
 [submodule "scripts/vendor/bats"]
 	path = scripts/vendor/bats
 	url = https://github.com/bats-core/bats-core.git
+[submodule "scripts/vendor/bats-support"]
+	path = scripts/vendor/bats-support
+	url = https://github.com/bats-core/bats-support
+[submodule "scripts/vendor/bats-assert"]
+	path = scripts/vendor/bats-assert
+	url = https://github.com/bats-core/bats-assert

@@ -6,7 +6,7 @@ _debug() {
 	fi
 }
 
-_assertComposerStartup() {
+_assertStartup() {
 	if ! ./gradlew clean start; then
 		_debug "Dumping .env file:"
 		_debug "$(cat .env)"

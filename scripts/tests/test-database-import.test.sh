@@ -39,8 +39,6 @@ _test_import_dump() {
 		return 1
 	fi
 
-	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
-
 	_assertSqlQueryOutputContains "select urlTitle from JournalArticle;" "test-web-content-title"
 }
 

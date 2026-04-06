@@ -6,6 +6,14 @@ _debug() {
 	fi
 }
 
+_assertComposerStartup() {
+	if ! ./gradlew clean start; then
+		_debug "Dumping .env file:"
+		_debug "$(cat .env)"
+		return 1
+	fi
+}
+
 _assertLiferayStartup() {
 	local liferayPort
 

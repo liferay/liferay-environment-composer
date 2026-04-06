@@ -24,11 +24,7 @@ teardown() {
 @test "Start environment with Liferay, MySQL, and Elasticsearch" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	if ! ./gradlew clean start; then
-		_debug "Dumping .env file:"
-		_debug "$(cat .env)"
-		return 1
-	fi
+	_assertComposerStartup
 
 	# Verify containers are running (expect liferay, mysql, elasticsearch)
 	local running_count

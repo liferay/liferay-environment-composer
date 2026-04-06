@@ -10,15 +10,7 @@ _test_initial_startup() {
 	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "true"
 
-	./gradlew clean start
-
-	local status=$?
-
-	if [[ ${status} != 0 ]]; then
-		echo "[FAILED] could not start up:"
-
-		return 1
-	fi
+	_assertComposerStartup
 
 	_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
 

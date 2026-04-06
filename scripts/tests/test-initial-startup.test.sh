@@ -20,15 +20,7 @@ _test_initial_startup() {
 		return 1
 	fi
 
-	local sqlQueryOutput
-
-	sqlQueryOutput="$(./gradlew executeSQLQuery -PsqlQuery="select emailAddress from User_ where screenName = 'test';")"
-
-	if [[ ! ${sqlQueryOutput} =~ test@liferay.com ]]; then
-		echo "[FAILED] expected data not found"
-
-		return 2
-	fi
+	_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
 
 	local liferay_port
 

@@ -6,6 +6,21 @@ _debug() {
 	fi
 }
 
+_assertSqlQueryOutputContains() {
+	local sqlQuery="${1}"
+	local expectedOutput="${2}"
+
+	local sqlQueryOutput
+
+	sqlQueryOutput="$(./gradlew executeSQLQuery -PsqlQuery="${sqlQuery}")"
+
+	if [[ ! ${sqlQueryOutput} =~ ${expectedOutput} ]]; then
+		echo "[FAILED] expected data not found"
+
+		return 4
+	fi
+}
+
 _getServicePort() {
 	local serviceName="${1}"
 	local internalPort="${2}"

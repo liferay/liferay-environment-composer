@@ -41,15 +41,7 @@ _test_import_dump() {
 
 	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
 
-	local sqlQueryOutput
-
-	sqlQueryOutput=$(./gradlew executeSQLQuery -PsqlQuery="select urlTitle from JournalArticle;")
-
-	if [[ ! ${sqlQueryOutput} =~ "test-web-content-title" ]]; then
-		echo "[FAILED] expected data not found"
-
-		return 2
-	fi
+	_assertSqlQueryOutputContains "select urlTitle from JournalArticle;" "test-web-content-title"
 }
 
 setup_file() {

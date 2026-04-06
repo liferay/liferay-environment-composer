@@ -9,7 +9,7 @@ _test_initial_startup() {
 
 	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
 
-	_assertComposerStartup
+	_assertStartup
 
 	_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
 

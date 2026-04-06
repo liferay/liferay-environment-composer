@@ -44,9 +44,6 @@ teardown() {
 	local es_host_port
 	es_host_port=$(_getServicePort elasticsearch 9200)
 
-	local liferay_host_port
-	liferay_host_port=$(_getServicePort liferay 8080)
-
 	# Verify Elasticsearch is healthy
 	local es_health
 	es_health=$(curl -s "http://localhost:${es_host_port}/_cluster/health")
@@ -57,11 +54,5 @@ teardown() {
 	fi
 
 	# Verify Liferay is reachable
-	local http_code
-	http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${liferay_host_port}")
-
-	if [[ ${http_code} -lt 200 ]] || [[ ${http_code} -ge 400 ]]; then
-		_debug "[FAILED] Liferay returned HTTP ${http_code}"
-		return 4
-	fi
+	_assertLiferayStartup
 }

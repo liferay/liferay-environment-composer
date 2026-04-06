@@ -8,7 +8,6 @@ _test_initial_startup() {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
 	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
-	_writeProperty "lr.docker.environment.service.enabled[liferay]" "true"
 
 	_assertComposerStartup
 
@@ -26,6 +25,8 @@ setup_file() {
 
 setup() {
 	common_setup
+
+	_writeProperty "lr.docker.environment.service.enabled[liferay]" "true"
 }
 
 teardown() {

@@ -116,6 +116,9 @@ common_setup() {
 	TEST_WORKSPACE_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${name}"
 	export TEST_WORKSPACE_DIR
 
+	load "${LIFERAY_ENVIRONMENT_COMPOSER_HOME}/scripts/vendor/bats-support/load"
+	load "${LIFERAY_ENVIRONMENT_COMPOSER_HOME}/scripts/vendor/bats-assert/load"
+
 	cd "${TEST_WORKSPACE_DIR}" || exit 1
 }
 

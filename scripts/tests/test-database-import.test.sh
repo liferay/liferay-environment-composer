@@ -29,15 +29,9 @@ _test_import_dump() {
 	_writeProperty "lr.docker.environment.service.enabled[${databaseType}]" "true"
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 
-	./gradlew clean importDatabaseDumps
+	run ./gradlew clean importDatabaseDumps
 
-	local status=$?
-
-	if [[ ${status} != 0 ]]; then
-		echo "[FAILED] could not start up:"
-
-		return 1
-	fi
+	assert_success
 
 	_assertSqlQueryOutputContains "select urlTitle from JournalArticle;" "test-web-content-title"
 }

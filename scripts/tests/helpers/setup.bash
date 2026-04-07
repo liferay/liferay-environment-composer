@@ -7,13 +7,10 @@ _debug() {
 }
 
 _assertStartup() {
-	if ! ./gradlew clean start; then
-		_debug "Dumping .env file:"
-		_debug "$(cat .env)"
-		return 1
-	fi
-}
+	run ./gradlew clean start
 
+	assert_success
+}
 
 _assertValidHttpStatusRange() {
 	local url="${1}"
@@ -22,25 +19,17 @@ _assertValidHttpStatusRange() {
 
 	http_code="$(_getHttpStatus "${url}")"
 
-	if (( http_code < 200 )) || (( http_code >= 400 )); then
-		_debug "[FAILED] Liferay returned HTTP ${http_code}"
-		return 1
-	fi
+	assert [ "${http_code}" -ge 200 ]
+	assert [ "${http_code}" -lt 400 ]
 }
 
 _assertSqlQueryOutputContains() {
 	local sqlQuery="${1}"
 	local expectedOutput="${2}"
 
-	local sqlQueryOutput
+	run ./gradlew executeSQLQuery -q -PsqlQuery="${sqlQuery}"
 
-	sqlQueryOutput="$(./gradlew executeSQLQuery -PsqlQuery="${sqlQuery}")"
-
-	if [[ ! ${sqlQueryOutput} =~ ${expectedOutput} ]]; then
-		echo "[FAILED] expected data not found"
-
-		return 1
-	fi
+	assert_output --partial "${expectedOutput}"
 }
 
 _getHttpStatus() {

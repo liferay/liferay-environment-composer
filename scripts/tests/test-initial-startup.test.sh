@@ -20,7 +20,7 @@ _test_initial_startup() {
 }
 
 setup_file() {
-	BATS_TEST_NAME_PREFIX="Initial startup: "
+	BATS_TEST_NAME_PREFIX="Initial startup with Liferay: "
 	export BATS_TEST_NAME_PREFIX
 
 	common_setup_file
@@ -36,18 +36,18 @@ teardown() {
 	common_teardown
 }
 
-@test "Start Liferay with DB2" {
+@test "DB2" {
 	_test_initial_startup db2
 }
-@test "Start Liferay with MariaDB" {
+@test "MariaDB" {
 	_test_initial_startup mariadb
 }
-@test "Start Liferay with MySQL" {
+@test "MySQL" {
 	_test_initial_startup mysql
 }
-@test "Start Liferay with PostgreSQL" {
+@test "PostgreSQL" {
 	_test_initial_startup postgres
 }
-@test "Start Liferay with SQLServer" {
+@test "SQLServer" {
 	_test_initial_startup sqlserver
 }

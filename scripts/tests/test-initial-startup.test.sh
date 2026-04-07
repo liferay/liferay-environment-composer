@@ -13,7 +13,10 @@ _test_initial_startup() {
 
 	_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
 
-	_assertLiferayStartup
+	local liferayPort
+	liferayPort="$(_getServicePort "liferay" "8080")"
+
+	_assertValidHttpStatusRange "http://localhost:${liferayPort}"
 }
 
 setup_file() {

@@ -14,14 +14,13 @@ _assertStartup() {
 	fi
 }
 
-_assertLiferayStartup() {
-	local liferayPort
 
-	liferayPort="$(_getServicePort "liferay" "8080")"
+_assertValidHttpStatusRange() {
+	local url="${1}"
 
 	local http_code
 
-	http_code="$(_getHttpStatus "http://localhost:${liferayPort}")"
+	http_code="$(_getHttpStatus "${url}")"
 
 	if (( http_code < 200 )) || (( http_code >= 400 )); then
 		_debug "[FAILED] Liferay returned HTTP ${http_code}"

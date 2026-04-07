@@ -50,5 +50,8 @@ teardown() {
 	fi
 
 	# Verify Liferay is reachable
-	_assertLiferayStartup
+	local liferayPort
+	liferayPort="$(_getServicePort "liferay" "8080")"
+
+	_assertValidHttpStatusRange "http://localhost:${liferayPort}"
 }

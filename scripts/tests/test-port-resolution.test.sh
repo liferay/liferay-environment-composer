@@ -120,7 +120,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	_assertStartup
+	_startup
 
 	local blocker_db_port
 	blocker_db_port="$(_getEnvPort "DATABASE_PORT")"
@@ -144,7 +144,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	_assertStartup
+	_startup
 
 	local ports_before
 	ports_before="$(grep "PORT=" .env | sort)"
@@ -180,7 +180,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	_assertStartup
+	_startup
 
 	# Switch to our test project and start it — should get 48322 since blocker has 48321
 	cd "${TEST_WORKSPACE_DIR}"
@@ -188,7 +188,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	_assertStartup
+	_startup
 
 	_assertPortEquals "DATABASE_PORT" "48322"
 

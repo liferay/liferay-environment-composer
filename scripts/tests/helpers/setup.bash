@@ -6,7 +6,7 @@ _debug() {
 	fi
 }
 
-_assertStartup() {
+_startup() {
 	run ./gradlew clean start
 
 	assert_success

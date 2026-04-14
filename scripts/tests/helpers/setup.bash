@@ -35,8 +35,6 @@ _assertSqlQueryOutputContains() {
 _getHttpStatus() {
 	local url="${1}"
 
-	local http_code
-
 	curl -s -o /dev/null -w "%{http_code}" "${url}"
 }
 

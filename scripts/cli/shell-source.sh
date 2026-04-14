@@ -56,3 +56,35 @@ function lec-init() {
 		cd "${workspace_dir}" || return 1
 	fi
 }
+
+function _lec_completions() {
+	local cmd=()
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+	case "$prev" in
+	lec)
+		cmd=(lec completions commands)
+		;;
+	list)
+		cmd=(lec completions entities)
+		;;
+	rm|remove|-p|--project)
+		cmd=(lec completions projects)
+		;;
+	*)
+		cmd=(lec completions flags "${prev}")
+		;;
+	esac
+
+	# shellcheck disable=SC2207
+	COMPREPLY=($(compgen -W "$("${cmd[@]}")" -- "${cur}"))
+
+	return 0
+}
+
+if [[ -n "${ZSH_VERSION}" ]]; then
+	autoload -U bashcompinit && bashcompinit
+fi
+
+complete -F _lec_completions lec

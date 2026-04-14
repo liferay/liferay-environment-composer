@@ -660,6 +660,8 @@ _writeProperty() {
 #
 
 _cmd_bats() {
+	git submodule update --init --recursive
+
 	export BATS_FILE_EXTENSION="test.sh"
 
 	"${LEC_REPO_ROOT}/scripts/vendor/bats/bin/bats" "${@}"

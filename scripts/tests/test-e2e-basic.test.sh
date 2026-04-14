@@ -53,5 +53,5 @@ teardown() {
 	local liferayPort
 	liferayPort="$(_getServicePort "liferay" "8080")"
 
-	_assertValidHttpStatusRange "http://localhost:${liferayPort}"
+	_assertHttpStatus "http://localhost:${liferayPort}"
 }

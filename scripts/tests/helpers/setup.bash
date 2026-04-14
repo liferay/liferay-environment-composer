@@ -12,7 +12,7 @@ _startup() {
 	assert_success
 }
 
-_assertValidHttpStatusRange() {
+_assertHttpStatus() {
 	local url="${1}"
 
 	local httpCode

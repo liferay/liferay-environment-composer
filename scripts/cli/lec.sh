@@ -673,6 +673,39 @@ _cmd_commands() {
 	printf "\n${C_BOLD}%s${C_RESET}\n\n" "Private Commands:"
 	_listPrivateCommands | sed 's,^,  ,g'
 }
+_cmd_completions() {
+	local type="${1}"
+
+	case "${type}" in
+	commands)
+		_listPublicCommands
+		;;
+	entities)
+		_listPrefixedFunctions _list_
+		;;
+	flags)
+		local command="${2}"
+
+		case "${command}" in
+		init)
+			echo "--start"
+			;;
+		restart)
+			echo "--clean"
+			;;
+		share)
+			echo "--export"
+			;;
+		update)
+			echo "--unstable"
+			;;
+		esac
+		;;
+	projects)
+		_list_projects
+		;;
+	esac
+}
 _cmd_fn() {
 	"${1}" "${@:2}"
 }

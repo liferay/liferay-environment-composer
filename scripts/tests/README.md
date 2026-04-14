@@ -95,6 +95,8 @@ Call this in `setup`. Requires `BATS_TEST_NAME_PREFIX` to be exported (typically
 
 1. Sets `TEST_WORKSPACE_DIR` to the new worktree path
 
+1. Loads `bats-support` and `bats-assert` libraries (providing `run`, `assert_success`, `assert_output`, etc.)
+
 1. `cd`s into the worktree
 
 After `common_setup` returns, your working directory is the isolated worktree. All `./gradlew` and `docker compose` commands run there.
@@ -120,6 +122,46 @@ _writeProperty "lr.docker.environment.lxc.backup.password" "12345"
 ```
 
 Handles bracket-containing keys (like `service.enabled[mysql]`) which are common in this project. Only modifies keys that already exist in `gradle.properties` — it uses sed substitution, so the key must be present (possibly commented out with `#`).
+
+### `_startup`
+
+Runs `./gradlew clean start` using BATS `run` and asserts the command succeeded. Replaces the common pattern of manually running Gradle and checking the exit code.
+
+```bash
+_startup
+
+# Equivalent to:
+# run ./gradlew clean start
+# assert_success
+```
+
+### `_assertHttpStatus url`
+
+Curls the given URL and asserts the HTTP status code is in the 2xx–3xx range (>= 200 and < 400).
+
+```bash
+local port
+port=$(_getServicePort liferay 8080)
+
+_assertHttpStatus "http://localhost:${port}"
+```
+
+### `_assertSqlQueryOutputContains sqlQuery expectedOutput`
+
+Runs a SQL query via `./gradlew executeSQLQuery` and asserts the output contains the expected string.
+
+```bash
+_assertSqlQueryOutputContains "select emailAddress from User_ where screenName = 'test';" "test@liferay.com"
+```
+
+### `_getHttpCode url`
+
+Returns the HTTP status code for a URL using curl. Used internally by `_assertHttpStatus`.
+
+```bash
+local code
+code=$(_getHttpCode "http://localhost:${port}")
+```
 
 ### `_getServicePort serviceName internalPort`
 
@@ -152,7 +194,7 @@ _lec fn _clean "${TEST_WORKSPACE_DIR}"      # Call internal lec function
 
 ### `_normalize input`
 
-Normalizes a string for use as a worktree name: trims whitespace, lowercases, strips punctuation, and replaces spaces with underscores. Used internally by `common_setup` to sanitize `BATS_TEST_NAME_PREFIX`.
+Normalizes a string for use as a worktree name: trims whitespace, lowercases, strips punctuation, and replaces spaces/blanks with underscores. Used internally by `common_setup` to sanitize `BATS_TEST_NAME_PREFIX`.
 
 ### `_timestamp`
 

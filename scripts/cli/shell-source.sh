@@ -6,9 +6,10 @@ if [[ -z "${LEC_REPO_ROOT}" ]]; then
 	return
 fi
 
-# Set the alias to the main script
-# shellcheck disable=SC2139
-alias lec="$LEC_REPO_ROOT/scripts/cli/lec.sh"
+# Shell function for the main script
+function lec() {
+	"$LEC_REPO_ROOT/scripts/cli/lec.sh" "$@"
+}
 
 # Util function to allow quickly jumping to a project
 function lecd() {

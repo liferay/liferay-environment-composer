@@ -15,12 +15,12 @@ _startup() {
 _assertValidHttpStatusRange() {
 	local url="${1}"
 
-	local http_code
+	local httpCode
 
-	http_code="$(_getHttpStatus "${url}")"
+	httpCode="$(_getHttpCode "${url}")"
 
-	assert [ "${http_code}" -ge 200 ]
-	assert [ "${http_code}" -lt 400 ]
+	assert [ "${httpCode}" -ge 200 ]
+	assert [ "${httpCode}" -lt 400 ]
 }
 
 _assertSqlQueryOutputContains() {
@@ -32,7 +32,7 @@ _assertSqlQueryOutputContains() {
 	assert_output --partial "${expectedOutput}"
 }
 
-_getHttpStatus() {
+_getHttpCode() {
 	local url="${1}"
 
 	curl -s -o /dev/null -w "%{http_code}" "${url}"

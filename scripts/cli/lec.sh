@@ -395,6 +395,8 @@ _listSaaSEnvironments() {
 	find "${LXC_REPOSITORY_PATH}/automation/environment-descriptors" -name '*.json' | sed -E 's,^.*/([^/]*).json$,\1,g'
 }
 _listWorktrees() {
+	_git worktree prune
+
 	_git worktree list --porcelain | grep worktree | awk '{print $2}'
 }
 

@@ -64,21 +64,21 @@ function _lec_completions() {
 
 	case "$prev" in
 	lec)
-		cmd=(lec completions commands)
+		cmd=(commands)
 		;;
 	list)
-		cmd=(lec completions entities)
+		cmd=(entities)
 		;;
 	rm|remove|-p|--project)
-		cmd=(lec completions projects)
+		cmd=(projects)
 		;;
 	*)
-		cmd=(lec completions flags "${prev}")
+		cmd=(flags "${prev}")
 		;;
 	esac
 
 	# shellcheck disable=SC2207
-	COMPREPLY=($(compgen -W "$("${cmd[@]}")" -- "${cur}"))
+	COMPREPLY=($(compgen -W "$(lec completions "${cmd[@]}")" -- "${cur}"))
 
 	return 0
 }

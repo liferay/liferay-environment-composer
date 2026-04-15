@@ -51,7 +51,7 @@ tasks.register("createGroups") {
 	}
 
 	onlyIf("creating LDAP groups") {
-		config.hasProperty("ldapGroupCount") && config.ldapGroupCount > 0
+		config.ldapGroupCount > 0
 	}
 
 	mustRunAfter("createUsers")

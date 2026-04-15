@@ -1,8 +1,3 @@
-String ldapUrl = System.getenv("LDAP_URL") ?: "ldap://localhost"
-String ldapBindDn = System.getenv("LDAP_BIND_DN") ?: "cn=admin,dc=liferay,dc=com"
-String ldapAdminPassword = System.getenv("LDAP_ADMIN_PASSWORD") ?: "test"
-String ldapBaseDn = System.getenv("LDAP_BASE_DN") ?: "dc=liferay,dc=com"
-
 tasks.register("createUsers") {
 	onlyIf("using the LDAP service") {
 		config.useLdap
@@ -27,7 +22,7 @@ tasks.register("createUsers") {
 			for(int i=1;i<=ldapUserCount;i++) {
 				String username = "testuser${i}"
 				writer.write("""\
-					dn: cn=${username},${ldapBaseDn}
+					dn: cn=${username},${config.ldapBaseDn}
 					objectClass: inetOrgPerson
 					objectClass: organizationalPerson
 					objectClass: person
@@ -43,7 +38,7 @@ tasks.register("createUsers") {
 		}
 
 		println "Attempting to create ${ldapUserCount} users in the LDAP service..."
-		executeLdapCommand("ldapadd", ldifFile, ldapUrl, ldapBindDn, ldapAdminPassword)
+		executeLdapCommand("ldapadd", ldifFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
 
 		println "Finished creating ${ldapUserCount} LDAP users!"
 
@@ -98,14 +93,14 @@ tasks.register("createGroups") {
 					// Guarantee at least 1 random user per group to ensure the groupOfUniqueNames is valid
 					for (int i = 1; i <= ldapGroupCount; i++) {
 						int randomUserId = rand.nextInt(ldapUserCount) + 1
-						groupMembers[i].add("cn=testuser${randomUserId},${ldapBaseDn}")
+						groupMembers[i].add("cn=testuser${randomUserId},${config.ldapBaseDn}")
 					}
 
 					// Randomly distribute the rest (50% chance for a user to be in any given group)
 					for (int i = 1; i <= ldapUserCount; i++) {
 						for (int j = 1; j <= ldapGroupCount; j++) {
 							if (rand.nextBoolean()) {
-								groupMembers[j].add("cn=testuser${i},${ldapBaseDn}")
+								groupMembers[j].add("cn=testuser${i},${config.ldapBaseDn}")
 							}
 						}
 					}
@@ -113,7 +108,7 @@ tasks.register("createGroups") {
 					// Assign every user to every group
 					for (int i = 1; i <= ldapGroupCount; i++) {
 						for (int j = 1; j <= ldapUserCount; j++) {
-							groupMembers[i].add("cn=testuser${j},${ldapBaseDn}")
+							groupMembers[i].add("cn=testuser${j},${config.ldapBaseDn}")
 						}
 					}
 				}
@@ -121,14 +116,14 @@ tasks.register("createGroups") {
 				for (int i = 1; i <= ldapGroupCount; i++) {
 					String groupName = "testgroup${i}"
 					addWriter.write("""\
-						dn: cn=${groupName},${ldapBaseDn}
+						dn: cn=${groupName},${config.ldapBaseDn}
 						objectClass: groupOfUniqueNames
 						objectClass: top
 						cn: ${groupName}
 						""".stripIndent())
 
 					modifyWriter.write("""\
-						dn: cn=${groupName},${ldapBaseDn}
+						dn: cn=${groupName},${config.ldapBaseDn}
 						changetype: modify
 						replace: uniqueMember
 						""".stripIndent())
@@ -146,8 +141,8 @@ tasks.register("createGroups") {
 		}
 
 		println "Attempting to create and update ${ldapGroupCount} groups in the LDAP service..."
-		executeLdapCommand("ldapadd", addFile, ldapUrl, ldapBindDn, ldapAdminPassword)
-		executeLdapCommand("ldapmodify", modifyFile, ldapUrl, ldapBindDn, ldapAdminPassword)
+		executeLdapCommand("ldapadd", addFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
+		executeLdapCommand("ldapmodify", modifyFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
 
 		println "Finished creating and updating ${ldapGroupCount} LDAP groups and assigning users to them!"
 	}

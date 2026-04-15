@@ -471,8 +471,12 @@ class Config {
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
 	public boolean isNightly = false
+	public String ldapAdminPassword = "test"
+	public String ldapBaseDn = "dc=liferay,dc=com"
+	public String ldapBindDn = "cn=admin,dc=liferay,dc=com"
 	public String ldapGroupAssignmentStrategy = "all"
 	public int ldapGroupCount = 0
+	public String ldapUrl = "ldap://localhost"
 	public int ldapUserCount = 0
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"

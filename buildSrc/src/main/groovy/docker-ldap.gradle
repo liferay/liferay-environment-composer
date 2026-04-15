@@ -57,7 +57,7 @@ tasks.register("createGroups") {
 	mustRunAfter("createUsers")
 
 	doFirst {
-		Integer ldapUserCount = config.hasProperty("ldapUserCount") ? config.ldapUserCount as Integer : 0
+		Integer ldapUserCount = config.ldapUserCount as Integer
 		if (ldapUserCount == 0) {
 			throw new GradleException("Cannot create LDAP groups without users. Please ensure lr.docker.environment.ldap.users.count is greater than 0 in gradle.properties.")
 		}

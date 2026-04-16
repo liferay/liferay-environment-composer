@@ -365,10 +365,8 @@ lr.docker.environment.service.enabled[mysql]=true
 ##### Default login info
 
 ```properties
-
-username=root
-password=
-
+username=liferay
+password=Liferay123
 ```
 
 #### Enable PostgreSQL 16.3
@@ -384,10 +382,8 @@ lr.docker.environment.service.enabled[postgres]=true
 ##### Default login info
 
 ```properties
-
 username=liferay
-password=password
-
+password=Liferay123
 ```
 
 #### Enable DB2 11.5
@@ -403,10 +399,8 @@ lr.docker.environment.service.enabled[db2]=true
 ##### Default login info
 
 ```properties
-
-username=db2admin
-password=lportal
-
+username=liferay
+password=Liferay123
 ```
 
 #### Enable MariaDB 10.6
@@ -422,10 +416,8 @@ lr.docker.environment.service.enabled[mariadb]=true
 ##### Default login info
 
 ```properties
-
-username=root
-password=
-
+username=liferay
+password=Liferay123
 ```
 
 #### Enable SQL Server 2022
@@ -441,10 +433,8 @@ lr.docker.environment.service.enabled[sqlserver]=true
 ##### Default login info
 
 ```properties
-
 username=sa
 password=Liferay123
-
 ```
 
 #### Import a database dump

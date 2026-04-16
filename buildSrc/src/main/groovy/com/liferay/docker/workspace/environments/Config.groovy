@@ -246,13 +246,13 @@ class Config {
 
 		this.useLdap = this.services.contains("ldap")
 
-		List<String> ldapGroupAssignmentStrategyList = ["all", "random"]
-
 		String ldapGroupAssignmentStrategyProperty = project.findProperty("lr.docker.environment.ldap.group.assignment.strategy")
 
 		if (ldapGroupAssignmentStrategyProperty != null) {
 			this.ldapGroupAssignmentStrategy = ldapGroupAssignmentStrategyProperty
 		}
+
+		List<String> ldapGroupAssignmentStrategyList = ["all", "random"]
 
 		if (!ldapGroupAssignmentStrategyList.contains(this.ldapGroupAssignmentStrategy)) {
 			throw new GradleException("${this.ldapGroupAssignmentStrategy} is not a valid LDAP group assignment strategy. Valid types are: ${ldapGroupAssignmentStrategyList.collect {it}}")

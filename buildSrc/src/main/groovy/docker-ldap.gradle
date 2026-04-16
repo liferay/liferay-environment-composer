@@ -10,7 +10,6 @@ tasks.register("createUsers") {
 	onlyIf("using the LDAP service") {
 		config.useLdap
 	}
-
 	onlyIf("creating LDAP users") {
 		config.ldapUserCount > 0
 	}
@@ -57,7 +56,6 @@ tasks.register("createGroups") {
 	onlyIf("using the LDAP service") {
 		config.useLdap
 	}
-
 	onlyIf("creating LDAP groups") {
 		config.ldapGroupCount > 0
 	}
@@ -66,6 +64,7 @@ tasks.register("createGroups") {
 
 	doFirst {
 		Integer ldapUserCount = config.ldapUserCount as Integer
+
 		if (ldapUserCount == 0) {
 			throw new GradleException("Cannot create LDAP groups without users. Please ensure lr.docker.environment.ldap.users.count is greater than 0 in gradle.properties.")
 		}
@@ -101,6 +100,7 @@ tasks.register("createGroups") {
 					// Guarantee at least 1 random user per group to ensure the groupOfUniqueNames is valid
 					for (int i = 1; i <= ldapGroupCount; i++) {
 						int randomUserId = rand.nextInt(ldapUserCount) + 1
+
 						groupMembers[i].add("cn=testuser${randomUserId},${config.ldapBaseDn}")
 					}
 
@@ -123,6 +123,7 @@ tasks.register("createGroups") {
 
 				for (int i = 1; i <= ldapGroupCount; i++) {
 					String groupName = "testgroup${i}"
+
 					addWriter.write("""\
 						dn: cn=${groupName},${config.ldapBaseDn}
 						objectClass: groupOfUniqueNames

@@ -1,3 +1,11 @@
+ext {
+	executeLdapCommand = {
+		String cmd, File ldifFile, String ldapUrl, String ldapBindDn, String ldapAdminPassword ->
+
+		waitForCommand("cat ${ldifFile.absolutePath} | docker compose exec -T ldap ${cmd} -x -H ${ldapUrl} -D ${ldapBindDn} -w ${ldapAdminPassword} -c")
+	}
+}
+
 tasks.register("createUsers") {
 	onlyIf("using the LDAP service") {
 		config.useLdap
@@ -148,20 +156,4 @@ tasks.register("createGroups") {
 	}
 }
 
-void executeLdapCommand(String cmd, File ldifFile, String ldapUrl, String ldapBindDn, String ldapAdminPassword) {
-	ByteArrayOutputStream out = new ByteArrayOutputStream()
-	exec {
-		ignoreExitValue = true
-		executable "docker"
-		args "compose", "exec", "-T", "ldap", cmd, "-x", "-H", ldapUrl, "-D", ldapBindDn, "-w", ldapAdminPassword, "-c"
-		standardInput = new FileInputStream(ldifFile)
-		standardOutput = out
-		errorOutput = out
-	}
-	out.toString().eachLine {
-		line ->
-		if (!line.contains("Already exists (68)") && !line.trim().isEmpty()) {
-			println line
-		}
-	}
-}
+project.plugins.apply "docker-common"

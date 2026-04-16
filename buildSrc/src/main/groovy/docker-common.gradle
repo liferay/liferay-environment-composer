@@ -130,8 +130,11 @@ ext {
 	getDatabaseAccessCommand = {
 		String schema ->
 
+		String databaseUser = config.databaseUser
+		String databaseUserPassword = config.databaseUserPassword
+
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
-			String command = "docker compose exec -it database mysql --user root"
+			String command = "docker compose exec -it database mysql --user ${databaseUser} --password=${databaseUserPassword}"
 
 			if (schema != null) {
 				command += " --database=${schema}"
@@ -145,7 +148,7 @@ ext {
 				schema = "public"
 			}
 
-			return "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
+			return "docker compose exec -e PGPASSWORD=${databaseUserPassword} -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=${databaseUser} --dbname=${config.databaseName}"
 		}
 
 		if (config.useDatabaseDB2) {
@@ -154,8 +157,8 @@ ext {
 			}
 
 			return [
-				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
-				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2"
+				"docker compose exec --user ${databaseUser} -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
+				"docker compose exec --user ${databaseUser} -it database /opt/ibm/db2/V11.5/bin/db2"
 			].join("\n")
 		}
 

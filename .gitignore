@@ -20,6 +20,7 @@
 **/node_modules_cache
 **/*server.crt
 **/*server.key
+**/settings.local.json
 **/test-coverage
 **/tmp
 .DS_Store

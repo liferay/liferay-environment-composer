@@ -631,6 +631,10 @@ tasks.register("importDatabaseDumps") {
 	doFirst {
 		copyDumpsFilesToDumpsVolume()
 
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
+			addGrantAdminAccessScriptToDumpsVolume()
+		}
+
 		if (config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
 			addCloudSQLScriptToDumpsVolume()
 		}

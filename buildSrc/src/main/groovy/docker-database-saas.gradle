@@ -14,7 +14,7 @@ ext {
 	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
 
 	addCloudSQLScriptToDumpsVolume = {
-		File globalVariableScript = file("0.sql")
+		File globalVariableScript = file("100_prepare_database_import.sql")
 
 		if (config.useDatabaseMySQL) {
 			Map<String, String> newVariables = [

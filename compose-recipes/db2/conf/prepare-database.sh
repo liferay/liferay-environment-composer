@@ -11,6 +11,13 @@ _prepare_database() {
 		echo "[prepare-database.sh] Found db2move.lst file. Importing database..."
 
 		cd /database/data/${DB2INSTANCE}/backups
+		local old_schema
+
+		old_schema=$(cat db2move.lst | head -1 | sed "s@\!\"\(.*\)\"\..*@\1@g"; printf x)
+
+		sed -i "s/${old_schema%x}/${DB2INSTANCE^^}/g" ./*
+
+		sed -i "s@\(\!\"\).*\(\"\.\)@\1${DB2INSTANCE^^}\2@g" db2move.lst
 
 		db2move ${COMPOSER_DATABASE_NAME} import
 

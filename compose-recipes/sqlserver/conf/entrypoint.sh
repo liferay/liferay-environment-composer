@@ -38,11 +38,10 @@ create_database() {
 		if [[ "${backup_file}" =~ .*\.bak ]]; then
 			echo "[entrypoint] Found bak file"
 
-			sed -i "s,%DATABASE_NAME%,${database_name},g" /init/restore.sql
-
-			sed -i "s,%BACKUP_FILE%,${backup_file},g" /init/restore.sql
-
-			${_sqlcmd} -i /init/restore.sql
+			${_sqlcmd} \
+				-v DATABASE_NAME="${database_name}" \
+				-v BACKUP_FILE="${backup_file}" \
+				-i /init/restore.sql
 
 			return
 		else
@@ -57,18 +56,18 @@ create_database() {
 	if [[ $(_has_database_files "${database_name}") ]]; then
 		echo "Database files found; reattaching database ${database_name}..."
 
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
-
-		${_sqlcmd} -i /init/reinit.sql
+		${_sqlcmd} \
+			-v DATABASE_NAME="${database_name}" \
+			-i /init/reinit.sql
 
 		return
 	fi
 
 	echo "[entrypoint] Could not find database ${database_name}; creating database..."
 
-	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
-
-	${_sqlcmd} -i /init/init.sql
+	${_sqlcmd} \
+		-v DATABASE_NAME="${database_name}" \
+		-i /init/init.sql
 }
 
 create_database_user() {

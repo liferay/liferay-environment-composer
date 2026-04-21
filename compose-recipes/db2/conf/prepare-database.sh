@@ -17,7 +17,7 @@ _prepare_database() {
 
 		local old_schema
 
-		old_schema=$(cat db2move.lst | head -1 | sed "s@\!\"\(.*\)\"\..*@\1@g"; printf x)
+		old_schema=$(sed -n '1s@\!"\(.*\)"\..*@\1@p' db2move.lst; printf x)
 
 		sed -i "s/${old_schema%x}/${DB2INSTANCE^^}/g" ./*
 

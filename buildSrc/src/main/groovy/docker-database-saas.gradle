@@ -60,7 +60,7 @@ ext {
 		grantAdminAccessSqlScript.withOutputStream {
 			BufferedOutputStream initSQLOutputStream ->
 
-			initSQLOutputStream << "grant system_variables_admin on *.* to '${config.databaseUser}'@'%';\n"
+			initSQLOutputStream << "grant all privileges on *.* to '${config.databaseUser}'@'%';\nflush privileges;\n"
 		}
 
 		addToVolume("${config.namespace}_dumps", grantAdminAccessSqlScript)

@@ -25,8 +25,6 @@ create_database() {
 	if [[ $(_is_database_present "${database_name}") ]]; then
 		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
 
-		touch /tmp/database_exists
-
 		return
 	fi
 
@@ -46,15 +44,11 @@ create_database() {
 
 			${_sqlcmd} -i /init/restore.sql
 
-			touch /tmp/database_exists
-
 			return
 		else
 			echo "[entrypoint] Found bacpac file"
 
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
-
-			touch /tmp/database_exists
 
 			return
 		fi
@@ -67,8 +61,6 @@ create_database() {
 
 		${_sqlcmd} -i /init/reinit.sql
 
-		touch /tmp/database_exists
-
 		return
 	fi
 
@@ -77,8 +69,18 @@ create_database() {
 	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
 
 	${_sqlcmd} -i /init/init.sql
+}
 
-	touch /tmp/database_exists
+create_database_user() {
+	local database_name=${1}
+
+	echo "[entrypoint] Ensuring login ${DATABASE_USER} exists with db_owner on ${database_name}..."
+
+	${_sqlcmd} \
+		-v DATABASE_USER="${DATABASE_USER}" \
+		-v DATABASE_USER_PASSWORD="${DATABASE_USER_PASSWORD}" \
+		-v DATABASE_NAME="${database_name}" \
+		-i /init/create-user.sql
 }
 
 /opt/mssql/bin/sqlservr &
@@ -100,5 +102,9 @@ done
 echo "[entrypoint] SQLServer is available"
 
 create_database "${COMPOSER_DATABASE_NAME}"
+
+create_database_user "${COMPOSER_DATABASE_NAME}"
+
+touch /tmp/database_exists
 
 wait $PID

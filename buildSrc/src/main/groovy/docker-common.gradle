@@ -131,7 +131,7 @@ ext {
 		String schema ->
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
-			String command = "docker compose exec -it database mysql --user root"
+			String command = "docker compose exec -e MYSQL_PWD=${config.databaseUserPassword} -it database mysql --user ${config.databaseUser}"
 
 			if (schema != null) {
 				command += " --database=${schema}"

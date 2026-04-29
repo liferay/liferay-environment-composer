@@ -14,7 +14,7 @@ ext {
 	PROD_ONLY_CONFIGS = [".liferay.analytics.", ".captcha.", ".content.security.policy.", ".elasticsearch7.", ".k8s."]
 
 	addCloudSQLScriptToDumpsVolume = {
-		File globalVariableScript = file("0.sql")
+		File globalVariableScript = file("100_prepare_database_import.sql")
 
 		if (config.useDatabaseMySQL) {
 			Map<String, String> newVariables = [
@@ -52,6 +52,20 @@ ext {
 		addToVolume("${config.namespace}_dumps", globalVariableScript)
 
 		delete(globalVariableScript)
+	}
+
+	addGrantAdminAccessScriptToDumpsVolume = {
+		File grantAdminAccessSqlScript = file("050_grant_admin_access.sql")
+
+		grantAdminAccessSqlScript.withOutputStream {
+			BufferedOutputStream initSQLOutputStream ->
+
+			initSQLOutputStream << "grant all privileges on *.* to '${config.databaseUser}'@'%';\nflush privileges;\n"
+		}
+
+		addToVolume("${config.namespace}_dumps", grantAdminAccessSqlScript)
+
+		delete(grantAdminAccessSqlScript)
 	}
 
 	clearSingleSignOnConfigurations = {
@@ -616,6 +630,10 @@ tasks.register("importDatabaseDumps") {
 
 	doFirst {
 		copyDumpsFilesToDumpsVolume()
+
+		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
+			addGrantAdminAccessScriptToDumpsVolume()
+		}
 
 		if (config.useDatabaseMySQL || config.useDatabasePostgreSQL) {
 			addCloudSQLScriptToDumpsVolume()

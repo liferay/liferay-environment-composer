@@ -2,12 +2,6 @@
 
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
-_has_database_files() {
-	local database_name=${1}
-
-	[[ -n $(find /var/opt/mssql/data -type f -iname "${database_name}.*") ]]
-}
-
 _is_database_present() {
 	local database_name=${1}
 
@@ -67,16 +61,6 @@ create_database() {
 
 			return
 		fi
-	fi
-
-	if _has_database_files "${database_name}"; then
-		echo "Database files found; reattaching database ${database_name}..."
-
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
-
-		${_sqlcmd} -i /init/reinit.sql
-
-		return
 	fi
 
 	echo "[entrypoint] Could not find database ${database_name}; creating database..."

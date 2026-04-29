@@ -37,6 +37,7 @@ To shut down the environment, run `./gradlew stop`.
 - [Enable DB2 11.5](#enable-db2-115)
 - [Enable MariaDB 10.6](#enable-mariadb-106)
 - [Enable SQL Server 2022](#enable-sql-server-2022)
+- [Default database login](#default-database-login)
 - [Import a database dump](#import-a-database-dump)
 - [Enable database partitioning (MySQL and PostgreSQL only)](#enable-database-partitioning-mysql-and-postgresql-only)
 - [Configure database port](#configure-database-port)
@@ -362,15 +363,6 @@ Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1`
 lr.docker.environment.service.enabled[mysql]=true
 ```
 
-##### Default login info
-
-```properties
-
-username=root
-password=
-
-```
-
 #### Enable PostgreSQL 16.3
 
 Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or `1` in `gradle.properties`.
@@ -379,15 +371,6 @@ Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or 
 
 ```properties
 lr.docker.environment.service.enabled[postgres]=true
-```
-
-##### Default login info
-
-```properties
-
-username=liferay
-password=password
-
 ```
 
 #### Enable DB2 11.5
@@ -400,15 +383,6 @@ Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` i
 lr.docker.environment.service.enabled[db2]=true
 ```
 
-##### Default login info
-
-```properties
-
-username=db2admin
-password=lportal
-
-```
-
 #### Enable MariaDB 10.6
 
 Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`.
@@ -417,15 +391,6 @@ Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `
 
 ```properties
 lr.docker.environment.service.enabled[mariadb]=true
-```
-
-##### Default login info
-
-```properties
-
-username=root
-password=
-
 ```
 
 #### Enable SQL Server 2022
@@ -438,14 +403,16 @@ Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or
 lr.docker.environment.service.enabled[sqlserver]=true
 ```
 
-##### Default login info
+#### Default database login
+
+All supported database engines except DB2 use the same shared credentials:
 
 ```properties
-
-username=sa
+username=liferay
 password=Liferay123
-
 ```
+
+DB2 still uses `username=db2admin` / `password=lportal`. Migrating DB2 to the shared login will be addressed in a future change.
 
 #### Import a database dump
 

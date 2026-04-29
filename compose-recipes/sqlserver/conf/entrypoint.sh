@@ -5,18 +5,13 @@ _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSW
 _has_database_files() {
 	local database_name=${1}
 
-	if [[ $(find /var/opt/mssql/data -type f -iname "${database_name}.*") ]]; then
-		echo true
-	fi
+	[[ -n $(find /var/opt/mssql/data -type f -iname "${database_name}.*") ]]
 }
 
 _is_database_present() {
 	local database_name=${1}
 
-	if ${_sqlcmd} -Q "select name from sys.databases" | grep -q "${database_name}"; then
-
-		echo true
-	fi
+	${_sqlcmd} -Q "select name from sys.databases" | grep -q "${database_name}"
 }
 
 grant_liferay_access() {
@@ -42,7 +37,7 @@ IF IS_ROLEMEMBER('db_owner', '${DATABASE_USER}') = 0
 create_database() {
 	local database_name=${1}
 
-	if [[ $(_is_database_present "${database_name}") ]]; then
+	if _is_database_present "${database_name}"; then
 		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
 
 		touch /tmp/database_exists
@@ -80,7 +75,7 @@ create_database() {
 		fi
 	fi
 
-	if [[ $(_has_database_files "${database_name}") ]]; then
+	if _has_database_files "${database_name}"; then
 		echo "Database files found; reattaching database ${database_name}..."
 
 		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql

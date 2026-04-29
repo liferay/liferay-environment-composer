@@ -19,6 +19,26 @@ _is_database_present() {
 	fi
 }
 
+grant_liferay_access() {
+	local database_name=${1}
+
+	echo "[entrypoint] Ensuring login ${DATABASE_USER} has access to ${database_name}..."
+
+	${_sqlcmd} -Q "
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = '${DATABASE_USER}')
+	CREATE LOGIN [${DATABASE_USER}] WITH PASSWORD = '${DATABASE_USER_PASSWORD}', CHECK_POLICY = OFF;
+"
+
+	${_sqlcmd} -d "${database_name}" -Q "
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = '${DATABASE_USER}')
+	CREATE USER [${DATABASE_USER}] FOR LOGIN [${DATABASE_USER}];
+ELSE
+	ALTER USER [${DATABASE_USER}] WITH LOGIN = [${DATABASE_USER}];
+IF IS_ROLEMEMBER('db_owner', '${DATABASE_USER}') = 0
+	ALTER ROLE db_owner ADD MEMBER [${DATABASE_USER}];
+"
+}
+
 create_database() {
 	local database_name=${1}
 
@@ -100,5 +120,7 @@ done
 echo "[entrypoint] SQLServer is available"
 
 create_database "${COMPOSER_DATABASE_NAME}"
+
+grant_liferay_access "${COMPOSER_DATABASE_NAME}"
 
 wait $PID

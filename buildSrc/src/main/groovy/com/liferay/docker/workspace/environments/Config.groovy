@@ -432,6 +432,8 @@ class Config {
 	public String databaseName = "lportal"
 	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false
+	public String databaseUser = "liferay"
+	public String databaseUserPassword = "Liferay123"
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dlStore = ""

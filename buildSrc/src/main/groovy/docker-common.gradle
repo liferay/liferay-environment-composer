@@ -154,8 +154,8 @@ ext {
 			}
 
 			return [
-				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
-				"docker compose exec --user db2admin -it database /opt/ibm/db2/V11.5/bin/db2"
+				"docker compose exec --user ${config.databaseUser} -it database /opt/ibm/db2/V11.5/bin/db2 connect to ${schema} > /dev/null",
+				"docker compose exec --user ${config.databaseUser} -it database /opt/ibm/db2/V11.5/bin/db2"
 			].join("\n")
 		}
 

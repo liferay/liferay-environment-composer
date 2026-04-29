@@ -145,7 +145,7 @@ ext {
 				schema = "public"
 			}
 
-			return "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
+			return "docker compose exec -e PGPASSWORD=${config.databaseUserPassword} -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=${config.databaseUser} --dbname=${config.databaseName}"
 		}
 
 		if (config.useDatabaseDB2) {

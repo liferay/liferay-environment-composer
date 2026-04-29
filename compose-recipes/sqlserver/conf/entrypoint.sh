@@ -40,8 +40,6 @@ create_database() {
 	if _is_database_present "${database_name}"; then
 		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
 
-		touch /tmp/database_exists
-
 		return
 	fi
 
@@ -61,15 +59,11 @@ create_database() {
 
 			${_sqlcmd} -i /init/restore.sql
 
-			touch /tmp/database_exists
-
 			return
 		else
 			echo "[entrypoint] Found bacpac file"
 
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
-
-			touch /tmp/database_exists
 
 			return
 		fi
@@ -82,8 +76,6 @@ create_database() {
 
 		${_sqlcmd} -i /init/reinit.sql
 
-		touch /tmp/database_exists
-
 		return
 	fi
 
@@ -92,8 +84,6 @@ create_database() {
 	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
 
 	${_sqlcmd} -i /init/init.sql
-
-	touch /tmp/database_exists
 }
 
 /opt/mssql/bin/sqlservr &
@@ -115,6 +105,8 @@ done
 echo "[entrypoint] SQLServer is available"
 
 create_database "${COMPOSER_DATABASE_NAME}"
+
+touch /tmp/database_exists
 
 grant_liferay_access "${COMPOSER_DATABASE_NAME}"
 

@@ -414,7 +414,7 @@ ext {
 			if (databaseInitialized.trim() == "[]") {
 				println "Attempting to restore binary dump file: ${binaryDumpFileNames[0]} with database name: ${config.databaseName}..."
 
-				waitForCommand("docker compose exec -u postgres database pg_restore -v -U liferay -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFileNames[0]}")
+				waitForCommand("docker compose exec -u postgres database pg_restore -v -U ${config.databaseUser} -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFileNames[0]}")
 			} else {
 				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
 			}

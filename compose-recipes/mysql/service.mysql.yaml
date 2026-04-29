@@ -8,6 +8,8 @@ services:
         environment:
             -   MYSQL_ALLOW_EMPTY_PASSWORD=1
             -   MYSQL_DATABASE=${DATABASE_NAME}
+            -   MYSQL_PASSWORD=${DATABASE_USER_PASSWORD}
+            -   MYSQL_USER=${DATABASE_USER}
         healthcheck:
             retries: 10
             start_period: 5m

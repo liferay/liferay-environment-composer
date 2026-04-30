@@ -20,6 +20,8 @@ RUN unzip /home/mssql/sqlpackage.zip -d /home/mssql/sqlpackage && \
     chmod a+x /home/mssql/sqlpackage/sqlpackage && \
     rm -rf /home/mssql/sqlpackage.zip
 
+ENV ACCEPT_EULA=Y
+ENV MSSQL_SA_PASSWORD=Liferay123
 ENV PATH="${PATH}:/home/mssql/sqlpackage"
 
 COPY --chown=mssql:mssql --chmod=a+x conf/entrypoint.sh /init/

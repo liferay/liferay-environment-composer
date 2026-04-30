@@ -90,7 +90,6 @@ echo ${DB2INST1_PASSWORD} | su ${DB2INSTANCE} -c "$(declare -f _prepare_database
 
 if [[ -s /tmp/secadm_user.out ]]; then
 	secadm_user=$(xargs < /tmp/secadm_user.out)
-	rm -f /tmp/secadm_user.out
 
 	if [[ "${secadm_user}" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]; then
 		secadm_user="${secadm_user,,}"
@@ -108,5 +107,7 @@ if [[ -s /tmp/secadm_user.out ]]; then
 		echo "${DB2INST1_PASSWORD}" | su "${DB2INSTANCE}" -c "$(declare -f _grant_authorities_to_instance_owner); _grant_authorities_to_instance_owner '${secadm_user}'"
 	fi
 fi
+
+rm -f /tmp/secadm_user.out
 
 echo "STARTING_UP" > /startup_log.txt

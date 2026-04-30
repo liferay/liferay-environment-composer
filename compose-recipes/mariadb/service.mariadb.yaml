@@ -8,7 +8,7 @@ services:
         environment:
             -   MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
             -   MARIADB_DATABASE=${DATABASE_NAME}
-            -   MARIADB_PASSWORD=${DATABASE_USER_PASSWORD}
+            -   MARIADB_PASSWORD=${DATABASE_PASSWORD}
             -   MARIADB_USER=${DATABASE_USER}
         healthcheck:
             retries: 10

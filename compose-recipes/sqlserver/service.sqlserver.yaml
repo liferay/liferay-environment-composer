@@ -15,7 +15,7 @@ services:
             -   ACCEPT_EULA=Y
             -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}
             -   DATABASE_USER=${DATABASE_USER}
-            -   DATABASE_USER_PASSWORD=${DATABASE_USER_PASSWORD}
+            -   DATABASE_PASSWORD=${DATABASE_PASSWORD}
             -   MSSQL_SA_PASSWORD=Liferay123
         healthcheck:
             interval: 5s

@@ -15,7 +15,7 @@ grant_liferay_access() {
 
 	${_sqlcmd} -Q "
 IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = '${DATABASE_USER}')
-	CREATE LOGIN [${DATABASE_USER}] WITH PASSWORD = '${DATABASE_USER_PASSWORD}', CHECK_POLICY = OFF;
+	CREATE LOGIN [${DATABASE_USER}] WITH PASSWORD = '${DATABASE_PASSWORD}', CHECK_POLICY = OFF;
 "
 
 	${_sqlcmd} -d "${database_name}" -Q "

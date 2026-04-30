@@ -75,9 +75,11 @@ _prepare_database() {
 }
 
 _grant_authorities_to_instance_owner() {
+	local user="${1}"
+
 	. /database/config/${DB2INSTANCE}/sqllib/db2profile
 
-	db2 connect to ${COMPOSER_DATABASE_NAME} user "${1}" using "${1}" > /dev/null
+	db2 connect to ${COMPOSER_DATABASE_NAME} user "${user}" using "${user}" > /dev/null
 
 	db2 "GRANT DBADM, DATAACCESS, ACCESSCTRL ON DATABASE TO USER ${DB2INSTANCE^^}"
 

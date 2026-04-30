@@ -405,11 +405,11 @@ lr.docker.environment.service.enabled[sqlserver]=true
 
 #### Default database login
 
-All supported database engines except DB2 use the same shared credentials:
+All supported database engines except DB2 use the same shared credentials. Set the `lr.docker.environment.database.user` and `lr.docker.environment.database.password` properties in `gradle.properties` to override the defaults.
 
 ```properties
-username=liferay
-password=Liferay123
+lr.docker.environment.database.user=liferay
+lr.docker.environment.database.password=Liferay123
 ```
 
 DB2 still uses `username=db2admin` / `password=lportal`. Migrating DB2 to the shared login will be addressed in a future change.

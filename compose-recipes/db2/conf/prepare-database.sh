@@ -54,8 +54,11 @@ _prepare_database() {
 
 		db2 connect to ${COMPOSER_DATABASE_NAME}
 
+		db2 -x "SELECT RTRIM(SCHEMANAME) FROM SYSCAT.SCHEMATA WHERE SCHEMANAME NOT LIKE 'SYS%' AND SCHEMANAME NOT IN ('NULLID','SQLJ','${DB2INSTANCE^^}') FETCH FIRST 1 ROW ONLY" > /tmp/restored_schema.out
+
 		local restored_schema
-		restored_schema=$(db2 -x "SELECT RTRIM(SCHEMANAME) FROM SYSCAT.SCHEMATA WHERE SCHEMANAME NOT LIKE 'SYS%' AND SCHEMANAME NOT IN ('NULLID','SQLJ','SYSTOOLS','SYSPROC','SYSIBMADM','${DB2INSTANCE^^}') FETCH FIRST 1 ROW ONLY" | xargs)
+		restored_schema=$(xargs < /tmp/restored_schema.out)
+		rm -f /tmp/restored_schema.out
 
 		if [[ "${restored_schema}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
 			echo "[prepare-database.sh] Redirecting default schema to ${restored_schema}"

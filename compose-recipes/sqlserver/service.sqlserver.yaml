@@ -12,11 +12,9 @@ services:
                 reservations:
                     memory: 4G
         environment:
-            -   ACCEPT_EULA=Y
             -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}
             -   DATABASE_USER=${DATABASE_USER}
             -   DATABASE_PASSWORD=${DATABASE_PASSWORD}
-            -   MSSQL_SA_PASSWORD=Liferay123
         healthcheck:
             interval: 5s
             retries: 50

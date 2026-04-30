@@ -15,7 +15,7 @@ _prepare_database() {
 		local old_schema
 		old_schema=$(sed -n '1s@^!"\(.*\)"\..*@\1@p' db2move.lst)
 
-		if [[ -n "${old_schema}" ]] && [[ "${old_schema}" != "${DB2INSTANCE^^}" ]]; then
+		if [[ -n "${old_schema}" && "${old_schema}" != "${DB2INSTANCE^^}" ]]; then
 			echo "[prepare-database.sh] Rewriting schema ${old_schema} to ${DB2INSTANCE^^} in db2move.lst..."
 
 			sed -i "s/${old_schema}/${DB2INSTANCE^^}/g" db2move.lst

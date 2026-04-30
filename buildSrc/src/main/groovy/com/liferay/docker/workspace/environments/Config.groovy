@@ -44,10 +44,10 @@ class Config {
 			this.databaseUser = databaseUserProperty
 		}
 
-		String databaseUserPasswordProperty = project.findProperty("lr.docker.environment.database.user.password")
+		String databasePasswordProperty = project.findProperty("lr.docker.environment.database.password")
 
-		if (databaseUserPasswordProperty != null) {
-			this.databaseUserPassword = databaseUserPasswordProperty
+		if (databasePasswordProperty != null) {
+			this.databasePassword = databasePasswordProperty
 		}
 
 		String databasePartitioningEnabledProperty = project.findProperty("lr.docker.environment.database.partitioning.enabled")
@@ -445,7 +445,7 @@ class Config {
 	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false
 	public String databaseUser = ""
-	public String databaseUserPassword = ""
+	public String databasePassword = ""
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dlStore = ""

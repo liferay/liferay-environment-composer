@@ -57,11 +57,7 @@ ext {
 	addGrantAdminAccessScriptToDumpsVolume = {
 		File grantAdminAccessSqlScript = file("050_grant_admin_access.sql")
 
-		grantAdminAccessSqlScript.withOutputStream {
-			BufferedOutputStream initSQLOutputStream ->
-
-			initSQLOutputStream << "grant all privileges on *.* to '${config.databaseUser}'@'%';\nflush privileges;\n"
-		}
+		grantAdminAccessSqlScript.text = "grant all privileges on *.* to '${config.databaseUser}'@'%';\nflush privileges;\n"
 
 		addToVolume("${config.namespace}_dumps", grantAdminAccessSqlScript)
 

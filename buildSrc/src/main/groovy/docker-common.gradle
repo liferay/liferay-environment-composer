@@ -131,7 +131,7 @@ ext {
 		String schema ->
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
-			String command = "docker compose exec -it database mysql --user root"
+			String command = "docker compose exec -e MYSQL_PWD=${config.databasePassword} -it database mysql --user ${config.databaseUser}"
 
 			if (schema != null) {
 				command += " --database=${schema}"
@@ -145,7 +145,7 @@ ext {
 				schema = "public"
 			}
 
-			return "docker compose exec -e PGPASSWORD=password -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=liferay --dbname=${config.databaseName}"
+			return "docker compose exec -e PGPASSWORD=${config.databasePassword} -e PGOPTIONS=\"--search_path=${schema}\" -it database psql --username=${config.databaseUser} --dbname=${config.databaseName}"
 		}
 
 		if (config.useDatabaseDB2) {
@@ -160,7 +160,7 @@ ext {
 		}
 
 		if (config.useDatabaseSQLServer) {
-			return "docker compose exec -it database /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -P Liferay123 -d ${config.databaseName} -Q"
+			return "docker compose exec -it database /opt/mssql-tools18/bin/sqlcmd -S localhost -U ${config.databaseUser} -C -P ${config.databasePassword} -d ${config.databaseName} -Q"
 		}
 	}
 

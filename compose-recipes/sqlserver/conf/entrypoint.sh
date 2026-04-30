@@ -2,30 +2,37 @@
 
 _sqlcmd="/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P ${MSSQL_SA_PASSWORD}"
 
-_has_database_files() {
-	local database_name=${1}
-
-	if [[ $(find /var/opt/mssql/data -type f -iname "${database_name}.*") ]]; then
-		echo true
-	fi
-}
-
 _is_database_present() {
 	local database_name=${1}
 
-	if ${_sqlcmd} -Q "select name from sys.databases" | grep -q "${database_name}"; then
+	${_sqlcmd} -Q "select name from sys.databases" | grep -q "${database_name}"
+}
 
-		echo true
-	fi
+grant_liferay_access() {
+	local database_name=${1}
+
+	echo "[entrypoint] Ensuring login ${DATABASE_USER} has access to ${database_name}..."
+
+	${_sqlcmd} -Q "
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = '${DATABASE_USER}')
+	CREATE LOGIN [${DATABASE_USER}] WITH PASSWORD = '${DATABASE_PASSWORD}', CHECK_POLICY = OFF;
+"
+
+	${_sqlcmd} -d "${database_name}" -Q "
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = '${DATABASE_USER}')
+	CREATE USER [${DATABASE_USER}] FOR LOGIN [${DATABASE_USER}];
+ELSE
+	ALTER USER [${DATABASE_USER}] WITH LOGIN = [${DATABASE_USER}];
+IF IS_ROLEMEMBER('db_owner', '${DATABASE_USER}') = 0
+	ALTER ROLE db_owner ADD MEMBER [${DATABASE_USER}];
+"
 }
 
 create_database() {
 	local database_name=${1}
 
-	if [[ $(_is_database_present "${database_name}") ]]; then
+	if _is_database_present "${database_name}"; then
 		echo "[entrypoint] Database ${database_name} is present; skipping database creation"
-
-		touch /tmp/database_exists
 
 		return
 	fi
@@ -46,30 +53,14 @@ create_database() {
 
 			${_sqlcmd} -i /init/restore.sql
 
-			touch /tmp/database_exists
-
 			return
 		else
 			echo "[entrypoint] Found bacpac file"
 
 			sqlpackage /a:Import /sf:"${backup_file}" /tdn:"${database_name}" /tp:"${MSSQL_SA_PASSWORD}" /tsn:localhost /ttsc:true /tu:sa
 
-			touch /tmp/database_exists
-
 			return
 		fi
-	fi
-
-	if [[ $(_has_database_files "${database_name}") ]]; then
-		echo "Database files found; reattaching database ${database_name}..."
-
-		sed -i "s,%DATABASE_NAME%,${database_name},g" /init/reinit.sql
-
-		${_sqlcmd} -i /init/reinit.sql
-
-		touch /tmp/database_exists
-
-		return
 	fi
 
 	echo "[entrypoint] Could not find database ${database_name}; creating database..."
@@ -77,8 +68,6 @@ create_database() {
 	sed -i "s,%DATABASE_NAME%,${database_name},g" /init/init.sql
 
 	${_sqlcmd} -i /init/init.sql
-
-	touch /tmp/database_exists
 }
 
 /opt/mssql/bin/sqlservr &
@@ -100,5 +89,9 @@ done
 echo "[entrypoint] SQLServer is available"
 
 create_database "${COMPOSER_DATABASE_NAME}"
+
+touch /tmp/database_exists
+
+grant_liferay_access "${COMPOSER_DATABASE_NAME}"
 
 wait $PID

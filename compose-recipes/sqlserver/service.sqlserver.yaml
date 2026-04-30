@@ -12,14 +12,14 @@ services:
                 reservations:
                     memory: 4G
         environment:
-            -   ACCEPT_EULA=Y
             -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}
-            -   MSSQL_SA_PASSWORD=Liferay123
+            -   DATABASE_USER=${DATABASE_USER}
+            -   DATABASE_PASSWORD=${DATABASE_PASSWORD}
         healthcheck:
             interval: 5s
             retries: 50
             start_period: 30s
-            test: test -f /tmp/database_exists && /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Liferay123 -Q  "select name from sys.databases where name = ${DATABASE_NAME}" | grep -q ${DATABASE_NAME}
+            test: test -f /tmp/database_exists && /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q  "select name from sys.databases where name = ${DATABASE_NAME}" | grep -q ${DATABASE_NAME}
             timeout: 5s
         ports:
             -   "${DATABASE_PORT}:1433"

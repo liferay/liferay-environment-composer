@@ -323,6 +323,8 @@ Map<String, String> environmentMap = [:]
 
 environmentMap.put "DATA_DIRECTORY", config.dataDirectory
 environmentMap.put "DATABASE_NAME", config.databaseName
+environmentMap.put "DATABASE_USER", config.databaseUser
+environmentMap.put "DATABASE_PASSWORD", config.databasePassword
 environmentMap.put "NAMESPACE", config.namespace
 
 if (config.useClustering) {

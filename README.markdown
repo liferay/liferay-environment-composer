@@ -400,15 +400,6 @@ Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` i
 lr.docker.environment.service.enabled[db2]=true
 ```
 
-##### Default login info
-
-```properties
-
-username=db2admin
-password=lportal
-
-```
-
 #### Enable MariaDB 10.6
 
 Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`.

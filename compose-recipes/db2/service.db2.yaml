@@ -7,8 +7,8 @@ services:
         container_name: ${NAMESPACE}-database-db2
         environment:
             -   COMPOSER_DATABASE_NAME=${DATABASE_NAME}
-            -   DB2INSTANCE=db2admin
-            -   DB2INST1_PASSWORD=lportal
+            -   DB2INSTANCE=${DATABASE_USER}
+            -   DB2INST1_PASSWORD=${DATABASE_USER_PASSWORD}
             -   LICENSE=accept
         healthcheck:
             retries: 10
@@ -20,7 +20,7 @@ services:
             -   "${DATABASE_PORT}:50000"
         privileged: true
         volumes:
-            -   dumps:/database/data/db2admin/backups
-            -   db2:/database/data/db2admin/NODE0000
+            -   dumps:/database/data/${DATABASE_USER}/backups
+            -   db2:/database/data/${DATABASE_USER}/NODE0000
 volumes:
     db2:

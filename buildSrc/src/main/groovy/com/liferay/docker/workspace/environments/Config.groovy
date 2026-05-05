@@ -244,6 +244,32 @@ class Config {
 
 		this.useKeycloak = this.services.contains("keycloak")
 
+		this.useLdap = this.services.contains("ldap")
+
+		String ldapGroupAssignmentStrategyProperty = project.findProperty("lr.docker.environment.ldap.group.assignment.strategy")
+
+		if (ldapGroupAssignmentStrategyProperty != null) {
+			this.ldapGroupAssignmentStrategy = ldapGroupAssignmentStrategyProperty
+		}
+
+		List<String> ldapGroupAssignmentStrategyList = ["all", "random"]
+
+		if (!ldapGroupAssignmentStrategyList.contains(this.ldapGroupAssignmentStrategy)) {
+			throw new GradleException("${this.ldapGroupAssignmentStrategy} is not a valid LDAP group assignment strategy. Valid types are: ${ldapGroupAssignmentStrategyList.collect {it}}")
+		}
+
+		Integer ldapGroupCountProperty = project.findProperty("lr.docker.environment.ldap.group.count") as Integer
+
+		if (ldapGroupCountProperty != null) {
+			this.ldapGroupCount = ldapGroupCountProperty
+		}
+
+		Integer ldapUserCountProperty = project.findProperty("lr.docker.environment.ldap.user.count") as Integer
+
+		if (ldapUserCountProperty != null) {
+			this.ldapUserCount = ldapUserCountProperty
+		}
+
 		this.useLiferay = this.services.contains("liferay")
 
 		this.useClustering = this.useLiferay && this.clusterNodes > 0
@@ -445,6 +471,13 @@ class Config {
 	public boolean is74OrQuarterly = false
 	public boolean isARM = false
 	public boolean isNightly = false
+	public String ldapAdminPassword = "test"
+	public String ldapBaseDn = "dc=liferay,dc=com"
+	public String ldapBindDn = "cn=admin,dc=liferay,dc=com"
+	public String ldapGroupAssignmentStrategy = "all"
+	public int ldapGroupCount = 0
+	public String ldapUrl = "ldap://localhost"
+	public int ldapUserCount = 0
 	public String liferayDockerImageId = ""
 	public String liferayUserPassword = "test"
 	public String lxcBackupPassword = null
@@ -469,6 +502,7 @@ class Config {
 	public boolean useDatabasePostgreSQL = false
 	public boolean useDatabaseSQLServer = false
 	public boolean useKeycloak = false
+	public boolean useLdap = false
 	public boolean useLiferay = false
 	public boolean useWebserver = false
 	public String webserverHostnames = "localhost"

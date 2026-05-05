@@ -438,9 +438,11 @@ ext {
 
 			if (outputStream != null) {
 				standardOutput outputStream
+				errorOutput outputStream
 			}
 			else {
 				standardOutput byteArrayOutputStream
+				errorOutput byteArrayOutputStream
 			}
 
 			if (cwd != null) {
@@ -450,6 +452,13 @@ ext {
 
 		if (config.useDatabaseDB2 && (byteArrayOutputStream.toString().contains("SQL0100W") || byteArrayOutputStream.toString().contains("0 record(s) selected"))) {
 			return byteArrayOutputStream.toString().trim()
+		}
+
+		if (config.useLdap && byteArrayOutputStream.toString().contains("Already exists (68)")) {
+			println "There were already exists messages"
+			return byteArrayOutputStream.toString().readLines().findAll {
+				!it.contains("Already exists (68)")
+			}.join("\n").trim()
 		}
 
 		execResult.assertNormalExitValue()

@@ -1,0 +1,160 @@
+ext {
+	executeLdapCommand = {
+		String cmd, File ldifFile, String ldapUrl, String ldapBindDn, String ldapAdminPassword ->
+
+		waitForCommand("cat ${ldifFile.absolutePath} | docker compose exec -T ldap ${cmd} -x -H ${ldapUrl} -D ${ldapBindDn} -w ${ldapAdminPassword} -c")
+	}
+}
+
+tasks.register("createUsers") {
+	onlyIf("using the LDAP service") {
+		config.useLdap
+	}
+	onlyIf("creating LDAP users") {
+		config.ldapUserCount > 0
+	}
+
+	doFirst {
+		waitForContainer("ldap")
+
+		Integer ldapUserCount = config.ldapUserCount
+
+		println "Creating ldif file"
+
+		File ldifFile = File.createTempFile("ldap-users-", ".ldif")
+		ldifFile.deleteOnExit()
+
+		ldifFile.withWriter {
+			writer ->
+			for(int i=1;i<=ldapUserCount;i++) {
+				String username = "testuser${i}"
+				writer.write("""\
+					dn: cn=${username},${config.ldapBaseDn}
+					objectClass: inetOrgPerson
+					objectClass: organizationalPerson
+					objectClass: person
+					objectClass: top
+					cn: ${username}
+					sn: User${i}
+					givenName: Test${i}
+					mail: ${username}@liferay.com
+					userPassword: test
+
+					""".stripIndent())
+			}
+		}
+
+		println "Attempting to create ${ldapUserCount} users in the LDAP service..."
+		executeLdapCommand("ldapadd", ldifFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
+
+		println "Finished creating ${ldapUserCount} LDAP users!"
+
+	}
+}
+
+tasks.register("createGroups") {
+	onlyIf("using the LDAP service") {
+		config.useLdap
+	}
+	onlyIf("creating LDAP groups") {
+		config.ldapGroupCount > 0
+	}
+
+	mustRunAfter("createUsers")
+
+	doFirst {
+		Integer ldapUserCount = config.ldapUserCount as Integer
+
+		if (ldapUserCount == 0) {
+			throw new GradleException("Cannot create LDAP groups without users. Please ensure lr.docker.environment.ldap.users.count is greater than 0 in gradle.properties.")
+		}
+
+		waitForContainer("ldap")
+
+		Integer ldapGroupCount = config.ldapGroupCount as Integer
+
+		println "Creating ldif file for groups"
+
+		File addFile = File.createTempFile("ldap-groups-", ".ldif")
+		addFile.deleteOnExit()
+
+		File modifyFile = File.createTempFile("ldap-groups-modify-", ".ldif")
+		modifyFile.deleteOnExit()
+
+		addFile.withWriter {
+			addWriter ->
+			modifyFile.withWriter {
+				modifyWriter ->
+
+				String assignmentStrategy = config.hasProperty("ldapGroupAssignmentStrategy") ? config.ldapGroupAssignmentStrategy as String : "all"
+				Map<Integer, Set<String>> groupMembers = [:]
+
+				// Initialize the group sets
+				for (int i = 1; i <= ldapGroupCount; i++) {
+					groupMembers[i] = [] as Set
+				}
+
+				if (assignmentStrategy == "random") {
+					Random rand = new Random()
+
+					// Guarantee at least 1 random user per group to ensure the groupOfUniqueNames is valid
+					for (int i = 1; i <= ldapGroupCount; i++) {
+						int randomUserId = rand.nextInt(ldapUserCount) + 1
+
+						groupMembers[i].add("cn=testuser${randomUserId},${config.ldapBaseDn}")
+					}
+
+					// Randomly distribute the rest (50% chance for a user to be in any given group)
+					for (int i = 1; i <= ldapUserCount; i++) {
+						for (int j = 1; j <= ldapGroupCount; j++) {
+							if (rand.nextBoolean()) {
+								groupMembers[j].add("cn=testuser${i},${config.ldapBaseDn}")
+							}
+						}
+					}
+				} else if (assignmentStrategy == "all") {
+					// Assign every user to every group
+					for (int i = 1; i <= ldapGroupCount; i++) {
+						for (int j = 1; j <= ldapUserCount; j++) {
+							groupMembers[i].add("cn=testuser${j},${config.ldapBaseDn}")
+						}
+					}
+				}
+
+				for (int i = 1; i <= ldapGroupCount; i++) {
+					String groupName = "testgroup${i}"
+
+					addWriter.write("""\
+						dn: cn=${groupName},${config.ldapBaseDn}
+						objectClass: groupOfUniqueNames
+						objectClass: top
+						cn: ${groupName}
+						""".stripIndent())
+
+					modifyWriter.write("""\
+						dn: cn=${groupName},${config.ldapBaseDn}
+						changetype: modify
+						replace: uniqueMember
+						""".stripIndent())
+
+					groupMembers[i].each {
+						memberDn ->
+						addWriter.write("uniqueMember: ${memberDn}\n")
+						modifyWriter.write("uniqueMember: ${memberDn}\n")
+					}
+
+					addWriter.write("\n")
+					modifyWriter.write("\n")
+				}
+			}
+		}
+
+		println "Attempting to create and update ${ldapGroupCount} groups in the LDAP service..."
+		executeLdapCommand("ldapadd", addFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
+		executeLdapCommand("ldapmodify", modifyFile, config.ldapUrl, config.ldapBindDn, config.ldapAdminPassword)
+
+		println "Finished creating and updating ${ldapGroupCount} LDAP groups and assigning users to them!"
+	}
+}
+
+project.plugins.apply "docker-common"

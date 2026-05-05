@@ -77,6 +77,8 @@ To shut down the environment, run `./gradlew stop`.
 ### LDAP features overview
 
 - [Enabled the ldap service](#enable-the-ldap-service)
+- [Create a specific number of users in LDAP](#create-a-specific-number-of-users-in-ldap)
+- [Create a specific number of groups in LDAP and assign the users to them](#create-a-specific-number-of-groups-in-ldap-and-assign-the-users-to-them)
 
 ### Sharing features overview
 - [Zip up the workspace to share the setup](#zip-up-the-workspace-to-share-the-setup)
@@ -664,6 +666,44 @@ Set the `lr.docker.environment.service.enabled[ldap]` property to `true` or `1` 
 ```properties
 
 lr.docker.environment.service.enabled[ldap]=true
+
+```
+
+#### Create a specific number of users in LDAP
+
+Set the `lr.docker.environment.ldap.user.count` property to the number of users you want to create. Default is 0.
+
+`gradle.properties`:
+
+```properties
+
+lr.docker.environment.ldap.user.count=10
+
+```
+
+#### Create a specific number of groups in LDAP and assign the users to them
+
+The `lr.docker.environment.ldap.group.count` property should be at least 1 to use this property. Set the `lr.docker.environment.ldap.group.count` property to the number of groups you want to create. Default is 0.
+
+`gradle.properties`:
+
+```properties
+
+lr.docker.environment.ldap.group.count=10
+
+```
+
+Set the `lr.docker.environment.ldap.group.assignment.strategy` to `all` or `random`.
+
+`all`: Every user is assigned to every group.
+
+`random`: Every user is assigned to a random group. Each group will have at least one user assigned.
+
+`gradle.properties`:
+
+```properties
+
+lr.docker.environment.ldap.group.assignment.strategy=all
 
 ```
 

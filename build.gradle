@@ -423,23 +423,21 @@ if (config.useKeycloak) {
 	}
 }
 
-file("versions.env").withInputStream {
-	versionsFile ->
+config.services.each {
+	String serviceName ->
 
-	Properties versions = new Properties()
+	String version = config.serviceVersions[serviceName]
 
-	versions.load(versionsFile)
-
-	environmentMap.putAll versions
-
-	String elasticsearchVersion = versions.getProperty("ELASTICSEARCH_VERSION")
-
-	if (elasticsearchVersion) {
-		String elasticsearchMajorVersion = elasticsearchVersion.split("\\.")[0]
-
-		environmentMap.put("ELASTICSEARCH_MAJOR_VERSION", elasticsearchMajorVersion)
-		environmentMap.put("ELASTICSEARCH_PRODUCTION_MODE_ENABLED", elasticsearchMajorVersion == "7" ? "false" : "true")
+	if (version == null) {
+		return
 	}
+
+	environmentMap.put("${serviceName.toUpperCase()}_VERSION", version)
+}
+
+if (config.services.contains("elasticsearch")) {
+	environmentMap.put("ELASTICSEARCH_MAJOR_VERSION", config.elasticsearchMajorVersion)
+	environmentMap.put("ELASTICSEARCH_PRODUCTION_MODE_ENABLED", config.elasticsearchProductionModeEnabled)
 }
 
 file('.env').withOutputStream {

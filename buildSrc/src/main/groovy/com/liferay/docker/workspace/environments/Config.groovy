@@ -311,6 +311,35 @@ class Config {
 			this.useWebserver = true
 		}
 
+		this.serviceVersions = project.properties.findAll {
+			Map.Entry<String, String> property ->
+
+			property.key =~ /^lr.docker.environment.service.version\[\w+\]$/
+		}.collectEntries {
+			Map.Entry<String, String> versionProperty ->
+
+			String name = versionProperty.key.substring(versionProperty.key.indexOf("[") + 1, versionProperty.key.indexOf("]"))
+
+			[(name): versionProperty.value]
+		}
+
+		List<String> versionedServiceNames = ["clamav", "db2", "elasticsearch", "mariadb", "mysql", "postgres", "sqlserver"]
+
+		this.services.findAll { versionedServiceNames.contains(it) }.each {
+			String serviceName ->
+
+			if (!this.serviceVersions[serviceName]) {
+				throw new GradleException("Missing required property: lr.docker.environment.service.version[${serviceName}]")
+			}
+		}
+
+		if (this.services.contains("elasticsearch")) {
+			String elasticsearchMajorVersion = this.serviceVersions["elasticsearch"].split("\\.")[0]
+
+			this.elasticsearchMajorVersion = elasticsearchMajorVersion
+			this.elasticsearchProductionModeEnabled = elasticsearchMajorVersion == "7" ? "false" : "true"
+		}
+
 		if (this.dockerImageLiferay.contains("7.4") || this.dockerImageLiferay.contains(".q")) {
 			this.is74OrQuarterly = true
 		}
@@ -439,6 +468,8 @@ class Config {
 	public String dlStorePath = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
+	public String elasticsearchMajorVersion = ""
+	public String elasticsearchProductionModeEnabled = ""
 	public List<String> gcpHotfixURLs = new ArrayList<String>()
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
@@ -461,6 +492,7 @@ class Config {
 	public String s3Region = null
 	public String s3SecretKey = null
 	public List<String> services = new ArrayList<String>()
+	public Map<String, String> serviceVersions = [:]
 	public boolean useClustering = false
 	public boolean useDatabase = false
 	public boolean useDatabaseDB2 = false

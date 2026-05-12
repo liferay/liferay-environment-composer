@@ -85,6 +85,17 @@ _writeProperty() {
 	rm "${file}.bak"
 }
 
+_getEnvVar() {
+	local key="${1}"
+
+	grep "^${key}=" .env | cut -d= -f2-
+}
+
+_runGradleConfig() {
+	# Gradle's configuration phase generates .env, so any task triggers it.
+	./gradlew help
+}
+
 common_setup_file() {
 	_debug "SETUP ${BATS_TEST_FILE_NAME}"
 

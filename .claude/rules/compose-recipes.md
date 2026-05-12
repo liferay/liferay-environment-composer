@@ -13,7 +13,7 @@ globs: compose-recipes/**/*.yaml
 ## Variable references
 - Container names: `${NAMESPACE}-{service-type}`
 - Ports: `"${PORT_VAR}:container-port"` — defined in `ports.env`
-- Versions: `${VERSION_VAR}` — defined in `versions.env`
+- Versions: `${<SERVICE>_VERSION}` — emitted only for enabled services from `lr.docker.environment.service.version[<service>]` in `gradle.properties`. Override locally via `gradle-local.properties`.
 
 ## Liferay environment variable encoding
 Property names use a special encoding in env vars:

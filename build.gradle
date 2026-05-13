@@ -431,6 +431,15 @@ file("versions.env").withInputStream {
 	versions.load(versionsFile)
 
 	environmentMap.putAll versions
+
+	String elasticsearchVersion = versions.getProperty("ELASTICSEARCH_VERSION")
+
+	if (elasticsearchVersion) {
+		String elasticsearchMajorVersion = elasticsearchVersion.split("\\.")[0]
+
+		environmentMap.put("ELASTICSEARCH_MAJOR_VERSION", elasticsearchMajorVersion)
+		environmentMap.put("ELASTICSEARCH_PRODUCTION_MODE_ENABLED", elasticsearchMajorVersion == "7" ? "false" : "true")
+	}
 }
 
 file('.env').withOutputStream {

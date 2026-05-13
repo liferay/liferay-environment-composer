@@ -1,6 +1,9 @@
 services:
     elasticsearch:
-        build: ./compose-recipes/elasticsearch
+        build:
+            args:
+                ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
+            context: ./compose-recipes/elasticsearch
         container_name: ${NAMESPACE}-elasticsearch
         environment:
             -   ES_JAVA_OPTS=-Xms1g -Xmx1g
@@ -9,9 +12,7 @@ services:
             -   http.port=9200
             -   transport.port=9300
             -   xpack.ml.enabled=false
-            -   xpack.monitoring.enabled=false
             -   xpack.security.enabled=false
-            -   xpack.sql.enabled=false
             -   xpack.watcher.enabled=false
         healthcheck:
             interval: 10s

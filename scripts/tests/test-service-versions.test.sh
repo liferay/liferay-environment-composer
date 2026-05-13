@@ -71,3 +71,15 @@ teardown() {
 
 	assert_failure
 }
+
+@test "Validation fails when elasticsearch major version is not supported" {
+	_debug "RUNNING ${BATS_TEST_NAME}"
+
+	_writeProperty "lr.docker.environment.service.enabled[elasticsearch]" "true"
+	_writeProperty "lr.docker.environment.service.version[elasticsearch]" "6.8.23"
+
+	run _runGradleConfig
+
+	assert_failure
+	assert_output --partial "Unsupported Elasticsearch version: 6.8.23"
+}

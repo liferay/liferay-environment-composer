@@ -334,7 +334,12 @@ class Config {
 		}
 
 		if (this.services.contains("elasticsearch")) {
-			String elasticsearchMajorVersion = this.serviceVersions["elasticsearch"].split("\\.")[0]
+			String elasticsearchVersion = this.serviceVersions["elasticsearch"]
+			String elasticsearchMajorVersion = elasticsearchVersion.split("\\.")[0]
+
+			if (!(elasticsearchMajorVersion in ["7", "8"])) {
+				throw new GradleException("Unsupported Elasticsearch version: ${elasticsearchVersion}. Supported major versions: 7, 8")
+			}
 
 			this.elasticsearchMajorVersion = elasticsearchMajorVersion
 			this.elasticsearchProductionModeEnabled = elasticsearchMajorVersion == "7" ? "false" : "true"

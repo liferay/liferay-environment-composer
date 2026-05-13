@@ -38,16 +38,16 @@ class Config {
 			this.databaseName = databaseNameProperty
 		}
 
-		String databaseUserProperty = project.findProperty("lr.docker.environment.database.user")
-
-		if (databaseUserProperty != null) {
-			this.databaseUser = databaseUserProperty
-		}
-
 		String databasePasswordProperty = project.findProperty("lr.docker.environment.database.password")
 
 		if (databasePasswordProperty != null) {
 			this.databasePassword = databasePasswordProperty
+		}
+
+		String databaseUserProperty = project.findProperty("lr.docker.environment.database.user")
+
+		if (databaseUserProperty != null) {
+			this.databaseUser = databaseUserProperty
 		}
 
 		String databasePartitioningEnabledProperty = project.findProperty("lr.docker.environment.database.partitioning.enabled")
@@ -444,8 +444,8 @@ class Config {
 	public String databaseName = "lportal"
 	public String databaseType = ""
 	public boolean databasePartitioningEnabled = false
-	public String databaseUser = ""
 	public String databasePassword = ""
+	public String databaseUser = ""
 	public String dataDirectory = "data"
 	public Map<String, String> defaultCompanyVirtualHost = null
 	public String dlStore = ""

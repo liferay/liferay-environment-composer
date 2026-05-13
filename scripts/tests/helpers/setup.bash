@@ -63,15 +63,26 @@ _normalize() {
 	tr '[:blank:]' '_'
 }
 
-_writeProperty() {
+_readProperty() {
 	local key="${1}"
-	local value="${2}"
+	local file="${2:-gradle.properties}"
 	local escapedKey="${key//[/\\[}"
 
 	escapedKey="${escapedKey//]/\\]}"
 
-	sed -E -i.bak "s,^#?${escapedKey}=.*$,${key}=${value//,/\,},g" gradle.properties
-	rm gradle.properties.bak
+	sed -nE "s,^${escapedKey}=(.*)$,\1,p" "${file}"
+}
+
+_writeProperty() {
+	local key="${1}"
+	local value="${2}"
+	local file="${3:-gradle.properties}"
+	local escapedKey="${key//[/\\[}"
+
+	escapedKey="${escapedKey//]/\\]}"
+
+	sed -E -i.bak "s,^#?${escapedKey}=.*$,${key}=${value//,/\,},g" "${file}"
+	rm "${file}.bak"
 }
 
 common_setup_file() {
@@ -98,7 +109,10 @@ common_setup() {
 	local name
 	name="$(_normalize "${BATS_TEST_NAME_PREFIX}")-${BATS_TEST_NUMBER}-$(_timestamp)"
 
-	_lec init "${name}" dxp-2025.q4.12
+	local liferay_version
+	liferay_version="$(_readProperty "liferay.workspace.product" "${WORKSPACE_DIR}/gradle.properties")"
+
+	_lec init "${name}" "${liferay_version}"
 
 	TEST_WORKSPACE_DIR="${LIFERAY_ENVIRONMENT_COMPOSER_WORKSPACES_DIR}/lec-${name}"
 	export TEST_WORKSPACE_DIR

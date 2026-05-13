@@ -49,9 +49,19 @@ teardown() {
 		return 3
 	fi
 
+	# Verify Elasticsearch version
+	run curl -s "http://localhost:${es_host_port}/"
+	assert_success
+	assert_output --regexp '"number" *: *"8\.19\.12"'
+
 	# Verify Liferay is reachable
 	local liferayPort
 	liferayPort="$(_getServicePort "liferay" "8080")"
 
 	_assertHttpStatus "http://localhost:${liferayPort}"
+
+	# Verify Liferay wrote indices to this Elasticsearch
+	run curl -s "http://localhost:${es_host_port}/_cat/indices?h=index"
+	assert_success
+	assert_output --regexp 'liferay-[0-9]+'
 }

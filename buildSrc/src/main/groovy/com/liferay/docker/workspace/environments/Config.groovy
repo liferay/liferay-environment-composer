@@ -336,7 +336,7 @@ class Config {
 			String elasticsearchMajorVersion = elasticsearchVersion.split("\\.")[0]
 
 			if (!(elasticsearchMajorVersion in ["7", "8"])) {
-				throw new GradleException("Unsupported Elasticsearch version: ${elasticsearchVersion}. Supported major versions: 7, 8")
+				throw new GradleException("Unsupported Elasticsearch version: ${elasticsearchVersion}. Supported major versions: 7, 8.")
 			}
 
 			this.elasticsearchMajorVersion = elasticsearchMajorVersion

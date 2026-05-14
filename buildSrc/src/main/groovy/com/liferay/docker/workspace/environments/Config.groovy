@@ -321,13 +321,11 @@ class Config {
 			}
 		}
 
-		List<String> versionedServiceNames = ["clamav", "db2", "elasticsearch", "mariadb", "mysql", "postgres", "sqlserver"]
+		this.serviceVersions.each {
+			String name, String version ->
 
-		this.services.findAll { versionedServiceNames.contains(it) }.each {
-			String serviceName ->
-
-			if (!this.serviceVersions[serviceName]) {
-				throw new GradleException("Missing required property: lr.docker.environment.service.version[${serviceName}]")
+			if (this.services.contains(name) && !version) {
+				throw new GradleException("Missing required property: lr.docker.environment.service.version[${name}]")
 			}
 		}
 

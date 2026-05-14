@@ -423,16 +423,12 @@ if (config.useKeycloak) {
 	}
 }
 
-config.services.each {
-	String serviceName ->
+config.serviceVersions.each {
+	String name, String version ->
 
-	String version = config.serviceVersions[serviceName]
-
-	if (version == null) {
-		return
+	if (config.services.contains(name)) {
+		environmentMap.put("${name.toUpperCase()}_VERSION", version)
 	}
-
-	environmentMap.put("${serviceName.toUpperCase()}_VERSION", version)
 }
 
 if (config.services.contains("elasticsearch")) {

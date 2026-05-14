@@ -311,16 +311,14 @@ class Config {
 			this.useWebserver = true
 		}
 
-		this.serviceVersions = project.properties.findAll {
-			Map.Entry<String, String> property ->
+		project.properties.each {
+			String key, value ->
 
-			property.key =~ /^lr.docker.environment.service.version\[\w+\]$/
-		}.collectEntries {
-			Map.Entry<String, String> versionProperty ->
+			def matcher = key =~ /^lr\.docker\.environment\.service\.version\[(\w+)\]$/
 
-			String name = versionProperty.key.substring(versionProperty.key.indexOf("[") + 1, versionProperty.key.indexOf("]"))
-
-			[(name): versionProperty.value]
+			if (matcher) {
+				this.serviceVersions[matcher[0][1]] = value
+			}
 		}
 
 		List<String> versionedServiceNames = ["clamav", "db2", "elasticsearch", "mariadb", "mysql", "postgres", "sqlserver"]

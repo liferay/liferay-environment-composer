@@ -15,7 +15,7 @@ setup() {
 	_writeProperty "liferay.workspace.product" "dxp-2024.q3.8"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 	_writeProperty "lr.docker.environment.service.enabled[elasticsearch]" "true"
-	_writeProperty "ELASTICSEARCH_VERSION" "7.17.9" "versions.env"
+	_writeProperty "lr.docker.environment.service.version[elasticsearch]" "7.17.9"
 }
 
 teardown() {

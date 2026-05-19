@@ -650,16 +650,17 @@ The shared workspace should be immediately usable by simply unzipping the archiv
 
 #### Customize Docker image versions
 
-You can change Docker image versions for several services in the `versions.env` file. Most version have not been tested, so extra configuration may be needed when changing versions to get them working.
+You can change Docker image versions for several services via the `lr.docker.environment.service.version[<service>]` properties. Defaults are in `gradle.properties`; override them locally without modifying the checked-in defaults by adding the same key to `gradle-local.properties`. Most versions have not been tested, so extra configuration may be needed when changing versions to get them working.
 
-`versions.env`:
+`gradle-local.properties`:
 
-```dotenv
-DB2_VERSION=11.5.9.0
-MARIADB_VERSION=10.6.22-jammy
-MYSQL_VERSION=8.4.5-oracle
-POSTGRES_VERSION=16.3
-SQLSERVER_VERSION=2022-CU21-ubuntu-22.04
+```properties
+lr.docker.environment.service.version[db2]=11.5.9.0
+lr.docker.environment.service.version[elasticsearch]=7.17.9
+lr.docker.environment.service.version[mariadb]=10.6.22-jammy
+lr.docker.environment.service.version[mysql]=8.4.5-oracle
+lr.docker.environment.service.version[postgres]=16.3
+lr.docker.environment.service.version[sqlserver]=2022-CU21-ubuntu-22.04
 ```
 
 ### Gradle tasks

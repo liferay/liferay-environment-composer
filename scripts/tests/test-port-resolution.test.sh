@@ -7,7 +7,7 @@ _assertPortEquals() {
 	local expected="${2}"
 
 	local actual
-	actual="$(_getEnvPort "${key}")"
+	actual="$(_getEnvVar "${key}")"
 
 	if [[ "${actual}" != "${expected}" ]]; then
 		_debug "[FAILED] ${key}: expected ${expected}, got ${actual}"
@@ -19,23 +19,12 @@ _assertPortResolved() {
 	local key="${1}"
 
 	local value
-	value="$(_getEnvPort "${key}")"
+	value="$(_getEnvVar "${key}")"
 
 	if [[ "${value}" =~ - ]]; then
 		_debug "[FAILED] ${key} is still a range: ${value}"
 		return 1
 	fi
-}
-
-_getEnvPort() {
-	local key="${1}"
-
-	grep "^${key}=" .env | cut -d= -f2
-}
-
-_resolvePorts() {
-	# Port resolution runs during Gradle's configuration phase, so any task triggers it
-	./gradlew help
 }
 
 _setPortRange() {
@@ -86,7 +75,7 @@ teardown() {
 @test "Ranges resolve to specific ports" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	_resolvePorts
+	_runGradleConfig
 
 	_assertPortResolved "LIFERAY_PORT"
 	_assertPortResolved "DATABASE_PORT"
@@ -96,7 +85,7 @@ teardown() {
 @test "Resolves to lowest port when all are free" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	_resolvePorts
+	_runGradleConfig
 
 	_assertPortEquals "LIFERAY_PORT" "48080"
 	_assertPortEquals "DATABASE_PORT" "48321"
@@ -123,7 +112,7 @@ teardown() {
 	_startup
 
 	local blocker_db_port
-	blocker_db_port="$(_getEnvPort "DATABASE_PORT")"
+	blocker_db_port="$(_getEnvVar "DATABASE_PORT")"
 
 	_debug "Blocker project DATABASE_PORT: ${blocker_db_port}"
 
@@ -133,7 +122,7 @@ teardown() {
 	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"
 
-	_resolvePorts
+	_runGradleConfig
 
 	_assertPortEquals "DATABASE_PORT" "48322"
 }
@@ -149,7 +138,7 @@ teardown() {
 	local ports_before
 	ports_before="$(grep "PORT=" .env | sort)"
 
-	_resolvePorts
+	_runGradleConfig
 
 	local ports_after
 	ports_after="$(grep "PORT=" .env | sort)"
@@ -204,7 +193,7 @@ teardown() {
 	# Re-run gradle on our project — should reuse 48322, not drop to 48321
 	cd "${TEST_WORKSPACE_DIR}"
 
-	_resolvePorts
+	_runGradleConfig
 
 	_assertPortEquals "DATABASE_PORT" "48322"
 }

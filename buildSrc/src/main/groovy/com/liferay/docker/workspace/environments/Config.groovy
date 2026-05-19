@@ -323,6 +323,35 @@ class Config {
 			this.useWebserver = true
 		}
 
+		project.properties.each {
+			String key, value ->
+
+			def matcher = key =~ /^lr\.docker\.environment\.service\.version\[(\w+)\]$/
+
+			if (matcher) {
+				this.serviceVersions[matcher[0][1]] = value
+			}
+		}
+
+		this.serviceVersions.each {
+			String name, String version ->
+
+			if (this.services.contains(name) && !version) {
+				throw new GradleException("Missing required property: lr.docker.environment.service.version[${name}]")
+			}
+		}
+
+		if (this.services.contains("elasticsearch")) {
+			String elasticsearchVersion = this.serviceVersions["elasticsearch"]
+			String elasticsearchMajorVersion = elasticsearchVersion.split("\\.")[0]
+
+			if (!(elasticsearchMajorVersion in ["7", "8"])) {
+				throw new GradleException("Unsupported Elasticsearch version: ${elasticsearchVersion}. Supported major versions: 7, 8.")
+			}
+
+			this.elasticsearchMajorVersion = elasticsearchMajorVersion
+		}
+
 		if (this.dockerImageLiferay.contains("7.4") || this.dockerImageLiferay.contains(".q")) {
 			this.is74OrQuarterly = true
 		}
@@ -453,6 +482,7 @@ class Config {
 	public String dlStorePath = null
 	public String dockerImageLiferay = null
 	public boolean dockerImageLiferayDXP = false
+	public String elasticsearchMajorVersion = ""
 	public List<String> gcpHotfixURLs = new ArrayList<String>()
 	public boolean glowrootEnabled = false
 	public List<String> hotfixURLs = new ArrayList<String>()
@@ -475,6 +505,7 @@ class Config {
 	public String s3Region = null
 	public String s3SecretKey = null
 	public List<String> services = new ArrayList<String>()
+	public Map<String, String> serviceVersions = [:]
 	public boolean useClustering = false
 	public boolean useDatabase = false
 	public boolean useDatabaseDB2 = false

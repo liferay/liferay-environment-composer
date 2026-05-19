@@ -66,7 +66,7 @@ Services are toggled via `lr.docker.environment.service.enabled[<name>]` in `gra
 - `configs/docker/` - Docker-specific overrides
 - `configs/local/` - Local overrides (gitignored)
 - `gradle.properties` - Primary configuration file for all environment settings
-- `ports.env` / `versions.env` - Port ranges and Docker image versions
+- `ports.env` - Port ranges
 
 ### CLI Tool
 

@@ -475,6 +475,9 @@ _getServicePorts() {
 	{{end -}}
 	EOF
 
+	local hostname
+	hostname="$(_getComposeProjectName "${projectDir}").localhost"
+
 	(
 		cd "${projectDir}" || exit 1
 
@@ -482,7 +485,27 @@ _getServicePorts() {
 			docker compose ps "${serviceName}" --format "${template}" | tail -n +3
 		else
 			docker compose ps --format "${template}" | tail -n +3
-		fi
+		fi | awk -v hostname="${hostname}" '
+			{
+				print $0
+				if ($2 ~ /^(80|443|8080|8443|9080)$/) {
+					has_browser_port = 1
+					url_pos = index($0, "http://")
+					if (url_pos == 0) url_pos = index($0, "https://")
+					if (url_pos > 0) {
+						url = substr($0, url_pos)
+						sub(/\/\/localhost:/, "//" hostname ":", url)
+						printf "%*s%s\n", url_pos - 1, "", url
+					}
+				}
+			}
+			END {
+				if (has_browser_port) {
+					print ""
+					print "Tip: Use *.localhost with multiple workspaces to keep browser sessions isolated."
+				}
+			}
+		'
 	)
 }
 _getWorktreeDir() {

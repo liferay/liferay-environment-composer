@@ -9,6 +9,7 @@ services:
             -   LIFERAY_JPDA_ENABLED=true
             -   LIFERAY_DISABLE_TRIAL_LICENSE=true
             -   LIFERAY_UPGRADE_PERIOD_DATABASE_PERIOD_AUTO_PERIOD_RUN=true
+            -   LIFERAY_VIRTUAL_PERIOD_HOSTS_PERIOD_VALID_PERIOD_HOSTS=${LIFERAY_VALID_HOSTS}
         healthcheck:
             interval: 5s
             start_period: 5m

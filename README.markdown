@@ -227,9 +227,9 @@ LIFERAY_DEBUG_PORT=8000-8009
 LIFERAY_YOURKIT_PORT=10001-10010
 ```
 
-When the workspace is running, `lec ports` prints both `http://localhost:<port>` and `http://<namespace>.localhost:<port>` for browser-facing ports. The `*.localhost` form gives each workspace a distinct hostname, so the browser tracks its session separately from other workspaces. A single workspace works fine on either URL.
+When the project is running, `lec ports` prints both `http://localhost:<port>` and `http://<namespace>.localhost:<port>` for browser-facing ports. The `*.localhost` form gives each project a distinct hostname, so the browser tracks its session separately from other projects. Either URL can be used to connect to a single project.
 
-**Note:** macOS's OS resolver does not handle `*.localhost`. Chrome, Firefox, and Edge resolve it internally, but Safari, `curl`, `wget`, and other tools that use the OS resolver do not. macOS users of those tools should add `127.0.0.1 <namespace>.localhost` to `/etc/hosts` for each workspace.
+**Note:** macOS's OS resolver does not handle `*.localhost`. Chrome, Firefox, and Edge resolve it internally, but Safari, `curl`, `wget`, and other tools that use the OS resolver do not. macOS users of those tools should add `127.0.0.1 <namespace>.localhost` to `/etc/hosts` for each project.
 
 #### Enable LibreOffice integration
 

@@ -124,6 +124,7 @@ _printHelpAndExit() {
 
 		${C_BOLD}COMMANDS:${C_RESET}
 		  init [<ticket>] [<version>] [--start]     Create a new Composer project. The "--start" flag starts the Composer project after it is created.
+		  service                                   Select enabled services
 		  start                                     Start a Composer project
 		  stop                                      Stop a Composer project
 		  clean                                     Stop a Composer project and remove Docker volumes
@@ -555,6 +556,59 @@ _selectLiferayRelease() {
 		_listSaaSEnvironments | sed "s,^,${C_BLUE}LXC${C_NC}    ${delimiter},g"
 	) | _select "${promptMessage}" | awk -F "${delimiter}" '{print $2}'
 }
+_selectServices() {
+	local projectDir="${1}"
+
+	(
+		cd "${projectDir}" || exit
+
+		local all_options
+		all_options=$(grep '^lr.docker.environment.service.enabled' gradle.properties | awk -F'[][]' '{ print $2 }' | sort -u)
+
+		local old_selected
+		old_selected=$(grep '^lr.docker.environment.service.enabled' gradle*.properties | grep -F '=true' | awk -F'[][]' '{ print $2 }')
+
+		local fzf_bind
+		fzf_bind='tab:toggle+clear-query'
+
+		if [ "" != "${old_selected}" ]; then
+			fzf_bind="${fzf_bind},start:select-all+clear-query"
+		fi
+
+		local fzf_query
+		fzf_query="liferay"
+
+		if [ "" != "${old_selected}" ]; then
+			fzf_query="$(echo "${old_selected}" | tr '\n' '|' | sed 's/|/ | /g')"
+		fi
+
+		local new_selected
+		new_selected=$(echo "${all_options}" | _selectMultiple "Choose services to enable (Tab to select multiple)" --bind "${fzf_bind}" --query="${fzf_query}" --sync)
+
+		echo "${new_selected}"
+
+		if [ "" != "${new_selected}" ]; then
+			for item in ${all_options}; do
+				local is_old
+				is_old="$(echo "${old_selected}" | grep -c "^${item}$")"
+
+				local is_new
+				is_new="$(echo "${new_selected}" | grep -c "^${item}$")"
+
+				if [[ ${is_old} -eq 0 ]] && [[ ${is_new} -ne 0 ]]; then
+					_writeProperty "lr.docker.environment.service.enabled\[${item}\]" "true" gradle.properties
+					test -f gradle-local.properties && sed -i.bak "/lr.docker.environment.service.enabled\[${item}\]/d" gradle-local.properties && rm gradle-local.properties.bak
+				elif [[ ${is_old} -ne 0 ]] && [[ ${is_new} -eq 0 ]]; then
+					_writeProperty "lr.docker.environment.service.enabled\[${item}\]" "false" gradle.properties
+					test -f gradle-local.properties && sed -i.bak "/lr.docker.environment.service.enabled\[${item}\]/d" gradle-local.properties && rm gradle-local.properties.bak
+				fi
+			done
+		fi
+
+		_print_success "The following services are enabled:"
+		grep --colour=never '^lr.docker.environment.service.enabled.*=true' gradle*.properties
+	)
+}
 _startProject() {
 	local projectDir="${1}"
 
@@ -910,10 +964,14 @@ cmd_importDLStructure() {
 }
 cmd_init() {
 	local ARGS=()
+	local FLAG_SERVICE=0
 	local FLAG_START=0
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
+		--service)
+			shift && FLAG_SERVICE=1
+			;;
 		--start)
 			shift && FLAG_START=1
 			;;
@@ -977,6 +1035,10 @@ cmd_init() {
 	_writeLiferayVersion "${worktree_dir}" "${liferay_version}"
 
 	_print_success "Created new Liferay Environment Composer project at ${C_BLUE}${worktree_dir}${C_NC}"
+
+	if [[ "${FLAG_SERVICE}" -gt 0 ]]; then
+		_selectServices "${worktree_dir}"
+	fi
 
 	if [[ "${FLAG_START}" -gt 0 ]]; then
 		_print_step "Starting workspace"
@@ -1105,6 +1167,15 @@ cmd_restart() {
 }
 cmd_rm() {
 	cmd_remove "${@}"
+}
+cmd_service() {
+	_checkProjectDirectory "${PWD}"
+
+	(
+		cd "${PROJECT_DIRECTORY}" || exit
+
+		_selectServices "${PROJECT_DIRECTORY}"
+	)
 }
 cmd_share() {
 	_checkProjectDirectory "${PWD}"

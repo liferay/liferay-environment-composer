@@ -242,7 +242,7 @@ When the project is running, `lec ports` prints both `http://localhost:<port>` a
 
 #### Enable LibreOffice integration
 
-You can enable LibreOffice integration with Liferay by setting the `lr.docker.environment.service.enabled[libreoffice]` property to `true` or `1` in `gradle.properties`.
+You can enable LibreOffice integration with Liferay by setting the `lr.docker.environment.service.enabled[libreoffice]` property to `true` or `1` in `gradle.properties`, or by choosing the `libreoffice` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -305,7 +305,7 @@ lr.docker.environment.preview.media.enabled=true
 
 #### Configure Liferay SAML with Keycloak as IdP
 
-You can enable the keycloak service by setting the `lr.docker.environment.service.enabled[keycloak]` property to `true` or `1` in `gradle.properties`.
+You can enable the keycloak service by setting the `lr.docker.environment.service.enabled[keycloak]` property to `true` or `1` in `gradle.properties`, or by choosing the `keycloak` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -368,7 +368,7 @@ To customize Liferay's JVM arguments, modify the `LIFERAY_JVM_OPTS` variable in 
 
 #### Enable MySQL 8.4
 
-Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[mysql]` property to `true` or `1` in `gradle.properties`, or choose the `mysql` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -378,7 +378,7 @@ lr.docker.environment.service.enabled[mysql]=true
 
 #### Enable PostgreSQL 16.3
 
-Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[postgres]` property to `true` or `1` in `gradle.properties`, or choose the `postgres` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -388,7 +388,7 @@ lr.docker.environment.service.enabled[postgres]=true
 
 #### Enable DB2 11.5
 
-Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[db2]` property to `true` or `1` in `gradle.properties`, or choose the `db2` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -398,7 +398,7 @@ lr.docker.environment.service.enabled[db2]=true
 
 #### Enable MariaDB 10.6
 
-Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[mariadb]` property to `true` or `1` in `gradle.properties`, or choose the `mariadb` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -408,7 +408,7 @@ lr.docker.environment.service.enabled[mariadb]=true
 
 #### Enable SQL Server 2022
 
-Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[sqlserver]` property to `true` or `1` in `gradle.properties`, or choose the `sqlserver` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -487,7 +487,7 @@ lr.docker.environment.liferay.user.password=test
 
 #### Enable standalone Elasticsearch
 
-Set the `lr.docker.environment.service.enabled[elasticsearch]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[elasticsearch]` property to `true` or `1` in `gradle.properties`, or choose the `elasticsearch` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -511,7 +511,7 @@ ELASTICSEARCH_TRANSPORT_PORT=9300-9309
 
 #### Enable the mail service
 
-Set the `lr.docker.environment.service.enabled[mail]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[mail]` property to `true` or `1` in `gradle.properties`, or choose the `mail` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -535,7 +535,7 @@ MAIL_SMTP_PORT=1025
 
 #### Enable NGINX
 
-Set the `lr.docker.environment.service.enabled[webserver]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[webserver]` property to `true` or `1` in `gradle.properties`, or choose the `webserver` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -643,7 +643,7 @@ lr.docker.environment.yourkit.url=https://www.yourkit.com/download/docker/YourKi
 
 #### Enable the ldap service
 
-Set the `lr.docker.environment.service.enabled[ldap]` property to `true` or `1` in `gradle.properties`.
+Set the `lr.docker.environment.service.enabled[ldap]` property to `true` or `1` in `gradle.properties`, or choose the `ldap` service when running the `lec service` command.
 
 `gradle.properties`:
 
@@ -795,7 +795,7 @@ This will provide the `lec` script alias and the `lecd` shell function.
 Create a new workspace:
 
 ```sh
-lec init # No args, prompts for ticket and version
+lec init # No args, prompts for ticket, version, and enabled services
 
 lec init LPP-12345 # Pass in the LPP ticket number
 
@@ -807,6 +807,12 @@ lec init LPP-12345 dxp-2025.q3.0 --start # Create and immediately start the proj
 ```
 
 The `lec-init` shell function is the same as `lec init`, but will also jump to the new project after it is created.
+
+Enable services:
+
+```sh
+lec service # Select enabled services
+```
 
 Start the workspace:
 

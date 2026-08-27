@@ -1,0 +1,8 @@
+{
+	"com.liferay.client.extension.type.configuration.CETConfiguration~cx-vi-variant/acme.local": {
+		"baseURL": "${portalURL}/o/cx-vi-variant_acme.local",
+		"dxp.lxc.liferay.com.virtualInstanceId": "acme.local",
+		"type": "customElement",
+		"webContextPath": "/cx-vi-variant_acme.local"
+	}
+}

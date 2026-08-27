@@ -1,0 +1,7 @@
+{
+	"id": "cxvivariant",
+	"kind": "Deployment",
+	"loadBalancer": {
+		"targetPort": 80
+	}
+}

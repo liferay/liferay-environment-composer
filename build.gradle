@@ -263,8 +263,29 @@ tasks.register("stop") {
 }
 
 buildDockerImage {
+	// Don't force-pull the base FROM image: a locally built portal image isn't in
+	// any registry (docker resolves it locally, or pulls only if genuinely absent).
+	pull = false
+
 	doFirst {
-		waitForCommand("docker pull ${gradle.liferayWorkspace.dockerImageLiferay}", null, System.out)
+		def image = gradle.liferayWorkspace.dockerImageLiferay
+
+		def inspect = exec {
+			commandLine "docker", "image", "inspect", image
+
+			errorOutput = new ByteArrayOutputStream()
+			ignoreExitValue = true
+			standardOutput = new ByteArrayOutputStream()
+		}
+
+		// A locally built portal image can't be pulled from a registry; only pull
+		// when it is not already present.
+		if (inspect.exitValue == 0) {
+			logger.lifecycle("Using local image ${image}; skipping docker pull")
+		}
+		else {
+			waitForCommand("docker pull ${image}", null, System.out)
+		}
 	}
 
 	onlyIf("using the Liferay service") {
@@ -333,6 +354,12 @@ if (config.useClustering) {
 
 if (config.useLiferay) {
 	environmentMap.put "LIFERAY_IMAGE_NAME", config.liferayDockerImageId
+
+	// A locally built portal image may lack the stock /opt/liferay/health-check.sh;
+	// lr.docker.environment.liferay.healthcheck.test overrides the health check.
+	environmentMap.put(
+		"LIFERAY_HEALTHCHECK_TEST",
+		(project.findProperty("lr.docker.environment.liferay.healthcheck.test") ?: "/opt/liferay/health-check.sh"))
 }
 
 environmentMap.put("COMPOSE_FILE", config.composeFiles.join(File.pathSeparator))
@@ -454,4 +481,119 @@ dockerCompose {
 
 	// DEBUG: Set to true if container startup is failing
 	retainContainersOnStartupFailure = false
+}
+
+// --- Client Extensions on k3s (LPD-65433) -----------------------------------
+// Deploy Client Extensions into the k3s recipe as real Kubernetes workloads
+// (replaces the old podman + operator prototype). Active ONLY when the k3s
+// service is enabled, so normal (compose-only) workspaces are unaffected. The
+// tasks themselves live in gradle/client-extensions-k8s.gradle.
+if (config.services.contains("k3s")) {
+
+	// docker exec targets for the applied script (container_name is
+	// ${NAMESPACE}-<service>).
+	if (!project.hasProperty("k3s")) {
+		project.ext.k3s = "${config.namespace}-k3s"
+	}
+
+	if (!project.hasProperty("liferayContainer")) {
+		project.ext.liferayContainer = "${config.namespace}-liferay"
+	}
+
+	apply from: "gradle/client-extensions-k8s.gradle"
+
+	// Bringing the environment up (`lec start` -> ./gradlew start) also pushes
+	// the client extensions into k3s.
+	tasks.matching { it.name == "deployClientExtensions" }.all {
+		deployTask ->
+
+		tasks.matching { it.name == "start" }.all {
+			it.finalizedBy deployTask
+		}
+	}
+
+	// Also refresh build/kubeconfig on start (and overwrite ~/.kube/config when
+	// lr.docker.environment.k3s.kubeconfig.default=true) so host kubectl works.
+	tasks.matching { it.name == "start" }.all {
+		it.finalizedBy "k3sKubeconfig"
+	}
+
+	// Build source CX and stage their zips into client-extensions/liferay.com so
+	// they join the auto-deploy set. Gradle up-to-date checks skip unchanged CX.
+	tasks.register("stageClientExtensions", Copy) {
+		group = "liferay k8s"
+		description = "Build source CX and copy their zips into client-extensions/liferay.com."
+		into "client-extensions/liferay.com"
+		eachFile {
+			it.path = it.name
+		}
+		includeEmptyDirs = false
+	}
+
+	gradle.projectsEvaluated {
+		def zipTasks = allprojects.collectMany {
+			p ->
+
+			p.tasks.findAll {
+				it.name == "buildClientExtensionZip"
+			}
+		}
+
+		tasks.named("stageClientExtensions").configure {
+			dependsOn zipTasks
+			from zipTasks.collect {
+				it.outputs.files
+			}
+		}
+	}
+
+	tasks.matching { it.name == "deployClientExtensions" }.all {
+		it.dependsOn "stageClientExtensions"
+	}
+
+	// Give the PortalK8sAgent its API credentials before deploying CX (the agent
+	// needs them to read the ext-provision ConfigMaps).
+	tasks.matching { it.name == "deployClientExtensions" }.all {
+		it.dependsOn "deployAgentCredentials"
+	}
+
+	// Manual-only: wipe the k3s stack + its state volume for a clean cluster. NOT
+	// wired to start (wiping the warm volume every start makes each boot a slow
+	// cold start and races the compose bring-up). Use `lec clean`, or run
+	// `./gradlew freshK3s` on purpose.
+	tasks.register("freshK3s") {
+		group = "liferay k8s"
+		description = "Remove the k3s stack + its state volume so the next start is a clean cluster."
+		doLast {
+			if (project.hasProperty("keepK3sState")) {
+				logger.lifecycle("keepK3sState set — keeping warm k3s datastore")
+
+				return
+			}
+
+			def ns = config.namespace
+
+			["k3s", "k3s-proxy", "k3s-dns-forwarder", "cx-logs"].each {
+				s ->
+
+				exec {
+					ignoreExitValue = true
+					commandLine "docker", "rm", "-f", "${ns}-${s}"
+				}
+			}
+
+			exec {
+				ignoreExitValue = true
+				commandLine "docker", "volume", "rm", "${ns}_k3s-data"
+			}
+
+			logger.lifecycle("freshK3s: wiped k3s stack + ${ns}_k3s-data — next start is a clean cluster")
+		}
+	}
+
+	// Fold the cluster reset into clean: `lec clean` runs `gradlew clean`, so this
+	// makes it wipe the k3s stack + state volume too (skip with -PkeepK3sState).
+	tasks.matching { it.name == "clean" }.all {
+		it.dependsOn "freshK3s"
+	}
 }

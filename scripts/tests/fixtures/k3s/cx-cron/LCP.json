@@ -1,0 +1,6 @@
+{
+	"concurrencyPolicy": "Forbid",
+	"id": "cxcron",
+	"kind": "CronJob",
+	"schedule": "0 */6 * * *"
+}

@@ -9,6 +9,7 @@ plugins {
 	id "docker-common"
 	id "docker-database-saas"
 	id "docker-keycloak"
+	id "docker-ldap"
 	id "docker-liferay-bundle"
 }
 
@@ -309,6 +310,8 @@ composeUp {
 	dependsOn ":buildDockerImage"
 	dependsOn ":importContainerData"
 	dependsOn ":importDatabaseDumps"
+	dependsOn ":createUsers"
+	dependsOn ":createGroups"
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"

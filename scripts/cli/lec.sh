@@ -133,9 +133,12 @@ _printHelpAndExit() {
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm [<project identifier>]         Completely tear down and remove one or more Composer projects
 		  restart [--clean]                         Restarts a running Composer project. The "--clean" flag removes Docker volumes and images during the shutdown.
-		  share [--export] [--encrypt | --no-encrypt]
-		                                            Save a Composer workspace for sharing. Prompts to encrypt the archive with AES-256 using a password stored in 1Password.
-		                                            "--export" exports container data first. "--encrypt" / "--no-encrypt" skip the prompt, as does setting LEC_SHARE_ENCRYPT_MODE to "1", "true", "yes" (encrypt) or "0", "false", "no" (do not encrypt).
+		  share [--export] [--encrypt|--no-encrypt] Save a Composer workspace for sharing. Prompts to encrypt the archive with AES-256.
+		                                            The "--export" flag exports the container data before saving the workspace.
+		                                            The "--encrypt" flag skips the prompt and encrypts the archive.
+		                                            The "--no-encrypt" flag skips the prompt and leaves the archive unencrypted.
+		                                            The LEC_SHARE_ENCRYPT_MODE environment variable sets the default when neither flag is passed.
+		                                            Set it to "1", "true", or "yes" to encrypt, or "0", "false", or "no" to skip encryption.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
 

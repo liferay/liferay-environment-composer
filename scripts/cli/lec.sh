@@ -786,6 +786,7 @@ _cmd_completions() {
 
 		case "${command}" in
 		init)
+			echo "--service"
 			echo "--start"
 			;;
 		restart)

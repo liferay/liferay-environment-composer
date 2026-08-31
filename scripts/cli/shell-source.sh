@@ -60,25 +60,43 @@ function lec-init() {
 function _lec_completions() {
 	local cmd=()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local prev="${COMP_WORDS[COMP_CWORD - 1]}"
 
-	case "$prev" in
-	lec)
+	if [ "${#COMP_WORDS[@]}" == "2" ]; then
 		cmd=(commands)
-		;;
-	list)
-		cmd=(entities)
-		;;
-	rm|remove|-p|--project)
-		cmd=(projects)
-		;;
-	*)
-		cmd=(flags "${prev}")
-		;;
-	esac
+	else
+		local lec_cmd="${COMP_WORDS[1]}"
+		case "${lec_cmd}" in
+		list)
+			cmd=(entities)
+			;;
+		rm|remove)
+			cmd=(projects)
+			;;
+		*)
+			local prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+			case "${prev}" in
+			-p|--project)
+				cmd=(projects)
+				;;
+			*)
+				cmd=(flags "${lec_cmd}")
+				;;
+			esac
+			;;
+		esac
+	fi
+
+	local compgen_opts="$(lec completions "${cmd[@]}")"
+
+	local comp_word
+
+	for comp_word in "${COMP_WORDS[@]:2}"; do
+		compgen_opts=$(echo "$compgen_opts" | grep -v "^${comp_word}$")
+	done
 
 	# shellcheck disable=SC2207
-	COMPREPLY=($(compgen -W "$(lec completions "${cmd[@]}")" -- "${cur}"))
+	COMPREPLY=($(compgen -W "${compgen_opts}" -- "${cur}"))
 
 	return 0
 }

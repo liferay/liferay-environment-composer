@@ -585,8 +585,6 @@ _selectServices() {
 		local new_selected
 		new_selected=$(echo "${all_options}" | _selectMultiple "Choose services to enable (Tab to select multiple)" --bind "${fzf_bind}" --query="${fzf_query}" --sync)
 
-		echo "${new_selected}"
-
 		if [ "" != "${new_selected}" ]; then
 			for item in ${all_options}; do
 				local is_old

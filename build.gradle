@@ -163,6 +163,8 @@ Closure<Void> applyShareWorkspaceFilters = {
 		exclude "buildSrc/build"
 		exclude "buildSrc/.gradle"
 		exclude "dumps/*"
+		exclude "scripts/tests"
+		exclude "scripts/vendor"
 		exclude "shared_workspaces"
 		exclude {
 			FileTreeElement fileTreeElement ->

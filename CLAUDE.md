@@ -80,7 +80,7 @@ Key subcommands:
 - `lec bats` - Run BATS tests with correct env vars
 - `lec exportData` / `lec importDLStructure` - Data management
 - `lec remove` / `lec rm` - Remove project workspace
-- `lec share` - Share workspace
+- `lec share [--export] [--encrypt | --no-encrypt]` - Share workspace, optionally encrypting the archive with AES-256. Set `LEC_SHARE_ENCRYPT_MODE` to a truthy (`1`, `true`, `yes`) or falsey (`0`, `false`, `no`) value to skip the prompt.
 - `lec update` - Update LEC
 - `lec version` - Print version info
 

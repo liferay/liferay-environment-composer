@@ -105,10 +105,13 @@ _print_warn() {
 # Control flow functions
 #
 
+_cancel() {
+	echo "Canceled"
+	exit 0
+}
 _cancelIfEmpty() {
 	if [[ -z "${1}" ]]; then
-		echo "Canceled"
-		exit 0
+		_cancel
 	fi
 }
 _errorExit() {
@@ -133,7 +136,12 @@ _printHelpAndExit() {
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm [<project identifier>]         Completely tear down and remove one or more Composer projects
 		  restart [--clean]                         Restarts a running Composer project. The "--clean" flag removes Docker volumes and images during the shutdown.
-		  share [--export]                          Save a Composer workspace for sharing. The "--export" flag exports the container data before saving the workspace.
+		  share [--export] [--encrypt|--no-encrypt] Save a Composer workspace for sharing. Prompts to encrypt the archive with AES-256.
+		                                            The "--export" flag exports the container data before saving the workspace.
+		                                            The "--encrypt" flag skips the prompt and encrypts the archive.
+		                                            The "--no-encrypt" flag skips the prompt and leaves the archive unencrypted.
+		                                            The LEC_SHARE_ENCRYPT_MODE environment variable sets the default when neither flag is passed.
+		                                            Set it to "1", "true", or "yes" to encrypt, or "0", "false", or "no" to skip encryption.
 		  update [--unstable]                       Check for updates to Composer and lec. The "--unstable" flag updates to latest master branch.
 		  version                                   Prints the current version of lec
 
@@ -170,6 +178,17 @@ _confirm() {
 _prompt() {
 	printf "${C_BOLD}%s${C_RESET}" "${1:?Provide prompt text}"
 	read -r "${2:?Need a variable to write response to}"
+}
+_promptSecret() {
+	printf "${C_BOLD}%s${C_RESET}" "${1:?Provide prompt text}"
+
+	if ! read -r -s "${2:?Need a variable to write response to}"; then
+		echo
+
+		return 1
+	fi
+
+	echo
 }
 _select() {
 	local prompt_message="${1}"
@@ -721,7 +740,7 @@ _cmd_completions() {
 			echo "--clean"
 			;;
 		share)
-			echo "--export"
+			echo "--encrypt --export --no-encrypt"
 			;;
 		update)
 			echo "--unstable"
@@ -1109,12 +1128,20 @@ cmd_rm() {
 cmd_share() {
 	_checkProjectDirectory "${PWD}"
 
+	local FLAG_ENCRYPT=0
 	local FLAG_EXPORT=0
+	local FLAG_NO_ENCRYPT=0
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
+		--encrypt)
+			shift && FLAG_ENCRYPT=1
+			;;
 		--export)
 			shift && FLAG_EXPORT=1
+			;;
+		--no-encrypt)
+			shift && FLAG_NO_ENCRYPT=1
 			;;
 		*)
 			shift
@@ -1122,8 +1149,75 @@ cmd_share() {
 		esac
 	done
 
+	if [[ "${FLAG_ENCRYPT}" -gt 0 && "${FLAG_NO_ENCRYPT}" -gt 0 ]]; then
+		_errorExit "The \"--encrypt\" and \"--no-encrypt\" flags cannot be used together."
+	fi
+
+	local ENCRYPT=""
+
+	if [[ "${FLAG_ENCRYPT}" -gt 0 ]]; then
+		ENCRYPT=1
+	elif [[ "${FLAG_NO_ENCRYPT}" -gt 0 ]]; then
+		ENCRYPT=0
+	elif [[ -n "${LEC_SHARE_ENCRYPT_MODE}" ]]; then
+		case "${LEC_SHARE_ENCRYPT_MODE}" in
+		1|true|yes)
+			ENCRYPT=1
+			;;
+		0|false|no)
+			ENCRYPT=0
+			;;
+		*)
+			_errorExit "\"${LEC_SHARE_ENCRYPT_MODE}\" is not a valid value for LEC_SHARE_ENCRYPT_MODE. Use \"1\", \"true\", or \"yes\" to encrypt, or \"0\", \"false\", or \"no\" to skip encryption."
+			;;
+		esac
+	fi
+
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
+
+		if [[ -z "${ENCRYPT}" ]]; then
+			ENCRYPT=0
+
+			if _confirm "Encrypt the workspace archive with AES-256?"; then
+				ENCRYPT=1
+			fi
+		fi
+
+		local password
+		local password_confirmation
+
+		if [[ "${ENCRYPT}" -gt 0 ]]; then
+			if ! _is_program 7z; then
+				_errorExit "The 7z CLI must be installed in order to encrypt workspace archives. Follow the install instructions at https://7-zip.org/download.html."
+			fi
+
+			_print_step "Create a password in 1Password and paste it below."
+
+			while true; do
+				if ! _promptSecret "Password: " password; then
+					_cancel
+				fi
+
+				if [[ -z "${password}" ]]; then
+					_print_warn "Password cannot be empty."
+
+					continue
+				fi
+
+				if ! _promptSecret "Confirm password: " password_confirmation; then
+					_cancel
+				fi
+
+				if [[ "${password}" != "${password_confirmation}" ]]; then
+					_print_warn "Passwords do not match."
+
+					continue
+				fi
+
+				break
+			done
+		fi
 
 		if [[ "${FLAG_EXPORT}" -gt 0 ]]; then
 			_print_step "Exporting container data..."
@@ -1133,9 +1227,13 @@ cmd_share() {
 			fi
 		fi
 
-		_print_step "Zipping up workspace..."
+		if [[ "${ENCRYPT}" -gt 0 ]]; then
+			_print_step "Zipping and encrypting workspace..."
+		else
+			_print_step "Zipping up workspace..."
+		fi
 
-		if ! ./gradlew shareWorkspace | grep -E "Workspace zip|workspace archive"; then
+		if ! ./gradlew shareWorkspace -ParchivePassword="${password}" | grep -E "Workspace zip|workspace archive"; then
 			exit 1
 		fi
 

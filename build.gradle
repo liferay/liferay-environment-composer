@@ -151,6 +151,33 @@ tasks.register("importDocumentLibraryStructure") {
 	}
 }
 
+Closure<Void> applyShareWorkspaceFilters = {
+	PatternFilterable patternFilterable ->
+
+	configure(patternFilterable) {
+		exclude ".gitkeep"
+		exclude ".gitignore"
+		exclude ".git"
+		exclude ".gradle"
+		exclude "binds"
+		exclude "buildSrc/build"
+		exclude "buildSrc/.gradle"
+		exclude "dumps/*"
+		exclude "scripts/tests"
+		exclude "scripts/vendor"
+		exclude "shared_workspaces"
+		exclude {
+			FileTreeElement fileTreeElement ->
+
+			fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
+			!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
+		}
+
+		include "${config.dataDirectory}/**"
+		include "**/*"
+	}
+}
+
 tasks.register("shareWorkspace7z") {
 	doLast {
 		if (!isProgramInstalled("7z")) {
@@ -164,33 +191,18 @@ tasks.register("shareWorkspace7z") {
 
 		fileListFile.parentFile.mkdirs()
 
-		fileListFile.text = fileTree('.') {
-			exclude ".gitkeep"
-			exclude ".gitignore"
-			exclude ".git"
-			exclude ".gradle"
-			exclude "binds"
-			exclude "buildSrc/build"
-			exclude "buildSrc/.gradle"
-			exclude "dumps/*"
-			exclude "shared_workspaces"
-			exclude {
-				FileTreeElement fileTreeElement ->
-
-				fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
-				!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
-			}
-
-			include "${config.dataDirectory}/**"
-			include "**/*"
-		}.files.collect {
+		fileListFile.text = fileTree('.', applyShareWorkspaceFilters).files.collect {
 			File file ->
 
 			project.relativePath(file)
 		}.join("\n")
 
+		String archivePassword = findProperty("archivePassword")
+
+		String encryptionFlags = archivePassword ? "-mhe=on -p'" + archivePassword.replace("'", "'\\''") + "' " : ""
+
 		try {
-			waitForCommand("7z a -m0=lzma2 -mx=1 -bsp2 ${archiveFileName} -i@${fileListFileName}")
+			waitForCommand("7z a -m0=lzma2 -mx=1 -bsp2 ${encryptionFlags}${archiveFileName} -i@${fileListFileName}")
 		}
 		finally {
 			fileListFile.delete()
@@ -201,36 +213,27 @@ tasks.register("shareWorkspace7z") {
 }
 
 tasks.register("shareWorkspaceZip", Zip) {
+	Zip zip ->
+
+	applyShareWorkspaceFilters(zip)
+
 	archiveFileName = provider {
 		"workspace_${config.namespace}_${timestamp}.zip"
 	}
 
 	destinationDirectory = file 'shared_workspaces'
 
+	doFirst {
+		if (findProperty("archivePassword")) {
+			throw new GradleException("Zip archives do not support AES-256 encryption. The 7z CLI must be installed in order to encrypt workspace archives. Follow the install instructions at https://7-zip.org/download.html.")
+		}
+	}
+
 	doLast {
 		logger.lifecycle "\nWorkspace zip: ${archiveFile.get()}\n"
 	}
 
-	exclude ".gitkeep"
-	exclude ".gitignore"
-	exclude ".git"
-	exclude ".gradle"
-	exclude "binds"
-	exclude "buildSrc/build"
-	exclude "buildSrc/.gradle"
-	exclude "dumps/*"
-	exclude "shared_workspaces"
-	exclude {
-		FileTreeElement fileTreeElement ->
-
-		fileTreeElement.relativePath.pathString.startsWith("exported_data/") &&
-		!fileTreeElement.relativePath.pathString.startsWith(config.dataDirectory)
-	}
-
 	from '.'
-
-	include "${config.dataDirectory}/**"
-	include "**/*"
 
 	outputs.upToDateWhen {
 		false

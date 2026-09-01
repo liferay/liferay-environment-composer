@@ -105,10 +105,13 @@ _print_warn() {
 # Control flow functions
 #
 
+_cancel() {
+	echo "Canceled"
+	exit 0
+}
 _cancelIfEmpty() {
 	if [[ -z "${1}" ]]; then
-		echo "Canceled"
-		exit 0
+		_cancel
 	fi
 }
 _errorExit() {
@@ -178,7 +181,12 @@ _prompt() {
 }
 _promptSecret() {
 	printf "${C_BOLD}%s${C_RESET}" "${1:?Provide prompt text}"
-	read -r -s "${2:?Need a variable to write response to}"
+
+	if ! read -r -s "${2:?Need a variable to write response to}"; then
+		echo
+
+		return 1
+	fi
 
 	echo
 }
@@ -1187,7 +1195,9 @@ cmd_share() {
 			_print_step "Create a password in 1Password and paste it below."
 
 			while true; do
-				_promptSecret "Password: " password
+				if ! _promptSecret "Password: " password; then
+					_cancel
+				fi
 
 				if [[ -z "${password}" ]]; then
 					_print_warn "Password cannot be empty."
@@ -1195,7 +1205,9 @@ cmd_share() {
 					continue
 				fi
 
-				_promptSecret "Confirm password: " password_confirmation
+				if ! _promptSecret "Confirm password: " password_confirmation; then
+					_cancel
+				fi
 
 				if [[ "${password}" != "${password_confirmation}" ]]; then
 					_print_warn "Passwords do not match."

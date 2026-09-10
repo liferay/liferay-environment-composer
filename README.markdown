@@ -858,7 +858,13 @@ Save a workspace for sharing:
 lec share # Zip up the workspace for sharing
 
 lec share --export # Export container data before saving
+
+lec share --encrypt # Encrypt the archive with AES-256, prompting for the password
+
+lec share --no-encrypt # Skip the encryption prompt and do not encrypt
 ```
+
+`lec share` prompts you to encrypt the archive unless a flag is passed, and encrypting requires the `7z` CLI. Set the `LEC_SHARE_ENCRYPT_MODE` environment variable to `1`, `true`, or `yes` to encrypt by default, or to `0`, `false`, or `no` to skip the prompt entirely.
 
 List various entities:
 

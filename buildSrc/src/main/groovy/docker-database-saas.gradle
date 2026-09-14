@@ -251,7 +251,15 @@ ext {
 			}
 		}
 
-		updateGradleLocalProperties(["lr.docker.environment.service.enabled[elasticsearch]"]: "true")
+		updateGradleLocalProperties(["lr.docker.environment.service.enabled[elasticsearch]": "true"])
+
+		File searchLCPJsonFile = new File(config.lxcRepositoryPath, "search/LCP.json")
+
+		String searchImage = jsonSlurper.parse(searchLCPJsonFile).image
+
+		String tag = searchImage.split(":")[1]
+
+		updateGradleLocalProperties(["lr.docker.environment.service.version[elasticsearch]": tag.split("-")[0]])
 
 		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion()
 

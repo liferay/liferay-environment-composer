@@ -251,6 +251,8 @@ ext {
 			}
 		}
 
+		updateGradleLocalProperties(["lr.docker.environment.service.enabled[elasticsearch]"]: "true")
+
 		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion()
 
 		if (latestReleaseInfoDate != null) {

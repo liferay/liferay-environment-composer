@@ -135,9 +135,9 @@ ext {
 			return
 		}
 
-		File lcpJsonFile = new File(config.lxcRepositoryPath, "liferay/LCP.json")
+		File liferayLCPJsonFile = new File(config.lxcRepositoryPath, "liferay/LCP.json")
 
-		if (!lcpJsonFile.exists()) {
+		if (!liferayLCPJsonFile.exists()) {
 			println "Unable to copy configurations from LXC repository, because ${config.lxcRepositoryPath} is not the liferay-lxc repository"
 
 			return
@@ -198,7 +198,7 @@ ext {
 
 		JsonSlurper jsonSlurper = new JsonSlurper()
 
-		Map<String, String> environmentVariables = jsonSlurper.parse(lcpJsonFile)["environments"][config.lxcEnvironmentName]["env"]
+		Map<String, String> environmentVariables = jsonSlurper.parse(liferayLCPJsonFile)["environments"][config.lxcEnvironmentName]["env"]
 
 		String jdbcURL = environmentVariables["LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL"]
 

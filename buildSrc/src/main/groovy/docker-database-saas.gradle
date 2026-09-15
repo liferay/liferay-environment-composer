@@ -255,12 +255,18 @@ ext {
 
 		String searchImage = jsonSlurper.parse(searchLCPJsonFile).image
 
-		String tag = searchImage.split(":")[1]
+		Map<String, String> elasticsearchProperties = [
+			"lr.docker.environment.service.enabled[elasticsearch]": "true"
+		]
 
-		updateGradleLocalProperties([
-			"lr.docker.environment.service.enabled[elasticsearch]": "true",
-			"lr.docker.environment.service.version[elasticsearch]": tag.split("-")[0]
-		])
+		if (searchImage.contains(":")) {
+			elasticsearchProperties["lr.docker.environment.service.version[elasticsearch]"] = searchImage.split(":")[1].split("-")[0]
+		}
+		else {
+			println "Unable to read a version from the image ${searchImage} in ${searchLCPJsonFile}, defaulting to Elasticsearch version ${config.serviceVersions["elasticsearch"]}"
+		}
+
+		updateGradleLocalProperties(elasticsearchProperties)
 
 		String latestReleaseInfoDate = updateGradlePropertiesWithLiferayVersion()
 

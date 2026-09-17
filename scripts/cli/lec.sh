@@ -793,7 +793,9 @@ _cmd_completions() {
 			echo "--clean"
 			;;
 		share)
-			echo "--encrypt --export --no-encrypt"
+			echo "--encrypt"
+			echo "--export"
+			echo "--no-encrypt"
 			;;
 		update)
 			echo "--unstable"

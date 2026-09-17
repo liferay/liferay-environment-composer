@@ -91,7 +91,6 @@ function _lec_completions() {
 	compgen_opts="$(lec completions "${cmd[@]}")"
 
 	local comp_word
-
 	for comp_word in "${COMP_WORDS[@]:2}"; do
 		compgen_opts=$(echo "$compgen_opts" | grep -v "^${comp_word}$")
 	done

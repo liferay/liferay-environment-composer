@@ -87,7 +87,8 @@ function _lec_completions() {
 		esac
 	fi
 
-	local compgen_opts="$(lec completions "${cmd[@]}")"
+	local compgen_opts
+	compgen_opts="$(lec completions "${cmd[@]}")"
 
 	local comp_word
 

@@ -1,0 +1,15 @@
+services:
+    liferay:
+        environment:
+            # configure_jgroups_tcpping_hosts.sh only adds the optional hosts that resolve when the node starts
+            -   JGROUPS_TCPPING_INITIAL_HOSTS=liferay[7800]
+            -   JGROUPS_TCPPING_OPTIONAL_HOSTS=liferay-cluster-node[7800]
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL=/jgroups/tcp.xml
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_=/jgroups/tcp.xml
+    liferay-cluster-node:
+        environment:
+            # The service name resolves to every cluster node that is running
+            -   JGROUPS_TCPPING_INITIAL_HOSTS=liferay-cluster-node[7800]
+            -   JGROUPS_TCPPING_OPTIONAL_HOSTS=liferay[7800]
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_CONTROL=/jgroups/tcp.xml
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_CHANNEL_PERIOD_PROPERTIES_PERIOD_TRANSPORT_PERIOD__NUMBER0_=/jgroups/tcp.xml

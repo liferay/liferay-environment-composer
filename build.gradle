@@ -315,6 +315,10 @@ composeUp {
 
 	doFirst {
 		println "Using config:\n\n${config}\n\n"
+
+		if (config.useClustering && !config.services.contains("elasticsearch")) {
+			logger.warn("Clustering is enabled without the Elasticsearch service, so every Liferay node starts its own sidecar Elasticsearch. Search results can differ between nodes, and each node needs about 1.3 GB more memory. Set lr.docker.environment.service.enabled[elasticsearch]=true to share one Elasticsearch.")
+		}
 	}
 
 	finalizedBy ":listAdminUsers"
@@ -331,6 +335,7 @@ environmentMap.put "DATABASE_USER", config.databaseUser
 environmentMap.put "NAMESPACE", config.namespace
 
 if (config.useClustering) {
+	environmentMap.put "LIFERAY_CLUSTER_NODE_START_PERIOD", "${config.clusterNodes * 10}m"
 	environmentMap.put "LIFERAY_CLUSTER_NODES", config.clusterNodes
 }
 

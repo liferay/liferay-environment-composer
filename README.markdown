@@ -222,6 +222,45 @@ Clustering can be enabled by setting the `lr.docker.environment.cluster.nodes` p
 lr.docker.environment.cluster.nodes=2
 ```
 
+Clustering needs a database that every node shares, such as one of the database services below, and a license that allows clustering in `./configs/common/osgi/modules`. Trial, developer, and limited licenses do not allow clustering, so they are deleted from that folder at startup.
+
+The cluster nodes start after the main Liferay instance is healthy, one at a time, so that they do not set up the same data at the same time. Each node gets its own ports from the ranges in `ports.env`, which `lec ports` prints. The page footer shows which node served the page.
+
+Enable the Elasticsearch service when clustering. Without it, every node starts its own sidecar Elasticsearch, so each node searches its own index and needs about 1.3 GB more memory.
+
+Every cluster node is another full Liferay JVM, so give Docker enough memory. With the default JVM settings and the Elasticsearch service, the main instance uses about 4 GB, each cluster node about 3.5 GB, and Elasticsearch about 2 GB. The main instance, two cluster nodes, Elasticsearch, and MySQL use about 14 GB right after startup.
+
+By default, the nodes find each other over UDP multicast. To use TCP unicast (JGroups `TCPPING`) instead, set `lr.docker.environment.cluster.unicast.enabled` to `true`, and enable a database service and the Elasticsearch service:
+
+`gradle.properties`:
+
+```properties
+# This will start a two-node cluster: the main Liferay instance and 1 additional cluster node
+lr.docker.environment.cluster.nodes=1
+lr.docker.environment.cluster.unicast.enabled=true
+
+# Every node must share one database. Any of the database services works.
+lr.docker.environment.service.enabled[mysql]=true
+
+# Without the Elasticsearch service, every node searches its own sidecar index
+lr.docker.environment.service.enabled[elasticsearch]=true
+```
+
+The database service also sets the address that JGroups uses to find the network interface to bind to (`cluster.link.autodetect.address`). Without a database service, Liferay looks it up by connecting to `www.google.com:80`, which only works if the containers can reach the internet.
+
+The JGroups configuration is in `./configs/docker/tomcat/webapps/ROOT/WEB-INF/classes/jgroups/tcp.xml`. JGroups resolves the `TCPPING` hosts when the channel starts and fails on any host that does not resolve, such as a node that is not running. So when a node starts, `./configs/docker/scripts/configure_jgroups_tcpping_hosts.sh` builds its host list from what is running:
+
+- The main Liferay instance lists itself, and the `liferay-cluster-node` service if any cluster node is running.
+- The cluster nodes list the `liferay-cluster-node` service, which resolves to every cluster node that is running, and the main Liferay instance if it is running.
+
+A node that restarts, even with a different IP address, rejoins the nodes that are still running.
+
+To check that the cluster formed, look for the cluster view in the logs. It should list every node:
+
+```sh
+docker compose logs liferay liferay-cluster-node | grep "Accepted view"
+```
+
 #### Configure Liferay ports
 
 You can configure the Liferay ports in the `ports.env` file. Each variable in this file defines a range from which the

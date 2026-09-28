@@ -1,6 +1,10 @@
 services:
+    liferay:
+        environment:
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS=database:50000
     liferay-cluster-node:
         environment:
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS=database:50000
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=com.ibm.db2.jcc.DB2Driver
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=${DATABASE_PASSWORD}
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:db2://database/${DATABASE_NAME}:deferPrepares=false;fullyMaterializeInputStreams=true;fullyMaterializeLobData=true;progresssiveLocators=2;progressiveStreaming=2;

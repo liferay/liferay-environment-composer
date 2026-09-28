@@ -20,6 +20,12 @@ export DEBUG=1
 lec bats ./scripts/tests/test-e2e-basic.test.sh
 ```
 
+The clustering tests need a license that allows clustering, so they are skipped unless `LEC_CLUSTER_LICENSE_FILE` points to one:
+
+```bash
+LEC_CLUSTER_LICENSE_FILE=/path/to/license.xml lec bats ./scripts/tests/test-clustering.test.sh
+```
+
 ## Test File Structure
 
 Test files must use the `.test.sh` extension and follow this structure:

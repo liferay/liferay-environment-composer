@@ -1,6 +1,10 @@
 services:
+    liferay:
+        environment:
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS=database:3306
     liferay-cluster-node:
         environment:
+            -   LIFERAY_CLUSTER_PERIOD_LINK_PERIOD_AUTODETECT_PERIOD_ADDRESS=database:3306
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME=org.mariadb.jdbc.Driver
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD=${DATABASE_PASSWORD}
             -   LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL=jdbc:mariadb://database:3306/${DATABASE_NAME}?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false

@@ -18,5 +18,10 @@ if ! curl -s localhost:8080 -o /dev/null --write-out "%{http_code}"; then
 	exit 1
 fi
 
+if [ "${LIFERAY_CONTAINER_STARTUP_LOCK_ENABLED}" == "true" ] && [ "$(cat "${LIFERAY_CONTAINER_STARTUP_LOCK_FILE}" 2> /dev/null)" == "$(hostname)" ]; then
+	_log "Releasing the startup lock so that the next node can start"
+	rm -f "${LIFERAY_CONTAINER_STARTUP_LOCK_FILE}"
+fi
+
 _log "Ready!"
 exit 0

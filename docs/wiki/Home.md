@@ -31,7 +31,7 @@ For day-to-day use, set up the [`lec` CLI](lec-CLI-Reference), which creates per
 | [lec CLI Reference](lec-CLI-Reference) | The convenience script |
 | [Gradle Task Reference](Gradle-Task-Reference) | Every `./gradlew` task |
 | **Liferay** | |
-| [Customizing the Liferay Image](Customizing-the-Liferay-Image) | Version, deploying artifacts/configs/hotfixes, clustering, JVM args |
+| [Customizing the Liferay Image](Customizing-the-Liferay-Image) | Version, deploying artifacts/configs/hotfixes, clustering (multicast/unicast), JVM args |
 | [Document Library](Document-Library) | Importing a DL, store types, LibreOffice, media previews |
 | [SAML with Keycloak](SAML-with-Keycloak) | Keycloak as a SAML IdP |
 | **Services** | |

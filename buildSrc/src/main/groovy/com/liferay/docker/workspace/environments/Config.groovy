@@ -22,6 +22,12 @@ class Config {
 			this.clusterNodes = clusterNodesProperty
 		}
 
+		String clusterUnicastEnabledProperty = project.findProperty("lr.docker.environment.cluster.unicast.enabled")
+
+		if (clusterUnicastEnabledProperty != null) {
+			this.clusterUnicastEnabled = clusterUnicastEnabledProperty.toBoolean()
+		}
+
 		this.composeFiles.add("docker-compose.yaml")
 
 		this.composeFiles.addAll(this.toList(project.findProperty("lr.docker.environment.compose.files")))
@@ -362,6 +368,10 @@ class Config {
 
 			if (useClustering) {
 				include "**/clustering.*.yaml"
+
+				if (this.clusterUnicastEnabled) {
+					include "**/unicast-clustering.liferay.yaml"
+				}
 			}
 
 			if (glowrootEnabled) {
@@ -465,6 +475,7 @@ class Config {
 
 	public boolean clearVolumeData = false
 	public int clusterNodes = 0
+	public boolean clusterUnicastEnabled = false
 	public List<Map<String, String>> companyVirtualHosts = null
 	public List<String> composeFiles = new ArrayList<String>()
 	public String databaseDriverName = ""

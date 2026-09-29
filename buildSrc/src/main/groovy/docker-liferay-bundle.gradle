@@ -8,8 +8,6 @@ import groovy.xml.slurpersupport.GPathResult
 import java.nio.file.Path
 import java.nio.file.Paths
 
-import java.util.regex.Matcher
-
 project.plugins.apply "docker-common"
 
 configurations {
@@ -117,40 +115,6 @@ Closure<String> getLatestImageNameLocal = {
 	return getLatestImageName(dxpImageNames)
 }
 
-Closure<Boolean> isLicenseInModulesDir = {
-	String imageName ->
-
-	if (imageName.endsWith(":latest")) {
-		return true
-	}
-
-	Matcher matcher = (imageName =~ /:(?<year>\d+)\.q(?<quarter>\d+)\.(?<patch>\d+)/)
-
-	if (!matcher.find()) {
-		return false
-	}
-
-	int year = Integer.parseInt(matcher.group("year"))
-
-	if (year < 2026) {
-		return false
-	}
-
-	int quarter = Integer.parseInt(matcher.group("quarter"))
-
-	if ((year == 2026) && (quarter < 2)) {
-		return false
-	}
-
-	int patch = Integer.parseInt(matcher.group("patch"))
-
-	if ((year == 2026) && (quarter == 2) && (patch < 9)) {
-		return false
-	}
-
-	return true
-}
-
 Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	String imageName, boolean pullImage = false ->
 
@@ -177,26 +141,25 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	}
 
 	String temporaryContainerName = "${config.namespace}-license-check"
-	String temporaryVolumeName = "${config.namespace}-license"
+	String temporaryDeployVolumeName = "${config.namespace}-license-deploy"
+	String temporaryModulesVolumeName = "${config.namespace}-license-modules"
 
 	println "Attempting to copy trial license from ${latestImageName}"
 
-	String relativeMountDir = isLicenseInModulesDir(latestImageName) ? "osgi/modules" : "deploy"
-
-	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryVolumeName}:/opt/liferay/${relativeMountDir} ${latestImageName}")
+	waitForCommand("docker create --name=${temporaryContainerName} --volume=${temporaryDeployVolumeName}:/opt/liferay/deploy --volume=${temporaryModulesVolumeName}:/opt/liferay/osgi/modules ${latestImageName}")
 
 	File modulesDir = file("${rootProject.projectDir}/configs/common/osgi/modules")
 
 	ByteArrayOutputStream errorByteArrayOutputStream = new ByteArrayOutputStream();
 
 	try {
-		waitForCommand("docker run --rm -v ${temporaryVolumeName}:/source -v ${modulesDir.absolutePath}:/target alpine sh -c 'cp /source/trial-*.xml /target/'", null, null, errorByteArrayOutputStream)
+		waitForCommand("docker run --rm -v ${temporaryDeployVolumeName}:/source/deploy -v ${temporaryModulesVolumeName}:/source/modules -v ${modulesDir.absolutePath}:/target alpine sh -c 'cp /source/*/trial-*.xml /target/'", null, null, errorByteArrayOutputStream)
 	}
 	catch (Exception exception) {
 		String stderrOutputString = errorByteArrayOutputStream.toString().trim()
 
 		if (stderrOutputString.contains("No such file or directory")) {
-			logger.warn("Unable to find license in /opt/liferay/${relativeMountDir} from ${latestImageName}")
+			logger.warn("Unable to find license in /opt/liferay/deploy or /opt/liferay/osgi/modules from ${latestImageName}")
 		}
 		else {
 			logger.warn(stderrOutputString)
@@ -204,7 +167,7 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 	}
 	finally {
 		waitForCommand("docker rm ${temporaryContainerName}")
-		waitForCommand("docker volume rm ${config.namespace}-license")
+		waitForCommand("docker volume rm ${temporaryDeployVolumeName} ${temporaryModulesVolumeName}")
 	}
 
 	return project.fileTree("configs") {

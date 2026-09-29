@@ -122,22 +122,21 @@ Closure<FileCollection> copyLiferayLicenseFromDXPImage = {
 		return null
 	}
 
+	if (pullImage) {
+		println "Checking image ${imageName} for a valid license file to copy, retrieving via docker pull (this may take awhile)"
+
+		try {
+			waitForCommand("docker pull ${imageName}", null, System.out)
+		}
+		catch (Exception exception) {
+			logger.warn("Unable to pull ${imageName}")
+		}
+	}
+
 	String latestImageName = getLatestImageNameLocal(imageName)
 
 	if (latestImageName == null) {
-		if (!pullImage) {
-			return null
-		}
-
-		println "Checking image ${imageName} for a valid license file to copy, retrieving via docker pull (this may take awhile)"
-
-		waitForCommand("docker pull ${imageName}", null, System.out)
-
-		latestImageName = getLatestImageNameLocal(imageName)
-
-		if (latestImageName == null) {
-			return null
-		}
+		return null
 	}
 
 	String temporaryContainerName = "${config.namespace}-license-check"

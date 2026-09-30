@@ -26,6 +26,8 @@ The clustering tests need a license that allows clustering, so they are skipped 
 LEC_CLUSTER_LICENSE_FILE=/path/to/license.xml lec bats ./scripts/tests/test-clustering.test.sh
 ```
 
+The path can be absolute or relative to the directory you run `lec bats` from.
+
 ## Test File Structure
 
 Test files must use the `.test.sh` extension and follow this structure:

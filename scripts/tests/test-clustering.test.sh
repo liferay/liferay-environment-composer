@@ -65,9 +65,12 @@ setup() {
 		skip "Set LEC_CLUSTER_LICENSE_FILE to a license file that allows clustering"
 	fi
 
+	local license_file
+	license_file="$(cd "$(dirname "${LEC_CLUSTER_LICENSE_FILE}")" && pwd)/$(basename "${LEC_CLUSTER_LICENSE_FILE}")"
+
 	common_setup
 
-	cp "${LEC_CLUSTER_LICENSE_FILE}" configs/common/osgi/modules/
+	cp "${license_file}" configs/common/osgi/modules/
 
 	_writeProperty "lr.docker.environment.cluster.nodes" "1"
 	_writeProperty "lr.docker.environment.service.enabled[mysql]" "true"

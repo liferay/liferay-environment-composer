@@ -1,0 +1,27 @@
+jobs:
+    sync-wiki:
+        if: github.repository == 'liferay/liferay-environment-composer'
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                run: |
+                    git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+                    rsync -a --delete --exclude .git --exclude README.md docs/wiki/ wiki/
+                    cd wiki
+                    git add -A
+                    if git diff --cached --quiet; then
+                        echo "Wiki is up to date"
+                        exit 0
+                    fi
+                    git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Sync from ${GITHUB_SHA}"
+                    git push
+name: Sync Wiki
+on:
+    push:
+        branches: [master]
+        paths: [docs/wiki/**]
+    workflow_dispatch:
+permissions:
+    contents: write

@@ -1,0 +1,1 @@
+This wiki is generated from [`docs/wiki/`](https://github.com/liferay/liferay-environment-composer/tree/master/docs/wiki) on `master`. Edits made here are overwritten; open a pull request instead.

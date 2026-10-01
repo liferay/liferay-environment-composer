@@ -101,6 +101,10 @@ All environment configuration goes through `gradle.properties` with the `lr.dock
 - **YAML** - Docker Compose service definitions
 - **Java Properties / XML** - Liferay configuration
 
+## Documentation
+
+User docs live in `docs/wiki/` and are synced to the GitHub wiki on push to `master` (`.github/workflows/sync-wiki.yaml`). When adding or changing a feature, update the matching wiki page in the same change. See `docs/wiki/README.md` for page conventions.
+
 ## CI
 
 GitHub Actions workflows in `.github/workflows/`:

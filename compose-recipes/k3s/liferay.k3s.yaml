@@ -1,0 +1,28 @@
+services:
+    liferay:
+        depends_on:
+            k3s:
+                condition: service_healthy
+        # Overridable via LIFERAY_HEALTHCHECK_TEST (property
+        # lr.docker.environment.liferay.healthcheck.test) -- a locally built portal
+        # image may lack the stock /opt/liferay/health-check.sh.
+        healthcheck:
+            test: ${LIFERAY_HEALTHCHECK_TEST:-/opt/liferay/health-check.sh}
+    # A socat that joins Liferay's network namespace and forwards loopback :80 to
+    # traefik in the k3s container. A CX ingress host resolves to loopback
+    # everywhere (127.0.0.1 / ::1), so this gives Liferay's loopback:80 somewhere
+    # to go: a server-side call to http://<sid>.<vid>.localtest.me leaves Liferay
+    # on 127.0.0.1:80 -> here -> k3s:80 (traefik) -> routed by Host header -> CX.
+    # The browser reaches the same ingress URL via the host's loopback, so one
+    # address serves both the browser and Liferay (no NodePort split needed).
+    localhost-proxy:
+        command: TCP-LISTEN:80,fork,bind=127.0.0.1 TCP:k3s:80
+        container_name: ${NAMESPACE}-localhost-proxy
+        depends_on:
+            k3s:
+                condition: service_healthy
+            liferay:
+                condition: service_started
+        image: alpine/socat:latest
+        network_mode: service:liferay
+        restart: unless-stopped

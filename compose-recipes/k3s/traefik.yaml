@@ -1,0 +1,99 @@
+# Minimal traefik ingress controller, deployed DIRECTLY (not via k3s's built-in
+# HelmChart/helm-controller/servicelb, which are slow to reconcile). A plain
+# Deployment with hostPort 80 on the node (= the k3s container, whose :80 we
+# publish to the host), watching k8s Ingress resources. Image is pre-imported by
+# the deployIngress task so the pod never has to pull.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: traefik, namespace: kube-system}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: {name: traefik-ingress}
+rules:
+    -   apiGroups: [""]
+        # nodes is required: traefik 3.x's kubernetes-ingress provider watches
+        # nodes to resolve endpoints; without it the informer cache never syncs
+        # and no ingress routes are published (every host 404s).
+        resources: [nodes, services, endpoints, secrets]
+        verbs: [get, list, watch]
+    -   apiGroups: [networking.k8s.io]
+        resources: [ingresses, ingressclasses]
+        verbs: [get, list, watch]
+    -   apiGroups: [networking.k8s.io]
+        resources: [ingresses/status]
+        verbs: [update]
+    -   apiGroups: [discovery.k8s.io]
+        resources: [endpointslices]
+        verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: {name: traefik-ingress}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: traefik-ingress}
+subjects:
+    -   {kind: ServiceAccount, name: traefik, namespace: kube-system}
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata: {name: traefik}
+spec: {controller: traefik.io/ingress-controller}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: traefik, namespace: kube-system, labels: {app: traefik}}
+spec:
+    replicas: 1
+    selector: {matchLabels: {app: traefik}}
+    # hostPort 80 is a node-level singleton, so a rolling update deadlocks (the new
+    # pod can't bind :80 until the old one dies). Recreate kills the old pod first.
+    strategy: {type: Recreate}
+    template:
+        metadata: {labels: {app: traefik}}
+        spec:
+            containers:
+                -   args:
+                        -   --entrypoints.web.address=:80
+                        -   --providers.kubernetesingress=true
+                        -   --providers.kubernetesingress.ingressclass=traefik
+                        # Route the Liferay compose service (below) via an
+                        # ExternalName Service, so the portal is reachable through
+                        # traefik on host "localhost".
+                        -   --providers.kubernetesingress.allowexternalnameservices=true
+                        -   --log.level=INFO
+                    image: traefik:v3.1
+                    imagePullPolicy: IfNotPresent
+                    name: traefik
+                    ports:
+                        -   {name: web, containerPort: 80, hostPort: 80}
+            serviceAccountName: traefik
+---
+# Serve the Liferay portal itself through traefik on host "localhost", so the
+# browser reaches it on :80 (the same port family as the CX ingresses). This
+# makes the browser's Liferay origin "http://localhost", which matches the
+# domain the PortalK8sAgent advertises (com.liferay.lxc.dxp.domains=localhost),
+# so Client Extension CORS passes without a metadata hack or a DXP change.
+# Liferay is a compose service (not a pod), so it is reached via an ExternalName
+# Service that resolves "liferay" through the CoreDNS -> docker-DNS forwarder.
+apiVersion: v1
+kind: Service
+metadata: {name: liferay, namespace: default}
+spec:
+    externalName: liferay
+    ports:
+        -   {name: http, port: 8080}
+    type: ExternalName
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: {name: liferay, namespace: default}
+spec:
+    ingressClassName: traefik
+    rules:
+        -   host: localhost
+            http:
+                paths:
+                    -   backend:
+                            service: {name: liferay, port: {number: 8080}}
+                        path: /
+                        pathType: Prefix

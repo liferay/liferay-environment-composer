@@ -38,7 +38,7 @@ For day-to-day use, set up the [`lec` CLI](lec-CLI-Reference), which creates per
 | [Database Service](Database-Service) | MySQL, PostgreSQL, DB2, MariaDB, SQL Server, dump import, partitioning |
 | [Elasticsearch Service](Elasticsearch-Service) | Standalone Elasticsearch |
 | [Webserver Service](Webserver-Service) | NGINX, HTTPS, ModSecurity, hostnames |
-| [Mail Service](Mail-Service) · [LDAP Service](LDAP-Service) | Supporting services |
+| [Mail and LDAP Services](Mail-and-LDAP-Services) | Mail capture and LDAP directory |
 | **Operations** | |
 | [Saving and Sharing Data](Saving-and-Sharing-Data) | Persisting, exporting, and importing data; sharing a workspace |
 | [Profiling Liferay](Profiling-Liferay) | Glowroot, YourKit |

@@ -17,8 +17,7 @@
 - [Database Service](Database-Service)
 - [Elasticsearch Service](Elasticsearch-Service)
 - [Webserver Service](Webserver-Service)
-- [Mail Service](Mail-Service)
-- [LDAP Service](LDAP-Service)
+- [Mail and LDAP Services](Mail-and-LDAP-Services)
 
 **Operations**
 

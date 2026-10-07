@@ -18,14 +18,12 @@ To use a different engine version, see [Configuring the Environment → Docker i
 
 ## Default login
 
-All engines except DB2 share one login, which you can override:
+All engines share one login, which you can override:
 
 ```properties
 lr.docker.environment.database.user=liferay
 lr.docker.environment.database.password=Liferay123
 ```
-
-DB2 still uses `db2admin` / `lportal`.
 
 ## Import a database dump
 

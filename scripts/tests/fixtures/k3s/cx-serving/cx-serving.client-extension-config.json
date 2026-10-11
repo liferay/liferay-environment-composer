@@ -1,0 +1,9 @@
+{
+	"com.liferay.client.extension.type.configuration.CETConfiguration~cx-serving": {
+		"baseURL": "${portalURL}/o/cx-serving",
+		"type": "customElement",
+		"typeSettings": [
+			"urls=main.js"
+		]
+	}
+}

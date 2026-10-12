@@ -527,7 +527,7 @@ class Config {
 	public String webserverHostnames = "localhost"
 	public String webserverProtocol = null
 	public boolean yourKitEnabled = false
-	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.3-docker.zip"
+	public String yourKitUrl = "https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2025.9-docker.zip"
 
 	@Override
 	public String toString() {

@@ -211,11 +211,15 @@ ext {
 	}
 
 	getFirstAvailablePort = {
-		Integer portLowest, Integer portHighest, Set<Integer> projectPorts ->
+		Integer portLowest, Integer portHighest, Set<Integer> projectPorts, Collection<Integer> claimedPorts ->
 
 		logger.info "Finding lowest available port in range: ${portLowest}-${portHighest}"
 
 		for (int port = portLowest; port <= portHighest; port++) {
+			if (claimedPorts.contains(port)) {
+				continue
+			}
+
 			if (projectPorts.contains(port)) {
 				logger.info "Port ${port} is bound by this project, reusing it."
 
@@ -224,6 +228,10 @@ ext {
 		}
 
 		for (int port = portLowest; port <= portHighest; port++) {
+			if (claimedPorts.contains(port)) {
+				continue
+			}
+
 			try {
 				ServerSocket socket = new ServerSocket(port)
 

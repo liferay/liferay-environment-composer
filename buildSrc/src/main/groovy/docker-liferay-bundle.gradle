@@ -491,9 +491,9 @@ tasks.register("prepareYourKitAgent", Copy) {
 	dependsOn ":downloadYourKitAgentZip"
 
 	eachFile {
-		File file ->
+		FileCopyDetails fileCopyDetails ->
 
-		file.relativePath = RelativePath.parse(true, file.name)
+		fileCopyDetails.relativePath = RelativePath.parse(true, fileCopyDetails.name)
 	}
 
 	from zipTree(downloadYourKitAgentZip.dest)

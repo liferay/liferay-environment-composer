@@ -80,15 +80,17 @@ The database service also sets the address that JGroups uses to find the network
 
 The JGroups configuration is in `./configs/docker/tomcat/webapps/ROOT/WEB-INF/classes/jgroups/tcp.xml`. JGroups resolves the `TCPPING` hosts when the channel starts and fails on any host that does not resolve, such as a node that is not running. So when a node starts, `./configs/docker/scripts/configure_jgroups_tcpping_hosts.sh` builds its host list from what is running:
 
-- The main instance lists itself, and the `liferay-cluster-node` service if any cluster node is running.
-- The cluster nodes list the `liferay-cluster-node` service, which resolves to every cluster node that is running, and the main instance if it is running.
+- The main instance lists itself, and the `liferay-cluster-node` host if any cluster node is running.
+- The cluster nodes list the `liferay-cluster-node` host and the main instance if it is running.
+
+Each cluster node runs as its own service (`liferay-cluster-node-1`, `liferay-cluster-node-2`, and so on), and every one of them has the network alias `liferay-cluster-node`. That alias resolves to every cluster node that is running.
 
 A node that restarts, even with a different IP address, rejoins the nodes that are still running.
 
 To check that the cluster formed, look for the cluster view in the logs. It should list every node:
 
 ```sh
-docker compose logs liferay liferay-cluster-node | grep "Accepted view"
+docker compose logs liferay liferay-cluster-node-1 liferay-cluster-node-2 | grep "Accepted view"
 ```
 
 ## Ports

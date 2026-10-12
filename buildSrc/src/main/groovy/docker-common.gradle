@@ -554,7 +554,14 @@ ext {
 					String clusterNodeName ->
 
 					[clusterNodeName, [condition: "service_healthy"]]
-				}
+				},
+				environment: [
+					"WEBSERVER_CLUSTER_UPSTREAM_SERVERS=" + services.keySet().collect {
+						String clusterNodeName ->
+
+						"server ${clusterNodeName}:8080;"
+					}.join(" ")
+				]
 			]
 		}
 

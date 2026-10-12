@@ -548,6 +548,16 @@ ext {
 			]
 		}
 
+		if (config.useWebserver) {
+			services["webserver"] = [
+				depends_on: services.keySet().collectEntries {
+					String clusterNodeName ->
+
+					[clusterNodeName, [condition: "service_healthy"]]
+				}
+			]
+		}
+
 		clusterNodesComposeFile.parentFile.mkdirs()
 
 		clusterNodesComposeFile.text = JsonOutput.prettyPrint(JsonOutput.toJson([services: services]))

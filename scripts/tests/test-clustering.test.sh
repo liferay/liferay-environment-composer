@@ -33,7 +33,7 @@ _getStartedAt() {
 }
 
 _refuteTrialLicenseError() {
-	run docker compose logs liferay liferay-cluster-node
+	run docker compose logs liferay liferay-cluster-node-1
 
 	refute_output --partial "Developer licenses do not allow for clustering"
 }
@@ -95,11 +95,11 @@ teardown() {
 	run docker compose logs liferay
 	assert_output --partial "properties: UDP("
 
-	run docker compose logs liferay-cluster-node
+	run docker compose logs liferay-cluster-node-1
 	assert_output --partial "Lock acquired by"
 
 	_assertClusterViewSize "liferay" 2
-	_assertClusterViewSize "liferay-cluster-node" 2
+	_assertClusterViewSize "liferay-cluster-node-1" 2
 	_refuteTrialLicenseError
 }
 
@@ -115,12 +115,12 @@ teardown() {
 	assert_output --partial "TCPPING("
 	assert_output --partial "JGroups TCPPING hosts: liferay[7800]"
 
-	run docker compose logs liferay-cluster-node
+	run docker compose logs liferay-cluster-node-1
 	assert_output --partial "JGroups TCPPING hosts: liferay-cluster-node[7800],liferay[7800]"
 	assert_output --partial "Lock acquired by"
 
 	_assertClusterViewSize "liferay" 2
-	_assertClusterViewSize "liferay-cluster-node" 2
+	_assertClusterViewSize "liferay-cluster-node-1" 2
 	_refuteTrialLicenseError
 }
 
@@ -135,7 +135,7 @@ teardown() {
 	liferayContainer="$(docker compose ps --quiet liferay)"
 
 	local clusterNodeContainer
-	clusterNodeContainer="$(docker compose ps --quiet liferay-cluster-node)"
+	clusterNodeContainer="$(docker compose ps --quiet liferay-cluster-node-1)"
 
 	local oldIpAddress
 	oldIpAddress="$(_getIpAddress "${liferayContainer}")"
@@ -150,15 +150,15 @@ teardown() {
 
 	assert_equal "$(_getIpAddress "${IP_HOLDER_CONTAINER}")" "${oldIpAddress}"
 
-	docker compose restart liferay-cluster-node
+	docker compose restart liferay-cluster-node-1
 
 	_waitUntilHealthy "${clusterNodeContainer}"
 
-	run docker compose logs --since "$(_getStartedAt "${clusterNodeContainer}")" liferay-cluster-node
+	run docker compose logs --since "$(_getStartedAt "${clusterNodeContainer}")" liferay-cluster-node-1
 	assert_output --partial "Leaving liferay[7800] out of the JGroups TCPPING hosts"
 	refute_output --partial "UnknownHostException"
 
-	_assertClusterViewSize "liferay-cluster-node" 1 "$(_getStartedAt "${clusterNodeContainer}")"
+	_assertClusterViewSize "liferay-cluster-node-1" 1 "$(_getStartedAt "${clusterNodeContainer}")"
 
 	docker compose start liferay
 

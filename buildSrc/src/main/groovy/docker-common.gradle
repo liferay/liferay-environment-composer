@@ -1,6 +1,7 @@
 import com.liferay.docker.workspace.environments.Config
 import com.liferay.docker.workspace.environments.Util
 
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
 ext {
@@ -514,6 +515,42 @@ ext {
 				println logs
 			}
 		}
+	}
+
+	writeClusterNodesComposeFile = {
+		List<String> composeFiles, File clusterNodesComposeFile ->
+
+		Map composeModel = new JsonSlurper().parseText(waitForCommand("docker compose ${getComposeFileArgs(composeFiles)} config --no-interpolate --format json", project.projectDir)) as Map
+
+		Map clusterNodeTemplate = composeModel.services["liferay-cluster-node"] as Map
+
+		clusterNodeTemplate.remove("profiles")
+
+		Map<String, Map> services = [:]
+
+		for (int node = 1; node <= config.clusterNodes; node++) {
+			String clusterNodeName = "liferay-cluster-node-${node}"
+
+			List<String> ports = [
+				"\${LIFERAY_CLUSTER_NODE_${node}_DEBUG_PORT}:8000",
+				"\${LIFERAY_CLUSTER_NODE_${node}_GOGO_SHELL_PORT}:11311",
+				"\${LIFERAY_CLUSTER_NODE_${node}_PORT}:8080"
+			]
+
+			if (config.yourKitEnabled) {
+				ports.add("\${LIFERAY_CLUSTER_NODE_${node}_YOURKIT_PORT}:10001")
+			}
+
+			services[clusterNodeName] = clusterNodeTemplate + [
+				container_name: "\${NAMESPACE}-${clusterNodeName}",
+				networks: [default: [aliases: ["liferay-cluster-node"]]],
+				ports: ports
+			]
+		}
+
+		clusterNodesComposeFile.parentFile.mkdirs()
+
+		clusterNodesComposeFile.text = JsonOutput.prettyPrint(JsonOutput.toJson([services: services]))
 	}
 }
 

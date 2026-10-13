@@ -171,3 +171,26 @@ teardown() {
 
 	_assertClusterViewSize "liferay" 2 "$(_getStartedAt "${liferayContainer}")"
 }
+
+@test "Cluster ports are stable across restarts" {
+	_debug "RUNNING ${BATS_TEST_NAME}"
+
+	_startup
+
+	local liferayPort
+	liferayPort="$(_getServicePort liferay 8080)"
+
+	local clusterNodePort
+	clusterNodePort="$(_getServicePort liferay-cluster-node-1 8080)"
+
+	refute [ "${liferayPort}" == "${clusterNodePort}" ]
+
+	run ./gradlew stop -Plr.docker.environment.clear.volume.data=true
+
+	assert_success
+
+	_startup
+
+	assert_equal "$(_getServicePort liferay 8080)" "${liferayPort}"
+	assert_equal "$(_getServicePort liferay-cluster-node-1 8080)" "${clusterNodePort}"
+}

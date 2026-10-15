@@ -414,7 +414,7 @@ ext {
 		List<String> backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split(/\n/)
 
 		List<String> binaryDumpFileNames = backupFileNames.findAll {
-			fileName -> [".bak", ".dmp", ".dump"].any {
+			fileName -> [".bak", ".dmp", ".dump", ".pg"].any {
 				extension -> fileName.endsWith(extension)
 			}
 

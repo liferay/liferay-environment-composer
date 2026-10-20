@@ -210,21 +210,37 @@ ext {
 		return config.defaultCompanyVirtualHost["webId"]
 	}
 
+	getBoundHostPort = {
+		String serviceName, Integer containerPort ->
+
+		String output = waitForCommand(
+			"docker ps --filter 'label=com.docker.compose.project=${config.namespace}' --filter 'label=com.docker.compose.service=${serviceName}' --format '{{.Ports}}'"
+		)
+
+		java.util.regex.Matcher matcher = (output =~ /:(?<hostPort>\d+)->${containerPort}\//)
+
+		return matcher.find() ? (matcher.group("hostPort") as Integer) : null
+	}
+
+	getComposeFileArgs = {
+		List<String> composeFiles ->
+
+		composeFiles.collect {
+			String composeFile ->
+
+			"-f '${composeFile}'"
+		}.join(" ")
+	}
+
 	getFirstAvailablePort = {
-		Integer portLowest, Integer portHighest, Set<Integer> projectPorts, Collection<Integer> claimedPorts ->
+		Integer portLowest, Integer portHighest, Integer boundPort, Collection<Integer> claimedPorts ->
 
 		logger.info "Finding lowest available port in range: ${portLowest}-${portHighest}"
 
-		for (int port = portLowest; port <= portHighest; port++) {
-			if (claimedPorts.contains(port)) {
-				continue
-			}
+		if ((boundPort != null) && (boundPort >= portLowest) && (boundPort <= portHighest) && !claimedPorts.contains(boundPort)) {
+			logger.info "Port ${boundPort} is bound by this service, reusing it."
 
-			if (projectPorts.contains(port)) {
-				logger.info "Port ${port} is bound by this project, reusing it."
-
-				return port
-			}
+			return boundPort
 		}
 
 		for (int port = portLowest; port <= portHighest; port++) {
@@ -249,28 +265,32 @@ ext {
 		return null
 	}
 
-	getProjectBoundHostPorts = {
-		Set<Integer> boundPorts = new HashSet<>()
+	getPortKeyServices = {
+		List<String> composeFiles ->
+
+		Map<String, List> portKeyServices = [:]
 
 		try {
-			String output = waitForCommand(
-				"docker ps --filter 'label=com.docker.compose.project=${config.namespace}' --format '{{.Ports}}'"
+			String projectContainerIds = waitForCommand(
+				"docker ps --filter 'label=com.docker.compose.project=${config.namespace}' --quiet"
 			)
 
-			if (output.isEmpty()) {
-				return boundPorts
+			if (projectContainerIds.isEmpty()) {
+				return portKeyServices
 			}
 
-			output.split("\n").each {
-				String line ->
+			Map composeModel = new JsonSlurper().parseText(waitForCommand("docker compose ${getComposeFileArgs(composeFiles)} config --no-interpolate --format json", project.projectDir)) as Map
 
-				line.split(",").each {
+			composeModel.services.each {
+				String serviceName, Map service ->
+
+				service.ports?.each {
 					String portMapping ->
 
-					java.util.regex.Matcher matcher = (portMapping.trim() =~ /(?<hostPort>\d+)->/)
+					java.util.regex.Matcher matcher = (portMapping =~ /^\$\{(?<key>\w+)\}:(?<containerPort>\d+)$/)
 
-					if (matcher.find()) {
-						boundPorts.add(matcher.group("hostPort") as Integer)
+					if (matcher.matches()) {
+						portKeyServices.put(matcher.group("key"), [serviceName, matcher.group("containerPort") as Integer])
 					}
 				}
 			}
@@ -279,7 +299,7 @@ ext {
 			logger.info "Unable to query Docker for project ports: ${e.message}"
 		}
 
-		return boundPorts
+		return portKeyServices
 	}
 
 	getExistingVolumeNames = {

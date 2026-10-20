@@ -382,7 +382,7 @@ file("ports.env").withInputStream {
 	}
 
 	Map<String, Integer> claimedPorts = [:]
-	Set<Integer> projectPorts = getProjectBoundHostPorts()
+	Map<String, List> portKeyServices = getPortKeyServices(config.composeFiles)
 
 	environmentMap.putAll ports.collectEntries {
 		key, value ->
@@ -396,7 +396,9 @@ file("ports.env").withInputStream {
 		Integer portLowest = parts[0] as Integer
 		Integer portHighest = parts[1] as Integer
 
-		Integer availablePort = getFirstAvailablePort(portLowest, portHighest, projectPorts, claimedPorts.values())
+		Integer boundPort = portKeyServices.containsKey(key) ? getBoundHostPort(*portKeyServices[key]) : null
+
+		Integer availablePort = getFirstAvailablePort(portLowest, portHighest, boundPort, claimedPorts.values())
 
 		if (availablePort == null) {
 			throw new GradleException("No free port found in range: ${value}. Please shut down other projects, or expand the port range in the ports.env file.")

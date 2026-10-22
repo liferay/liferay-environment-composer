@@ -1,5 +1,5 @@
 upstream appserver-${PROTOCOL} {
 	ip_hash;
 	server liferay:8080;
-	server liferay-cluster-node:8080;
+	${WEBSERVER_CLUSTER_UPSTREAM_SERVERS}
 }

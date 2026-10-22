@@ -27,12 +27,17 @@ lr.docker.environment.database.password=Liferay123
 
 ## Import a database dump
 
-Put dump files in `./dumps` at the workspace root. They are copied into the database container automatically.
+Put one dump file in `./dumps` at the workspace root. It is copied into the database container automatically.
 
-```
-./dumps/dumpfile.sql   # raw dump
-./dumps/dumpfile.gz    # compressed dump, e.g. downloaded from LXC
-```
+| Database | Supported dump files |
+|:--|:--|
+| MySQL | `.sql`, `.sql.bz2`, `.sql.gz`, `.sql.xz`, `.sql.zst` |
+| MariaDB | `.sql`, `.sql.bz2`, `.sql.gz`, `.sql.xz`, `.sql.zst` |
+| PostgreSQL | `.sql`, `.sql.bz2`, `.sql.gz`, `.sql.xz`, `.sql.zst`, or a `pg_dump` custom/tar archive ending in `.bak`, `.dmp`, `.dump`, or `.pg` |
+| DB2 | A `db2move` export (`db2move.lst` and its table files, packed into one archive), or a backup image from `db2 BACKUP DATABASE` with its original file name (e.g. `LPORTAL.0.db2admin.DBPART000.20260130234412.001`) |
+| SQL Server | `.bacpac` or `.bak` |
+
+Any of these can also be wrapped in an archive, which is extracted first: `.7z`, `.bz2`, `.gz`, `.tar.bz2`, `.tar.gz`, `.tbz`, `.tgz`, or `.zip`.
 
 ### SaaS backups
 

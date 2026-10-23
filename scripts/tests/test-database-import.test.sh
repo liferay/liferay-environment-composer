@@ -114,6 +114,9 @@ teardown() {
 @test "raw/postgres/lportal_psql.bak" {
 	_test_import_dump postgres raw/postgres/lportal_psql.bak
 }
+@test "raw/postgres/lportal_psql.pg" {
+	_test_import_dump postgres raw/postgres/lportal_psql.pg
+}
 @test "raw/postgres/lportal_psql_foreign_owner.dump" {
 	_test_import_dump postgres raw/postgres/lportal_psql_foreign_owner.dump
 }

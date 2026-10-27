@@ -9,8 +9,5 @@ services:
             -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_${WEBSERVER_PROTOCOL_UPPERCASE}_PERIOD_PORT=${LIFERAY_CONTAINER_PORT}
             -   LIFERAY_WEB_PERIOD_SERVER_PERIOD_PROTOCOL=${WEBSERVER_PROTOCOL}
     webserver:
-        depends_on:
-            liferay-cluster-node:
-                condition: service_healthy
         environment:
             -   WEBSERVER_UPSTREAM_FILE=upstream.cluster.conf

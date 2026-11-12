@@ -171,3 +171,32 @@ teardown() {
 
 	_assertClusterViewSize "liferay" 2 "$(_getStartedAt "${liferayContainer}")"
 }
+
+@test "Webserver fails over to a cluster node when the main node is down" {
+	_debug "RUNNING ${BATS_TEST_NAME}"
+
+	_writeProperty "lr.docker.environment.cluster.nodes" "2"
+	_writeProperty "lr.docker.environment.service.enabled[webserver]" "true"
+
+	_startup
+
+	local clusterNodeHostnames=()
+	local clusterNodeContainer
+
+	while read -r clusterNodeContainer; do
+		clusterNodeHostnames+=("$(docker inspect --format '{{.Config.Hostname}}' "${clusterNodeContainer}")")
+	done < <(docker compose ps --quiet liferay-cluster-node)
+
+	assert_equal "${#clusterNodeHostnames[@]}" 2
+
+	docker compose stop liferay
+
+	local webserverUrl
+	webserverUrl="http://localhost:$(_getServicePort webserver 8080)/web/guest"
+
+	_assertHttpStatus "${webserverUrl}"
+
+	run curl -s -L "${webserverUrl}"
+
+	assert_output --regexp "${clusterNodeHostnames[0]}|${clusterNodeHostnames[1]}"
+}

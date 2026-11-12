@@ -45,6 +45,26 @@ _getServicePort() {
 	docker compose port "${serviceName}" "${internalPort}" | sed 's,^.*:,,g'
 }
 
+_indexOf() {
+	local needle="${1}"
+	shift
+
+	local i=0
+	local element
+
+	for element in "${@}"; do
+		if [[ "${element}" == "${needle}" ]]; then
+			echo "${i}"
+
+			return 0
+		fi
+
+		i=$((i + 1))
+	done
+
+	return 1
+}
+
 _lec() {
 	"${WORKSPACE_DIR}/scripts/cli/lec.sh" "${@}"
 }
@@ -93,7 +113,7 @@ _getEnvVar() {
 
 _runGradleConfig() {
 	# Gradle's configuration phase generates .env, so any task triggers it.
-	./gradlew help
+	./gradlew help >/dev/null
 }
 
 common_setup_file() {

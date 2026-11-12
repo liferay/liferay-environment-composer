@@ -182,6 +182,19 @@ port=$(_getServicePort liferay 8080)
 curl -s "http://localhost:${port}"
 ```
 
+### `_indexOf needle elements...`
+
+Prints the zero-based index of the first element equal to `needle` and returns `0`, or returns `1` if no element matches. Pass an array as `"${array[@]}"`.
+
+```bash
+if ! _indexOf "${file}" "${files[@]}" > /dev/null; then
+	fail "${file} is not included"
+fi
+
+local index
+index="$(_indexOf "${file}" "${files[@]}")"
+```
+
 ### `_debug message`
 
 Prints a message to BATS output, but only when `DEBUG` is exported and greater than `0`. Use this for diagnostic output.

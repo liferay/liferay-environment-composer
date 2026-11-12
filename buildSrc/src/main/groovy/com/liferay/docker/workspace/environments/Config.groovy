@@ -30,8 +30,6 @@ class Config {
 
 		this.composeFiles.add("docker-compose.yaml")
 
-		this.composeFiles.addAll(this.toList(project.findProperty("lr.docker.environment.compose.files")))
-
 		String clearVolumeData = project.findProperty("lr.docker.environment.clear.volume.data")
 
 		if (clearVolumeData != null) {
@@ -444,14 +442,24 @@ class Config {
 					"The service '${serviceName}' does not have a matching service.*.yaml file. Possible services are: ${possibleServices}");
 			}
 
-			matchingFileTree.getFiles()
-		}.flatten().collect {
+			matchingFileTree.files.sort {
+				File composeFile ->
+
+				composeFile.name
+			}
+		}.flatten().sort {
+			File serviceComposeFile ->
+
+			serviceComposeFile.name.startsWith("service.") ? 0 : 1
+		}.collect {
 			File serviceComposeFile ->
 
 			projectDir.relativePath(serviceComposeFile)
 		}
 
 		this.composeFiles.addAll(serviceComposeFiles)
+
+		this.composeFiles.addAll(this.toList(project.findProperty("lr.docker.environment.compose.files")))
 	}
 
 	static Object getRequiredProperty(Project project, String property) {

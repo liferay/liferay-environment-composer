@@ -1,0 +1,7 @@
+{
+	"id": "cxserving",
+	"kind": "Deployment",
+	"loadBalancer": {
+		"targetPort": 8080
+	}
+}

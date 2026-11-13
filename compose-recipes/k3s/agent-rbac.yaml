@@ -1,0 +1,38 @@
+# ServiceAccount + RBAC so the Liferay PortalK8sAgent can reach the k3s API
+# server directly with a bearer token (replacing the unauthenticated kubectl
+# proxy). Modeled on the Liferay Cloud liferay-dxp-agent ClusterRole
+# (charts/stable/liferaycloud/liferay-configuration/templates/liferay-dxp-agent.clusterrole.yaml):
+# same verb set, but scoped to the ConfigMaps the DXP agent actually manages
+# (the agent is ConfigMap-based; the k8s.liferay.com CRDs are the PaaS-pipeline
+# interface — see the PaaS-mode TODO in the recipe README).
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: liferay-portal-k8s-agent, namespace: default}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: liferay-portal-k8s-agent, namespace: default}
+rules:
+    -   apiGroups: [""]
+        resources: [configmaps]
+        verbs: [get, list, watch, create, update, patch, delete, deletecollection]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: liferay-portal-k8s-agent, namespace: default}
+roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: liferay-portal-k8s-agent
+subjects:
+    -   {kind: ServiceAccount, name: liferay-portal-k8s-agent, namespace: default}
+---
+# k8s 1.24+ no longer auto-creates a SA token Secret; request a long-lived one
+# (no expiry) so the local dev env doesn't need token rotation.
+apiVersion: v1
+kind: Secret
+metadata:
+    annotations: {kubernetes.io/service-account.name: liferay-portal-k8s-agent}
+    name: liferay-portal-k8s-agent-token
+    namespace: default
+type: kubernetes.io/service-account-token

@@ -1,0 +1,12 @@
+{
+	"com.liferay.oauth2.provider.configuration.OAuth2ProviderApplicationUserAgentConfiguration~cx-oauth-action-oaua": {
+		"baseURL": "${portalURL}/o/cx-oauth-action",
+		"homePageURL": "${portalURL}",
+		"type": "oAuthApplicationUserAgent"
+	},
+	"com.liferay.object.internal.configuration.FunctionObjectActionExecutorImplConfiguration~cx-oauth-action-oa": {
+		"baseURL": "${portalURL}/o/cx-oauth-action",
+		"resourcePath": "/object/action/thing",
+		"type": "objectAction"
+	}
+}

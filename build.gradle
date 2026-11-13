@@ -334,9 +334,35 @@ environmentMap.put "DATABASE_PASSWORD", config.databasePassword
 environmentMap.put "DATABASE_USER", config.databaseUser
 environmentMap.put "NAMESPACE", config.namespace
 
+File clusterNodesComposeFile = layout.buildDirectory.file("cluster-nodes.compose.json").get().asFile
+List<String> clusterNodeTemplateComposeFiles = new ArrayList<>(config.composeFiles)
+
 if (config.useClustering) {
 	environmentMap.put "LIFERAY_CLUSTER_NODE_START_PERIOD", "${config.clusterNodes * 10}m"
-	environmentMap.put "LIFERAY_CLUSTER_NODES", config.clusterNodes
+
+	writeClusterNodesComposeFile(clusterNodeTemplateComposeFiles, clusterNodesComposeFile)
+
+	config.composeFiles.add(projectDir.relativePath(clusterNodesComposeFile))
+}
+
+tasks.register("prepareClusterNodesComposeFile") {
+	onlyIf("using clustering") {
+		config.useClustering
+	}
+
+	mustRunAfter ":clean"
+
+	doLast {
+		writeClusterNodesComposeFile(clusterNodeTemplateComposeFiles, clusterNodesComposeFile)
+	}
+}
+
+["composeBuild", "composeDown", "composePull", "composeUp"].each {
+	String taskName ->
+
+	tasks.named(taskName) {
+		dependsOn ":prepareClusterNodesComposeFile"
+	}
 }
 
 if (config.useLiferay) {
@@ -375,15 +401,28 @@ file("ports.env").withInputStream {
 
 	ports.load(portsFile)
 
-	if (config.useClustering) {
-		environmentMap.putAll ports
+	Map<String, String> portRanges = new LinkedHashMap<>(ports)
 
-		return
+	if (config.useClustering) {
+		List<String> clusterNodePortKeys = ["LIFERAY_DEBUG_PORT", "LIFERAY_GOGO_SHELL_PORT", "LIFERAY_PORT"]
+
+		if (config.yourKitEnabled) {
+			clusterNodePortKeys.add("LIFERAY_YOURKIT_PORT")
+		}
+
+		for (int node = 1; node <= config.clusterNodes; node++) {
+			clusterNodePortKeys.each {
+				String key ->
+
+				portRanges.put(key.replace("LIFERAY_", "LIFERAY_CLUSTER_NODE_${node}_"), ports[key])
+			}
+		}
 	}
 
-	Set<Integer> projectPorts = getProjectBoundHostPorts()
+	Map<String, Integer> claimedPorts = [:]
+	Map<String, List> portKeyServices = getPortKeyServices(config.composeFiles)
 
-	environmentMap.putAll ports.collectEntries {
+	environmentMap.putAll portRanges.collectEntries {
 		key, value ->
 
 		if (!value.contains("-")) {
@@ -395,11 +434,15 @@ file("ports.env").withInputStream {
 		Integer portLowest = parts[0] as Integer
 		Integer portHighest = parts[1] as Integer
 
-		Integer availablePort = getFirstAvailablePort(portLowest, portHighest, projectPorts)
+		Integer boundPort = portKeyServices.containsKey(key) ? getBoundHostPort(*portKeyServices[key]) : null
+
+		Integer availablePort = getFirstAvailablePort(portLowest, portHighest, boundPort, claimedPorts.values())
 
 		if (availablePort == null) {
 			throw new GradleException("No free port found in range: ${value}. Please shut down other projects, or expand the port range in the ports.env file.")
 		}
+
+		claimedPorts.put(key, availablePort)
 
 		return [key, availablePort.toString()]
 	}

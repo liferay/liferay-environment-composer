@@ -2,7 +2,8 @@
 
 # The postgres image's entrypoint runs this script once, on the first start of
 # the database container, against a temporary server that only listens on the
-# local socket. Import the dump in /dumps.
+# local socket. Import the dump in /dumps, then rename a non-public Liferay
+# schema to public.
 #
 # The dumps are mounted at /dumps rather than in /docker-entrypoint-initdb.d,
 # where the entrypoint would run them in name order. An extracted archive can
@@ -79,4 +80,33 @@ _psql() {
 		"${@}"
 }
 
+_query() {
+	_psql --command "${1}" --no-align --tuples-only
+}
+
+_rename_schema_to_public() {
+	if [[ -n "$(_query "select 1 from pg_tables where schemaname = 'public' limit 1")" ]]; then
+		return
+	fi
+
+	local schema_names
+	schema_names="$(_query "select distinct schemaname from pg_tables where tablename = 'company' and schemaname not like 'lpartition\_%'")"
+
+	if [[ -z "${schema_names}" ]]; then
+		return
+	fi
+
+	if [[ "$(wc --lines <<< "${schema_names}")" -gt 1 ]]; then
+		echo "[import-dumps.sh] Not renaming any schema to public because multiple schemas have Liferay tables: ${schema_names//$'\n'/, }"
+
+		return
+	fi
+
+	echo "[import-dumps.sh] Renaming schema ${schema_names} to public..."
+
+	_psql --command "drop schema public; alter schema \"${schema_names}\" rename to public"
+}
+
 _import_dumps
+
+_rename_schema_to_public

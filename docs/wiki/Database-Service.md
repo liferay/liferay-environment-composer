@@ -39,6 +39,30 @@ Put one dump file in `./dumps` at the workspace root. It is copied into the data
 
 Any of these can also be wrapped in an archive, which is extracted first: `.7z`, `.bz2`, `.gz`, `.tar.bz2`, `.tar.gz`, `.tbz`, `.tgz`, or `.zip`.
 
+A PostgreSQL dump whose Liferay tables are in a schema other than `public` (for example, `liferay`) is renamed to `public` after the import. Partition schemas (`lpartition_*`) are left as they are.
+
+### How a PostgreSQL dump is imported
+
+The dump is imported only when the data directory is empty. Gradle prepares the files, and the database container imports them the first time it starts:
+
+1. `importDatabaseDumps` builds the `database` image and creates its container without starting it.
+
+1. It copies the dump into the `dumps` volume, which the container mounts at `/dumps`, and extracts any archive there. It also adds `100_prepare_database_import.sql`, which creates the `cloudsqlsuperuser` role that Cloud SQL dumps grant privileges to. The dumps are not mounted in the image's `/docker-entrypoint-initdb.d`, because the entrypoint would run them in name order, and an extracted archive can contain file names that sort before this file.
+
+1. The first step that needs the database starts the container and waits until it is healthy, or fails if the container exits.
+
+1. On its first start, the postgres image's entrypoint creates the database and runs `compose-recipes/postgres/conf/import-dumps.sh`, which:
+
+    1. Identifies the files in `/dumps`. A file that `pg_restore --list` can read is a binary dump, whatever its name. Other `.sql`, `.sql.xz` and `.sql.zst` files are SQL dumps. It fails before importing anything if there is more than one binary dump, or if a `.bak`, `.dmp`, `.dump` or `.pg` file is not a valid binary dump (for example, one written by a newer `pg_dump` than the image's).
+
+    1. Runs `100_prepare_database_import.sql`, then all SQL dumps in name order with `psql`, then the binary dump with `pg_restore`. An archive can contain several SQL files, for example a role script next to the database dump.
+
+    1. Renames a non-`public` Liferay schema to `public`.
+
+1. When the container is healthy, Gradle resets user passwords and clears production-only configuration in the imported data.
+
+If the import fails, the container exits and the build fails with the container's log. The partly imported data stays in the database volume, so run `lec clean` to remove the volumes before trying again.
+
 ### SaaS backups
 
 SRE usually provides a password-protected `.7z` or `.zip`. You can extract it yourself, or set the password and let the tool do it:

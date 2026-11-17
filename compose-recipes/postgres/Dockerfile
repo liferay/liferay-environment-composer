@@ -10,3 +10,7 @@ RUN chown postgres:postgres /startup_log.txt
 # Inject an echo right before exec "$@" in docker-entrypoint.sh
 
 RUN sed -i -E 's,^(.*)(exec "\$@"),\1echo "STARTING_UP" > /startup_log.txt\n\1\2,' /usr/local/bin/docker-entrypoint.sh
+
+# Import the dumps in /dumps on the first start
+
+COPY --chmod=0755 conf/import-dumps.sh /docker-entrypoint-initdb.d/

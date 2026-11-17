@@ -25,7 +25,7 @@ services:
             -   "${DATABASE_PORT}:5432"
         shm_size: 128mb
         volumes:
-            -   dumps:/docker-entrypoint-initdb.d
+            -   dumps:/dumps
             -   postgres:/var/lib/postgresql/data
 volumes:
     postgres:

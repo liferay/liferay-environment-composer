@@ -408,35 +408,6 @@ ext {
 		return releaseInfo
 	}
 
-	importPostgreSQLBinaryDump = {
-		waitForContainer("database")
-
-		List<String> backupFileNames = waitForCommand("docker compose exec database ls /docker-entrypoint-initdb.d").split(/\n/)
-
-		List<String> binaryDumpFileNames = backupFileNames.findAll {
-			fileName -> [".bak", ".dmp", ".dump", ".pg"].any {
-				extension -> fileName.endsWith(extension)
-			}
-
-		}
-
-		if (binaryDumpFileNames.size() > 1) {
-			throw new GradleException("Aborting because multiple binary dump files were found in the dumps folder.")
-		}
-
-		if (binaryDumpFileNames.size() > 0) {
-			String databaseInitialized = executeSQLQuery("SELECT * from pg_tables WHERE schemaname NOT LIKE 'pg_%' AND schemaname NOT LIKE 'sql_%' AND schemaname NOT LIKE 'information_schema'")
-
-			if (databaseInitialized.trim() == "[]") {
-				println "Attempting to restore binary dump file: ${binaryDumpFileNames[0]} with database name: ${config.databaseName}..."
-
-				waitForCommand("docker compose exec -u postgres database pg_restore -v -O -x -U ${config.databaseUser} -d ${config.databaseName} /docker-entrypoint-initdb.d/${binaryDumpFileNames[0]}")
-			} else {
-				println "Database ${config.databaseName} already initialized, skipping dump binary restore."
-			}
-		}
-	}
-
 	reactivateDisabledUsers = {
 		String schema ->
 
@@ -677,10 +648,6 @@ tasks.register("importDatabaseDumps") {
 
 		if (config.useDatabaseMariaDB || config.useDatabaseMySQL) {
 			resetDatabaseGlobalValues()
-		}
-
-		if (config.useDatabasePostgreSQL) {
-			importPostgreSQLBinaryDump()
 		}
 
 		updateDatabaseForLocalDevelopment()

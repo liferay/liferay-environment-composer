@@ -465,17 +465,27 @@ ext {
 		String serviceName ->
 
 		Closure<String> statusClosure = {
-			waitForCommand("docker compose ps ${serviceName} --format '{{.Health}}'").trim()
+			waitForCommand("docker compose ps ${serviceName} --all --format '{{.State}} {{.Health}}'").trim()
 		}
 
-		if (Objects.equals(statusClosure.call(), "healthy")) {
+		if (Objects.equals(statusClosure.call(), "running healthy")) {
 			return
 		}
 
 		println "Starting service ${serviceName}"
 		waitForCommand("docker compose up -d ${serviceName}")
 
-		while (!Objects.equals(statusClosure.call(), "healthy")) {
+		while (true) {
+			String status = statusClosure.call()
+
+			if (Objects.equals(status, "running healthy")) {
+				return
+			}
+
+			if (status.startsWithAny("dead", "exited")) {
+				throw new GradleException("Service ${serviceName} stopped. See its log above.")
+			}
+
 			Thread.sleep(10000)
 
 			println "Waiting for service ${serviceName}"

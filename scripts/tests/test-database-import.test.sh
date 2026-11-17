@@ -12,6 +12,79 @@ _download_database_dump() {
 		"${baseUrl}/${filePath}"
 }
 
+_generate_postgres_liferay_schema_dumps() {
+	local generatedDir="${TEST_RESOURCES_DIR}/generated/postgres"
+
+	if [[ -f "${generatedDir}/lportal_psql_two_binary_dumps.tar.gz" ]]; then
+		return
+	fi
+
+	if [[ ! -f "${TEST_RESOURCES_DIR}/raw/postgres/lportal_psql.sql" ]]; then
+		_download_database_dump raw/postgres/lportal_psql.sql
+	fi
+
+	mkdir -p "${generatedDir}"
+
+	{
+		echo "CREATE SCHEMA liferay;"
+
+		sed "s/public\./liferay./g" "${TEST_RESOURCES_DIR}/raw/postgres/lportal_psql.sql"
+	} > "${generatedDir}/lportal_psql_liferay_schema.sql"
+
+	local containerName="lec-test-postgres-liferay-schema-${BATS_ROOT_PID}"
+
+	local postgresVersion
+	postgresVersion="$(_readProperty "lr.docker.environment.service.version[postgres]" "${WORKSPACE_DIR}/gradle.properties")"
+
+	docker run \
+		--detach \
+		--env POSTGRES_DB=lportal \
+		--env POSTGRES_PASSWORD=liferay \
+		--env POSTGRES_USER=liferay \
+		--name "${containerName}" \
+		--volume "${generatedDir}/lportal_psql_liferay_schema.sql:/docker-entrypoint-initdb.d/lportal.sql:ro" \
+		"postgres:${postgresVersion}"
+
+	until docker logs "${containerName}" 2>&1 | grep --quiet "PostgreSQL init process complete"; do
+		if [[ "$(docker inspect --format "{{.State.Running}}" "${containerName}")" != "true" ]]; then
+			docker rm --force "${containerName}"
+
+			return 1
+		fi
+
+		sleep 2
+	done
+
+	local attempt
+	for attempt in {1..60}; do
+		if docker exec "${containerName}" pg_isready --dbname=lportal --username=liferay; then
+			break
+		fi
+
+		if [[ "${attempt}" -eq 60 ]]; then
+			docker rm --force "${containerName}"
+
+			return 2
+		fi
+
+		sleep 1
+	done
+
+	docker exec "${containerName}" pg_dump --dbname=lportal --format=custom --username=liferay > "${generatedDir}/lportal_psql_liferay_schema.dump"
+
+	docker rm --force "${containerName}"
+
+	cp "${generatedDir}/lportal_psql_liferay_schema.dump" "${generatedDir}/lportal_psql_binary_named_sql.sql"
+
+	tar \
+		--create \
+		--directory "${generatedDir}" \
+		--file "${generatedDir}/lportal_psql_two_binary_dumps.tar.gz" \
+		--gzip \
+		lportal_psql_binary_named_sql.sql \
+		lportal_psql_liferay_schema.dump
+}
+
 _test_import_dump() {
 	local databaseType=${1}
 	local inputFilePath=${2}
@@ -122,6 +195,37 @@ teardown() {
 }
 @test "raw/postgres/lportal_psql.sql" {
 	_test_import_dump postgres raw/postgres/lportal_psql.sql
+}
+@test "generated/postgres/lportal_psql_liferay_schema.sql" {
+	_generate_postgres_liferay_schema_dumps
+
+	_test_import_dump postgres generated/postgres/lportal_psql_liferay_schema.sql
+}
+@test "generated/postgres/lportal_psql_liferay_schema.dump" {
+	_generate_postgres_liferay_schema_dumps
+
+	_test_import_dump postgres generated/postgres/lportal_psql_liferay_schema.dump
+}
+@test "generated/postgres/lportal_psql_binary_named_sql.sql" {
+	_generate_postgres_liferay_schema_dumps
+
+	_test_import_dump postgres generated/postgres/lportal_psql_binary_named_sql.sql
+}
+@test "generated/postgres/lportal_psql_two_binary_dumps.tar.gz fails before importing" {
+	_debug "RUNNING ${BATS_TEST_NAME}"
+
+	_generate_postgres_liferay_schema_dumps
+
+	cp "${TEST_RESOURCES_DIR}/generated/postgres/lportal_psql_two_binary_dumps.tar.gz" ./dumps/
+
+	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
+	_writeProperty "lr.docker.environment.service.enabled[postgres]" "true"
+
+	run ./gradlew clean importDatabaseDumps
+
+	assert_failure
+	assert_output --partial "Aborting because multiple binary dump files were found"
+	refute_output --partial "Restoring /dumps/"
 }
 @test "archives/sqlserver/lportal.bak.gz" {
 	_test_import_dump sqlserver archives/sqlserver/lportal.bak.gz

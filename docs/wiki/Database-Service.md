@@ -53,7 +53,9 @@ The dump is imported only when the data directory is empty. Gradle prepares the 
 
 1. On its first start, the postgres image's entrypoint creates the database and runs `compose-recipes/postgres/conf/import-dumps.sh`, which:
 
-    1. Runs `100_prepare_database_import.sql`, then imports the other files in `/dumps` in name order: SQL files (`.sql`, `.sql.xz`, `.sql.zst`) with `psql`, and a binary dump (`.bak`, `.dmp`, `.dump`, `.pg`) with `pg_restore`.
+    1. Identifies the files in `/dumps`. A file that `pg_restore --list` can read is a binary dump, whatever its name. Other `.sql`, `.sql.xz` and `.sql.zst` files are SQL dumps. It fails before importing anything if there is more than one binary dump, or if a `.bak`, `.dmp`, `.dump` or `.pg` file is not a valid binary dump (for example, one written by a newer `pg_dump` than the image's).
+
+    1. Runs `100_prepare_database_import.sql`, then all SQL dumps in name order with `psql`, then the binary dump with `pg_restore`. An archive can contain several SQL files, for example a role script next to the database dump.
 
     1. Renames a non-`public` Liferay schema to `public`.
 

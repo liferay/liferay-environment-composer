@@ -15,7 +15,7 @@ _download_database_dump() {
 _generate_postgres_liferay_schema_dumps() {
 	local generatedDir="${TEST_RESOURCES_DIR}/generated/postgres"
 
-	if [[ -f "${generatedDir}/lportal_psql_liferay_schema.dump" ]]; then
+	if [[ -f "${generatedDir}/lportal_psql_two_binary_dumps.tar.gz" ]]; then
 		return
 	fi
 
@@ -70,6 +70,16 @@ _generate_postgres_liferay_schema_dumps() {
 	docker exec "${containerName}" pg_dump --dbname=lportal --format=custom --username=liferay > "${generatedDir}/lportal_psql_liferay_schema.dump"
 
 	docker rm --force "${containerName}"
+
+	cp "${generatedDir}/lportal_psql_liferay_schema.dump" "${generatedDir}/lportal_psql_binary_named_sql.sql"
+
+	tar \
+		--create \
+		--directory "${generatedDir}" \
+		--file "${generatedDir}/lportal_psql_two_binary_dumps.tar.gz" \
+		--gzip \
+		lportal_psql_binary_named_sql.sql \
+		lportal_psql_liferay_schema.dump
 }
 
 _test_import_dump() {
@@ -192,6 +202,27 @@ teardown() {
 	_generate_postgres_liferay_schema_dumps
 
 	_test_import_dump postgres generated/postgres/lportal_psql_liferay_schema.dump
+}
+@test "generated/postgres/lportal_psql_binary_named_sql.sql" {
+	_generate_postgres_liferay_schema_dumps
+
+	_test_import_dump postgres generated/postgres/lportal_psql_binary_named_sql.sql
+}
+@test "generated/postgres/lportal_psql_two_binary_dumps.tar.gz fails before importing" {
+	_debug "RUNNING ${BATS_TEST_NAME}"
+
+	_generate_postgres_liferay_schema_dumps
+
+	cp "${TEST_RESOURCES_DIR}/generated/postgres/lportal_psql_two_binary_dumps.tar.gz" ./dumps/
+
+	_writeProperty "lr.docker.environment.service.enabled[liferay]" "false"
+	_writeProperty "lr.docker.environment.service.enabled[postgres]" "true"
+
+	run ./gradlew clean importDatabaseDumps
+
+	assert_failure
+	assert_output --partial "Aborting because multiple binary dump files were found"
+	refute_output --partial "Restoring /dumps/"
 }
 @test "archives/sqlserver/lportal.bak.gz" {
 	_test_import_dump sqlserver archives/sqlserver/lportal.bak.gz

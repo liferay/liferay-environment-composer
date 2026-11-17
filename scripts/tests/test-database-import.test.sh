@@ -33,6 +33,9 @@ _generate_postgres_liferay_schema_dumps() {
 
 	local containerName="lec-test-postgres-liferay-schema-${BATS_ROOT_PID}"
 
+	local postgresVersion
+	postgresVersion="$(_readProperty "lr.docker.environment.service.version[postgres]" "${WORKSPACE_DIR}/gradle.properties")"
+
 	docker run \
 		--detach \
 		--env POSTGRES_DB=lportal \
@@ -40,7 +43,7 @@ _generate_postgres_liferay_schema_dumps() {
 		--env POSTGRES_USER=liferay \
 		--name "${containerName}" \
 		--volume "${generatedDir}/lportal_psql_liferay_schema.sql:/docker-entrypoint-initdb.d/lportal.sql:ro" \
-		postgres:16.13
+		"postgres:${postgresVersion}"
 
 	until docker logs "${containerName}" 2>&1 | grep --quiet "PostgreSQL init process complete"; do
 		if [[ "$(docker inspect --format "{{.State.Running}}" "${containerName}")" != "true" ]]; then

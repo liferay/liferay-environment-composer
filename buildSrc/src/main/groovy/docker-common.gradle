@@ -482,8 +482,8 @@ ext {
 				return
 			}
 
-			if (status.startsWith("dead") || status.startsWith("exited")) {
-				throw new GradleException("Service ${serviceName} stopped, see its log above")
+			if (status.startsWithAny("dead", "exited")) {
+				throw new GradleException("Service ${serviceName} stopped. See its log above.")
 			}
 
 			Thread.sleep(10000)

@@ -42,6 +42,12 @@ ext {
 // lr.docker.environment.k3s.dxp.operator.chart: the DXP operator's chart
 // lr.docker.environment.k3s.dxp.operator.chart.version: its chart version
 // lr.docker.environment.k3s.dxp.operator.image: its image repository
+// lr.docker.environment.k3s.cx.liferay.yaml: liferay.yaml files, comma-separated
+//
+// Settings a Liferay Cloud Native environment keeps in its liferay.yaml
+// (replicas, env, probes, resources, a CronJob schedule, enabled) are read from
+// client-extensions/liferay.yaml or the files that property lists, in the same
+// format and with the same merge rules.
 // ============================================================================
 
 ext.containerdSocket = "/run/k3s/containerd/containerd.sock"
@@ -641,13 +647,95 @@ Map descriptorFor(Map clientExtension) {
 	return descriptor + [configs: clientExtension.configs]
 }
 
+// liferay.yaml, in the format of a Liferay Cloud Native environment: optional
+// clientExtensionDefaults, and clientExtensions.<name> entries with chart
+// values and enabled. Several files (for example base, then environment) are
+// merged in order. An entry matches a client extension by its directory or zip
+// name, its LCP.json id, or its deploy name.
+
+ext.cxLiferayYamlFiles = (project.findProperty("lr.docker.environment.k3s.cx.liferay.yaml") ?: "${cxRoot.name}/liferay.yaml").toString().split(",")*.trim().findAll {
+	it
+}.collect {
+	file(it)
+}
+
+Map loadLiferayYaml() {
+	Map liferayYaml = [:]
+
+	cxLiferayYamlFiles.findAll {
+		it.exists()
+	}.each {
+		File liferayYamlFile ->
+
+		liferayYaml = deepMerge(liferayYaml, new ObjectMapper(new YAMLFactory()).readValue(liferayYamlFile, Map) ?: [:])
+	}
+
+	return liferayYaml
+}
+
+// As the platform's client-extension-elements.gotmpl does: entry keys replace
+// the defaults' keys, and so do the top-level keys of its values.
+
+Map mergeLiferayYamlEntry(Map defaults, Map entry) {
+	Map merged = new LinkedHashMap(defaults)
+
+	merged.putAll(entry)
+
+	if ((defaults.values instanceof Map) && (entry.values instanceof Map)) {
+		merged.values = new LinkedHashMap(defaults.values)
+
+		merged.values.putAll(entry.values)
+	}
+
+	return merged
+}
+
+Map liferayYamlEntryFor(Map clientExtension) {
+	Map liferayYaml = loadLiferayYaml()
+
+	Map clientExtensions = (liferayYaml.clientExtensions instanceof Map) ? liferayYaml.clientExtensions : [:]
+
+	Map defaults = (liferayYaml.clientExtensionDefaults instanceof Map) ? liferayYaml.clientExtensionDefaults : [:]
+
+	String key = [clientExtension.name, clientExtension.sid, clientExtension.deployName].find {
+		clientExtensions[it] instanceof Map
+	}
+
+	// On the platform every client extension has an entry. Locally, one without
+	// an entry still gets the defaults.
+
+	if (!key && !defaults) {
+		return null
+	}
+
+	return mergeLiferayYamlEntry(defaults, key ? clientExtensions[key] : [:])
+}
+
+void logReplacedValues(Map liferayYamlValues, Map localValues, String prefix) {
+	localValues.each {
+		key, value ->
+
+		if (!liferayYamlValues.containsKey(key) || (key == "descriptor")) {
+			return
+		}
+
+		if ((value instanceof Map) && (liferayYamlValues[key] instanceof Map)) {
+			logReplacedValues(liferayYamlValues[key], value, "${prefix}${key}.")
+		}
+		else if (liferayYamlValues[key] != value) {
+			logger.lifecycle("  liferay.yaml ${prefix}${key} is replaced locally with ${value}")
+		}
+	}
+}
+
 // The chart values: LCP.json supplies what the descriptor leaves to the
-// environment (kind, schedule, env, port, probes, replicas), and Composer sets
+// environment (kind, schedule, env, port, probes, replicas), liferay.yaml
+// overrides it as it does on Liferay Cloud Native, and Composer sets
 // what has to be local: the names, the instance, the domain the ingress serves,
 // the image it built, the label the log tailer selects, and no Gateway API
 // route.
 
-Map valuesFor(Map clientExtension, Map descriptor) {
+Map valuesFor(Map clientExtension, Map descriptor, Map liferayYamlEntry) {
 	Map lcp = clientExtension.lcp
 
 	Map workload = [
@@ -684,7 +772,13 @@ Map valuesFor(Map clientExtension, Map descriptor) {
 		podLabels: [(managedLabel): "true"]
 	]
 
-	return deepMerge([clientExtension: [configs: clientExtension.configs], service: [port: clientExtension.port ?: 80], workload: workload], localValues)
+	Map liferayYamlValues = (liferayYamlEntry?.values instanceof Map) ? liferayYamlEntry.values : [:]
+
+	if (liferayYamlEntry) {
+		logReplacedValues(liferayYamlValues, localValues, "")
+	}
+
+	return deepMerge(deepMerge([clientExtension: [configs: clientExtension.configs], service: [port: clientExtension.port ?: 80], workload: workload], liferayYamlValues), localValues)
 }
 
 // The chart routes with a Gateway API HTTPRoute; the k3s recipe runs a plain
@@ -733,11 +827,25 @@ ext.deployClientExtension = {
 
 	logger.lifecycle(">> ${clientExtension.instanceWebId}/${clientExtension.sid}")
 
+	Map liferayYamlEntry = liferayYamlEntryFor(clientExtension)
+
+	if (liferayYamlEntry?.enabled?.toString() == "false") {
+		logger.lifecycle("  skipped: enabled: false in liferay.yaml")
+
+		return
+	}
+
+	["descriptor", "separateNamespace", "version"].findAll {
+		liferayYamlEntry?.containsKey(it)
+	}.each {
+		logger.lifecycle("  liferay.yaml ${it} is not used for a client extension from the workspace")
+	}
+
 	cxDeployedNames << clientExtension.deployName
 
 	Map descriptor = descriptorFor(clientExtension)
 
-	Map values = valuesFor(clientExtension, descriptor)
+	Map values = valuesFor(clientExtension, descriptor, liferayYamlEntry)
 
 	// The chart decides from the descriptor type whether there is a workload
 	// (not for configuration).
@@ -865,7 +973,8 @@ ext.deployClientExtension = {
 }
 
 // A full deploy also removes the client extensions the chart deployed before
-// that are no longer under client-extensions or moved to another instance. The
+// that are no longer under client-extensions, are disabled in liferay.yaml, or
+// moved to another instance. The
 // operator's finalizer removes the ext-provision ConfigMap, so Liferay
 // unregisters them.
 
@@ -972,9 +1081,17 @@ tasks.register("renderClientExtensions") {
 				return
 			}
 
+			Map liferayYamlEntry = liferayYamlEntryFor(clientExtension)
+
+			if (liferayYamlEntry?.enabled?.toString() == "false") {
+				println "# ===== ${clientExtension.instanceWebId}/${clientExtension.sid} skipped (enabled: false) ====="
+
+				return
+			}
+
 			println "# ===== ${clientExtension.instanceWebId}/${clientExtension.sid} name=${clientExtension.deployName} ingress=${clientExtension.ingressURL} ====="
 
-			println JsonOutput.prettyPrint(new JsonGenerator.Options().disableUnicodeEscaping().build().toJson(valuesFor(clientExtension, descriptorFor(clientExtension))))
+			println JsonOutput.prettyPrint(new JsonGenerator.Options().disableUnicodeEscaping().build().toJson(valuesFor(clientExtension, descriptorFor(clientExtension), liferayYamlEntry)))
 		}
 	}
 }

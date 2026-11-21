@@ -1,0 +1,1 @@
+FROM liferay/jar-runner:latest

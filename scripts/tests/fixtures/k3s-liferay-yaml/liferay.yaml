@@ -1,0 +1,18 @@
+clientExtensionDefaults:
+    values:
+        workload:
+            env:
+                FROM_DEFAULTS: "true"
+clientExtensions:
+    cx-cron:
+        values:
+            workload:
+                schedule: "*/5 * * * *"
+    cx-job:
+        enabled: false
+    cxserving:
+        values:
+            clientExtension:
+                domain: cx.example.com
+            workload:
+                replicas: 2

@@ -142,26 +142,10 @@ teardown() {
 @test "renderClientExtensions applies liferay.yaml as Liferay Cloud Native does" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	cat > "${TEST_WORKSPACE_DIR}/client-extensions/liferay.yaml" <<-'YAML'
-		clientExtensionDefaults:
-			values:
-				workload:
-					env:
-						FROM_DEFAULTS: "true"
-		clientExtensions:
-			cx-cron:
-				values:
-					workload:
-						schedule: "*/5 * * * *"
-			cx-job:
-				enabled: false
-			cxserving:
-				values:
-					clientExtension:
-						domain: cx.example.com
-					workload:
-						replicas: 2
-	YAML
+	# A fixture file, so its indentation is formatted as YAML.
+
+	cp "${WORKSPACE_DIR}/scripts/tests/fixtures/k3s-liferay-yaml/liferay.yaml" \
+		"${TEST_WORKSPACE_DIR}/client-extensions/liferay.yaml"
 
 	run ./gradlew renderClientExtensions --quiet --console=plain
 

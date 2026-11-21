@@ -463,3 +463,110 @@ dockerCompose {
 	// DEBUG: Set to true if container startup is failing
 	retainContainersOnStartupFailure = false
 }
+// Client extensions on k3s: deploy the workspace's client extensions into the
+// k3s recipe through the platform's chart and the DXP operator. Active only
+// when the k3s service is enabled, so other workspaces are unaffected. The
+// tasks live in gradle/client-extensions-k8s.gradle.
+
+if (config.services.contains("k3s")) {
+
+	// docker exec targets for the applied script (container_name is
+	// ${NAMESPACE}-<service>).
+
+	if (!project.hasProperty("k3s")) {
+		project.ext.k3s = "${config.namespace}-k3s"
+	}
+
+	if (!project.hasProperty("liferayContainer")) {
+		project.ext.liferayContainer = "${config.namespace}-liferay"
+	}
+
+	apply from: "gradle/client-extensions-k8s.gradle"
+
+	// Bringing the environment up (`lec start` runs ./gradlew start) also
+	// deploys the client extensions, and refreshes build/kubeconfig (and
+	// ~/.kube/config with lr.docker.environment.k3s.kubeconfig.default=true).
+
+	tasks.matching {
+		it.name == "start"
+	}.all {
+		it.finalizedBy "deployClientExtensions", "k3sKubeconfig"
+	}
+
+	// Build source client extensions and stage their zips into
+	// client-extensions/liferay.com so they join the deploy. Gradle's up-to-date
+	// checks skip unchanged ones.
+
+	tasks.register("stageClientExtensions", Copy) {
+		description = "Build source client extensions and copy their zips into client-extensions/liferay.com."
+		eachFile {
+			it.path = it.name
+		}
+		group = "liferay k8s"
+		includeEmptyDirs = false
+		into "client-extensions/liferay.com"
+	}
+
+	gradle.projectsEvaluated {
+		List<Task> zipTasks = allprojects.collectMany {
+			Project subproject ->
+
+			subproject.tasks.findAll {
+				it.name == "buildClientExtensionZip"
+			}
+		}
+
+		tasks.named("stageClientExtensions").configure {
+			dependsOn zipTasks
+			from zipTasks.collect {
+				it.outputs.files
+			}
+		}
+	}
+
+	// The PortalK8sAgent needs its API credentials before client extensions are
+	// delivered.
+
+	tasks.named("deployClientExtensions").configure {
+		dependsOn "deployAgentCredentials", "stageClientExtensions"
+	}
+
+	// Remove the k3s stack and its state volume for a clean cluster. Not wired to
+	// start, because wiping the warm volume makes every start a slow cold start.
+	// `lec clean` runs it through clean; -PkeepK3sState skips it.
+
+	tasks.register("freshK3s") {
+		description = "Remove the k3s stack and its state volume so the next start is a clean cluster."
+		group = "liferay k8s"
+
+		doLast {
+			if (project.hasProperty("keepK3sState")) {
+				logger.lifecycle("keepK3sState set, keeping the k3s datastore")
+
+				return
+			}
+
+			["cx-logs", "k3s", "k3s-dns-forwarder", "localhost-proxy"].each {
+				String service ->
+
+				exec {
+					commandLine "docker", "rm", "-f", "${config.namespace}-${service}"
+					ignoreExitValue = true
+				}
+			}
+
+			exec {
+				commandLine "docker", "volume", "rm", "${config.namespace}_k3s-data"
+				ignoreExitValue = true
+			}
+
+			logger.lifecycle("freshK3s: removed the k3s stack and ${config.namespace}_k3s-data; the next start is a clean cluster")
+		}
+	}
+
+	tasks.matching {
+		it.name == "clean"
+	}.all {
+		it.dependsOn "freshK3s"
+	}
+}

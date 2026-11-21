@@ -1,0 +1,1214 @@
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+
+import groovy.io.FileType
+
+import groovy.json.JsonGenerator
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+ext {
+	cxChartChecked = false
+}
+
+// ============================================================================
+// client-extensions-k8s.gradle
+//
+// Deploy the workspace's client extensions into the k3s recipe the way Liferay
+// Cloud Native deploys them: the Workspace writes each client extension's
+// descriptor, the platform's liferay-client-extension Helm chart renders the
+// workload and a ClientExtension resource from it, and the DXP operator
+// delivers the ext-provision ConfigMap that the PortalK8sAgent reads. Helm runs
+// in a container, so the host needs nothing beyond Docker.
+//
+// Tasks: deployClientExtensions builds, renders and applies every client
+// extension; renderClientExtensions prints their chart values without a
+// cluster; clientExtensionStatus shows the ClientExtension resources.
+//
+// Client extensions are found anywhere under client-extensions: a directory
+// with an LCP.json (a source client extension stages its zip there), or a
+// supplied *.zip. The virtual instance is resolved by precedence:
+//
+// 1. client-extensions/virtual-instances.properties (<name|sid> = vid)
+// 2. -PvirtualInstance.<name|sid>=vid
+// 3. -PvirtualInstanceId=vid
+// 4. the virtual instance baked into the client extension's configuration
+// 5. "default"
+//
+// Properties:
+//
+// lr.docker.environment.k3s.cx.chart: chart reference or local chart directory
+// lr.docker.environment.k3s.cx.chart.version: chart version (OCI reference)
+// lr.docker.environment.k3s.dxp.operator.chart: the DXP operator's chart
+// lr.docker.environment.k3s.dxp.operator.chart.version: its chart version
+// lr.docker.environment.k3s.dxp.operator.image: its image repository
+// ============================================================================
+
+ext.containerdSocket = "/run/k3s/containerd/containerd.sock"
+ext.cxChart = project.findProperty("lr.docker.environment.k3s.cx.chart") ?: "oci://us-central1-docker.pkg.dev/external-assets-prd/liferay-helm-chart/liferay-client-extension"
+ext.cxChartVersion = project.findProperty("lr.docker.environment.k3s.cx.chart.version") ?: "0.1.1"
+ext.cxNamespace = "default"
+ext.cxRoot = file(project.findProperty("cxRoot") ?: "client-extensions")
+ext.dxpOperatorChart = project.findProperty("lr.docker.environment.k3s.dxp.operator.chart") ?: "oci://us-central1-docker.pkg.dev/external-assets-prd/liferay-helm-chart/liferay-dxp-operator"
+ext.dxpOperatorChartVersion = project.findProperty("lr.docker.environment.k3s.dxp.operator.chart.version") ?: "0.2.1"
+ext.dxpOperatorImage = project.findProperty("lr.docker.environment.k3s.dxp.operator.image") ?: ""
+ext.dxpOperatorName = "dxp-operator"
+ext.dxpOperatorNamespace = "dxp-operator-system"
+ext.helmImage = "alpine/helm:4.3.1@sha256:e3f8d5c462d75470fbb1fce79ad5c20063657096d1f98c0fcea869e2600e2e5e"
+ext.k3s = project.findProperty("k3s") ?: "k3s-lec"
+ext.liferayAddress = project.findProperty("liferayAddress") ?: "liferay:8080"
+ext.managedLabel = "lxc.liferay.com/managed"
+ext.socatImage = "alpine/socat:latest"
+ext.traefikImage = "traefik:v3.1"
+
+// The agent names the dxp and ext-init ConfigMaps by the instance webId
+// (company.getWebId()). Resolve it the same way Liferay does: -PwebId override >
+// company.default.web.id in portal-ext.properties > "liferay.com" (Liferay's own
+// default). No database needed.
+
+String resolveWebId() {
+	String webIdOverride = project.findProperty("webId")
+
+	if (webIdOverride) {
+		return webIdOverride
+	}
+
+	File portalExtProperties = file("configs/common/portal-ext.properties")
+
+	if (portalExtProperties.exists()) {
+		def matcher = (portalExtProperties.text =~ /(?m)^[ \t]*company\.default\.web\.id[ \t]*=[ \t]*(\S+)/)
+
+		if (matcher.find()) {
+			return matcher.group(1)
+		}
+	}
+
+	return "liferay.com"
+}
+
+ext.webId = resolveWebId()
+
+// Discovery: a directory with an LCP.json or a supplied *.zip, in any layout
+// under client-extensions.
+
+List<File> discoverClientExtensions() {
+	List<File> clientExtensions = []
+
+	if (!cxRoot.isDirectory()) {
+		return clientExtensions
+	}
+
+	cxRoot.eachFileRecurse(FileType.FILES) {
+		File file ->
+
+		if (file.name.endsWith(".zip")) {
+			clientExtensions << file
+		}
+	}
+
+	cxRoot.traverse(type: FileType.DIRECTORIES) {
+		File dir ->
+
+		if (new File(dir, "LCP.json").exists()) {
+			clientExtensions << dir
+		}
+	}
+
+	// A client extension built from source is deployed from the zip
+	// stageClientExtensions copies, so leave out everything inside its project:
+	// the project and build directories (both have an LCP.json) and dist's zip.
+
+	List<File> projectDirs = rootProject.subprojects.findAll {
+		it.tasks.findByName("buildClientExtensionZip")
+	}.collect {
+		it.projectDir
+	}
+
+	return clientExtensions.findAll {
+		File entry ->
+
+		!projectDirs.any {
+			(entry.absolutePath + File.separator).startsWith(it.absolutePath + File.separator)
+		}
+	}
+}
+
+// Order client extensions by their LCP.json "dependencies" (the field Liferay
+// Cloud uses): a topological sort so each one deploys after the ones it
+// depends on.
+
+List<File> orderByDependencies(List<File> entries) {
+	if (entries.size() < 2) {
+		return entries
+	}
+
+	Map<String, File> entryById = [:]
+	Map<String, List<String>> dependencyIdsById = [:]
+
+	entries.each {
+		File entry ->
+
+		File lcpFile = new File(materialize(entry), "LCP.json")
+
+		if (!lcpFile.exists()) {
+			return
+		}
+
+		def lcp = new JsonSlurper().parse(lcpFile)
+		String id = (lcp.id ?: (entry.name - ".zip")).toString().toLowerCase()
+
+		entryById[id] = entry
+		dependencyIdsById[id] = (lcp.dependencies ?: []).collect {
+			it.toString().toLowerCase()
+		}
+	}
+
+	Set<String> knownIds = entryById.keySet()
+
+	List<String> unresolvableIds = dependencyIdsById.values().flatten().findAll {
+		!knownIds.contains(it)
+	}.unique()
+
+	if (unresolvableIds) {
+		logger.warn("client-extensions: ignoring dependencies not in this workspace: ${unresolvableIds}")
+	}
+
+	Set<String> placedIds = [] as Set
+	List<File> orderedEntries = []
+	List<String> remainingIds = knownIds.toList()
+
+	while (!remainingIds.isEmpty()) {
+		List<String> readyIds = remainingIds.findAll {
+			id ->
+
+			dependencyIdsById[id].every {
+				dependencyId ->
+
+				placedIds.contains(dependencyId) || !knownIds.contains(dependencyId)
+			}
+		}
+
+		if (readyIds.isEmpty()) {
+			logger.warn("client-extensions: dependency cycle among ${remainingIds}; deploying in discovery order")
+
+			readyIds = remainingIds
+		}
+
+		readyIds.each {
+			id ->
+
+			orderedEntries << entryById[id]
+			placedIds << id
+		}
+
+		remainingIds -= readyIds
+	}
+
+	return orderedEntries + entries.findAll {
+		!orderedEntries.contains(it)
+	}
+}
+
+// Normalize an entry to a directory that has LCP.json. Only place where the
+// zip-vs-source distinction matters.
+
+File materialize(File entry) {
+	if (entry.isDirectory()) {
+		return entry
+	}
+
+	File dest = new File(buildDir, "cx/${entry.name - '.zip'}")
+
+	delete dest
+
+	copy {
+		from zipTree(entry)
+		into dest
+	}
+
+	return dest
+}
+
+// External virtual-instance signal (archives only carry the "default"
+// placeholder), resolved by precedence: file mapping > per-CX property >
+// workspace default > baked-in > "default".
+
+ext.viMappingFile = file(project.findProperty("viMapping") ?: new File(cxRoot, "virtual-instances.properties"))
+
+Properties loadViMap() {
+	Properties properties = new Properties()
+
+	if (viMappingFile.exists()) {
+		viMappingFile.withInputStream {
+			InputStream inputStream ->
+
+			properties.load(inputStream)
+		}
+	}
+
+	return properties
+}
+
+// The vid a packaged client extension declares for itself. Per-VI variant
+// artifacts bake it into their configuration, so such a variant registers
+// under its own instance with no external mapping.
+
+String bakedVirtualInstanceId(File dir) {
+	String found = null
+
+	dir.listFiles(
+		{
+			File file ->
+
+			file.name.endsWith(".client-extension-config.json")
+		} as FileFilter)?.each {
+		File configFile ->
+
+		new JsonSlurper().parse(configFile).values().each {
+			value ->
+
+			if ((value instanceof Map) && !found &&
+				value["dxp.lxc.liferay.com.virtualInstanceId"]) {
+
+				found = value["dxp.lxc.liferay.com.virtualInstanceId"]
+			}
+		}
+	}
+
+	return found
+}
+
+String resolveVirtualInstance(String sid, String name, String bakedVid) {
+	Properties viMap = loadViMap()
+
+	List<String> candidates = [
+		viMap.getProperty(name),
+		viMap.getProperty(sid),
+		project.findProperty("virtualInstance.${name}"),
+		project.findProperty("virtualInstance.${sid}"),
+		project.findProperty("virtualInstanceId"),
+		bakedVid
+	]
+
+	return candidates.find {
+		it
+	} ?: "default"
+}
+
+// Environment for a client extension's pod: LCP.json env is what a client
+// extension declares it needs, but the values (cloud secrets and configuration)
+// come from the environment. Mirror the client extension's own `docker run
+// --env-file` local development flow: read a sibling "<name>.env" next to the
+// artifact (or "local.env" inside a source directory). LCP.json env wins on
+// conflict.
+
+Map<String, String> loadEnvFile(File entry, String name) {
+	List<File> candidates = [new File(entry.parentFile, "${name}.env")]
+
+	if (entry.isDirectory()) {
+		candidates << new File(entry, "local.env")
+	}
+
+	Map<String, String> env = [:]
+
+	candidates.findAll {
+		File file ->
+
+		file.exists()
+	}.each {
+		File file ->
+
+		file.eachLine {
+			String line ->
+
+			String trimmed = line.trim()
+
+			int eq = trimmed.indexOf("=")
+
+			if (trimmed && !trimmed.startsWith("#") && (eq > 0)) {
+				env[trimmed.substring(0, eq)] = trimmed.substring(eq + 1)
+			}
+		}
+	}
+
+	return env
+}
+
+String captureOutput(List<String> command, String input = null) {
+	ByteArrayOutputStream out = new ByteArrayOutputStream()
+
+	exec {
+		commandLine command
+
+		if (input != null) {
+			standardInput = new ByteArrayInputStream(input.getBytes("UTF-8"))
+		}
+
+		standardOutput = out
+	}
+
+	return out.toString("UTF-8")
+}
+
+void kubectlApply(String manifests) {
+	exec {
+		commandLine "docker", "exec", "-i", k3s, "kubectl", "apply", "-f", "-"
+		standardInput = new ByteArrayInputStream(manifests.getBytes("UTF-8"))
+	}
+}
+
+Map deepMerge(Map base, Map overlay) {
+	Map merged = new LinkedHashMap(base)
+
+	overlay.each {
+		key, value ->
+
+		merged[key] = ((merged[key] instanceof Map) && (value instanceof Map)) ? deepMerge(merged[key], value) : value
+	}
+
+	return merged
+}
+
+String helmTemplate(String releaseName, String chart, String chartVersion, String namespace, Map values, List<String> extraArgs = []) {
+	File valuesDir = new File(buildDir, "cx-chart/${releaseName}")
+
+	valuesDir.mkdirs()
+
+	// Helm reads values as YAML, which rejects the surrogate pair escapes JSON
+	// uses for characters such as emoji, so write them unescaped.
+
+	new File(valuesDir, "values.json").setText(new JsonGenerator.Options().disableUnicodeEscaping().build().toJson(values), "UTF-8")
+
+	String user = ["id", "-u"].execute().text.trim() + ":" + ["id", "-g"].execute().text.trim()
+
+	List<String> command = ["docker", "run", "--rm", "--user", user, "--env", "HOME=/tmp", "--volume", "${valuesDir.absolutePath}:/values:ro"]
+
+	String chartReference = chart
+
+	if (!chart.startsWith("oci://") && file(chart).isDirectory()) {
+		command += ["--volume", "${file(chart).absolutePath}:/chart:ro"]
+
+		chartReference = "/chart"
+	}
+
+	command += [helmImage, "template", releaseName, chartReference, "--namespace", namespace, "--values", "/values/values.json"]
+
+	if (chartReference.startsWith("oci://") && chartVersion) {
+		command += ["--version", chartVersion]
+	}
+
+	return captureOutput(command + extraArgs)
+}
+
+// The chart reads the descriptor from 0.1.1 on. Check once, so an older chart
+// fails with a hint instead of rendering client extensions without Services.
+
+void checkCxChartVersion() {
+	if (cxChartChecked) {
+		return
+	}
+
+	String chartYaml
+
+	if (!cxChart.startsWith("oci://") && file(cxChart).isDirectory()) {
+		chartYaml = file("${cxChart}/Chart.yaml").text
+	}
+	else {
+		List<String> command = ["docker", "run", "--rm", "--env", "HOME=/tmp", helmImage, "show", "chart", cxChart]
+
+		if (cxChartVersion) {
+			command += ["--version", cxChartVersion]
+		}
+
+		chartYaml = captureOutput(command)
+	}
+
+	Map chart = new ObjectMapper(new YAMLFactory()).readValue(chartYaml, Map)
+
+	String version = chart.version ?: "0"
+
+	List<Integer> parts = version.tokenize(".-").collect {
+		it.isInteger() ? it.toInteger() : 0
+	}
+
+	while (parts.size() < 3) {
+		parts << 0
+	}
+
+	boolean readsDescriptor = (parts[0] > 0) || (parts[1] > 1) || ((parts[1] == 1) && (parts[2] >= 1))
+
+	if (!readsDescriptor) {
+		throw new GradleException("The client extension chart ${cxChart} is version ${version}, but reading the descriptor needs 0.1.1 or later. Set lr.docker.environment.k3s.cx.chart and lr.docker.environment.k3s.cx.chart.version.")
+	}
+
+	cxChartChecked = true
+}
+
+// Convert rendered YAML to JSON objects with kubectl so the manifests can be
+// split and adjusted as data.
+
+List<Map> toObjects(String yaml) {
+	String output = captureOutput(["docker", "exec", "-i", k3s, "kubectl", "create", "--dry-run=client", "--output=json", "--filename=-"], yaml)
+
+	// kubectl prints one pretty-printed document per object, each closed by a
+	// "}" in the first column.
+
+	List<Map> objects = []
+	StringBuilder document = new StringBuilder()
+
+	output.eachLine {
+		String line ->
+
+		document.append(line).append("\n")
+
+		if (line == "}") {
+			objects << new JsonSlurper().parseText(document.toString())
+
+			document.setLength(0)
+		}
+	}
+
+	return objects
+}
+
+Map podSpecOf(Map workload) {
+	return (workload.kind == "CronJob") ? workload.spec.jobTemplate.spec.template.spec : workload.spec.template.spec
+}
+
+// Everything about one client extension that does not need the cluster: its
+// names, instance, ingress, and its configuration as k3s serves it.
+
+Map clientExtensionFor(File entry) {
+	String name = entry.isDirectory() ? entry.name : (entry.name - ".zip")
+
+	File dir = materialize(entry)
+
+	File lcpFile = new File(dir, "LCP.json")
+
+	if (!lcpFile.exists()) {
+		logger.warn("skip ${entry.name}: no LCP.json")
+
+		return null
+	}
+
+	Map lcp = new JsonSlurper().parse(lcpFile)
+
+	String sid = lcp.id
+
+	String vid = resolveVirtualInstance(sid, name, bakedVirtualInstanceId(dir))
+
+	// The agent names the metadata by the instance's webId, and the same client
+	// extension can run in several instances, so the objects of another
+	// instance carry a DNS-safe sid+vid name.
+
+	String instanceWebId = (vid == "default") ? webId : vid
+
+	String vidSlug = vid.toLowerCase(
+	).replaceAll(
+		/[^a-z0-9]+/, "-"
+	).replaceAll(
+		/^-+|-+$/, ""
+	)
+
+	String deployName = (vid == "default") ? sid : "${sid}-${vidSlug}"
+
+	String kind = [cronjob: "CronJob", job: "Job"][(lcp.kind ?: "Deployment").toString().toLowerCase()] ?: "Deployment"
+
+	def port = lcp.loadBalancer?.targetPort
+
+	// A serving client extension gets an Ingress on <sid>.<vid>.localtest.me,
+	// which reaches traefik from the browser, from Liferay (the localhost-proxy)
+	// and from other client extensions (the CoreDNS rewrite).
+
+	String ingressHost = "${sid}.${vid}.localtest.me"
+
+	String ingressURL = (port && (kind == "Deployment")) ? "http://${ingressHost}" : null
+
+	Map configs = [:]
+
+	dir.listFiles(
+		{
+			File file ->
+
+			file.name.endsWith(".client-extension-config.json")
+		} as FileFilter)?.each {
+		File configFile ->
+
+		configs.putAll(new JsonSlurper().parse(configFile))
+	}
+
+	configs.values().findAll {
+		it instanceof Map
+	}.each {
+		Map config ->
+
+		// Every endpoint of a serving client extension is its ingress URL, and it
+		// registers in the resolved instance rather than the archive's "default".
+
+		if (ingressURL && config.containsKey("baseURL")) {
+			config.baseURL = ingressURL
+		}
+
+		if (ingressURL && config.containsKey("homePageURL")) {
+			config.homePageURL = ingressURL
+		}
+
+		if (config.containsKey("dxp.lxc.liferay.com.virtualInstanceId")) {
+			config["dxp.lxc.liferay.com.virtualInstanceId"] = instanceWebId
+		}
+	}
+
+	boolean needsLiferay = configs.values().any {
+		(it instanceof Map) && (it.type in ["oAuthApplicationHeadlessServer", "oAuthApplicationUserAgent"])
+	}
+
+	return [
+		configs: configs,
+		deployName: deployName,
+		dir: dir,
+		entry: entry,
+		env: loadEnvFile(entry, name) + (lcp.env ?: [:]).collectEntries {
+			key, value ->
+
+			[(key): value.toString()]
+		},
+		image: "lxc/${sid}:latest",
+		ingressHost: ingressHost,
+		ingressURL: ingressURL,
+		instanceWebId: instanceWebId,
+		kind: kind,
+		lcp: lcp,
+		name: name,
+		needsLiferay: needsLiferay,
+		port: port,
+		sid: sid,
+		vid: vid
+	]
+}
+
+// The Workspace writes the descriptor for client extensions built from source
+// (com.liferay.gradle.plugins.workspace 17.2.0 and later). Supplied archives
+// have none, so one is put together from the archive's configuration.
+
+Map descriptorFor(Map clientExtension) {
+	// A source client extension is found by its project's name, or through its
+	// build directory, which also has an LCP.json.
+
+	Project cxProject = rootProject.allprojects.findAll {
+		it.file("build/client-extension-descriptor/client-extension-descriptor.json").exists() &&
+		((it.name == clientExtension.name) || clientExtension.dir.absolutePath.startsWith(it.projectDir.absolutePath + File.separator))
+	}.max {
+		it.projectDir.absolutePath.length()
+	}
+
+	Map descriptor
+
+	if (cxProject) {
+		descriptor = new JsonSlurper().parse(cxProject.file("build/client-extension-descriptor/client-extension-descriptor.json")).descriptor
+
+		logger.lifecycle("  descriptor from ${cxProject.path} (type ${descriptor.type})")
+	}
+	else {
+		// The Workspace builds each type on its own base image.
+
+		File dockerfile = new File(clientExtension.dir, "Dockerfile")
+
+		String baseImage = ""
+
+		if (dockerfile.exists()) {
+			baseImage = dockerfile.readLines().find {
+				it.startsWith("FROM ")
+			} ?: ""
+		}
+
+		String type = "service"
+
+		if (!baseImage || baseImage.contains("liferay/noop")) {
+			type = "configuration"
+		}
+		else if (baseImage.contains("liferay/batch")) {
+			type = "batch"
+		}
+		else if (baseImage.contains("liferay/caddy")) {
+			type = "frontend"
+		}
+
+		descriptor = [descriptorVersion: 1, image: [:], type: type]
+
+		logger.lifecycle("  no Workspace descriptor for ${clientExtension.name}; using its archive (type ${descriptor.type})")
+	}
+
+	return descriptor + [configs: clientExtension.configs]
+}
+
+// The chart values: LCP.json supplies what the descriptor leaves to the
+// environment (kind, schedule, env, port, probes, replicas), and Composer sets
+// what has to be local: the names, the instance, the domain the ingress serves,
+// the image it built, the label the log tailer selects, and no Gateway API
+// route.
+
+Map valuesFor(Map clientExtension, Map descriptor) {
+	Map lcp = clientExtension.lcp
+
+	Map workload = [
+		containerPort: clientExtension.port ?: 80,
+		env: clientExtension.env,
+		kind: clientExtension.kind,
+		replicas: lcp.scale ?: 1
+	]
+
+	if (lcp.schedule) {
+		workload.schedule = lcp.schedule
+	}
+
+	if (lcp.livenessProbe) {
+		workload.livenessProbe = lcp.livenessProbe
+	}
+
+	if (lcp.readinessProbe) {
+		workload.readinessProbe = lcp.readinessProbe
+	}
+
+	Map localValues = [
+		clientExtension: [
+			domain: clientExtension.ingressHost,
+			dxpNamespace: cxNamespace,
+			serviceId: clientExtension.sid,
+			virtualInstanceId: clientExtension.instanceWebId
+		],
+		descriptor: descriptor,
+		fullnameOverride: clientExtension.deployName,
+		image: [pullPolicy: "IfNotPresent", repository: clientExtension.image.substring(0, clientExtension.image.lastIndexOf(":")), tag: clientExtension.image.substring(clientExtension.image.lastIndexOf(":") + 1)],
+		labels: [(managedLabel): "true"],
+		network: [enabled: false],
+		podLabels: [(managedLabel): "true"]
+	]
+
+	return deepMerge([clientExtension: [configs: clientExtension.configs], service: [port: clientExtension.port ?: 80], workload: workload], localValues)
+}
+
+// The chart routes with a Gateway API HTTPRoute; the k3s recipe runs a plain
+// traefik ingress controller, so the client extension gets an Ingress instead.
+
+Map ingressFor(Map clientExtension, int servicePort) {
+	return [
+		apiVersion: "networking.k8s.io/v1",
+		kind: "Ingress",
+		metadata: [labels: [(managedLabel): "true"], name: clientExtension.deployName],
+		spec: [
+			ingressClassName: "traefik",
+			rules: [
+				[
+					host: clientExtension.ingressHost,
+					http: [
+						paths: [
+							[
+								backend: [service: [name: clientExtension.deployName, port: [number: servicePort]]],
+								path: "/",
+								pathType: "Prefix"
+							]
+						]
+					]
+				]
+			]
+		]
+	]
+}
+
+ext.cxDeployedNames = []
+
+// Build (or unpack) -> image -> import -> render -> apply, for one client
+// extension. Used by deployClientExtensions and each project's deployToK3s.
+
+ext.deployClientExtension = {
+	File entry ->
+
+	checkCxChartVersion()
+
+	Map clientExtension = clientExtensionFor(entry)
+
+	if (!clientExtension) {
+		return
+	}
+
+	logger.lifecycle(">> ${clientExtension.instanceWebId}/${clientExtension.sid}")
+
+	cxDeployedNames << clientExtension.deployName
+
+	Map descriptor = descriptorFor(clientExtension)
+
+	Map values = valuesFor(clientExtension, descriptor)
+
+	// The chart decides from the descriptor type whether there is a workload
+	// (not for configuration).
+
+	if (descriptor.type != "configuration") {
+		exec {
+			commandLine "docker", "build", "-q", "-t", clientExtension.image, clientExtension.dir.absolutePath
+		}
+
+		exec {
+			commandLine "bash", "-c", "docker save ${clientExtension.image} | docker exec -i ${k3s} ctr -a ${containerdSocket} -n k8s.io images import -"
+		}
+	}
+
+	if (clientExtension.needsLiferay) {
+		exec {
+			commandLine "bash", "-c", "docker image inspect ${socatImage} >/dev/null 2>&1 || docker pull -q ${socatImage}; docker save ${socatImage} | docker exec -i ${k3s} ctr -a ${containerdSocket} -n k8s.io images import -"
+		}
+	}
+
+	List<Map> objects = toObjects(helmTemplate(clientExtension.deployName, cxChart, cxChartVersion, cxNamespace, values))
+
+	List<Map> workloads = objects.findAll {
+		it.kind in ["CronJob", "Deployment", "Job"]
+	}
+
+	List<Map> others = objects - workloads
+
+	// A client extension that talks to Liferay expects the portal at
+	// localhost:80. The chart has no place for extra containers, so add a socat
+	// native sidecar that forwards to Liferay and does not block Job completion.
+
+	if (clientExtension.needsLiferay) {
+		workloads.each {
+			Map podSpec = podSpecOf(it)
+
+			podSpec.initContainers = (podSpec.initContainers ?: []) + [
+				[
+					args: ["TCP6-LISTEN:80,fork,reuseaddr,ipv6-v6only=0", "TCP:${liferayAddress}".toString()],
+					image: socatImage,
+					imagePullPolicy: "IfNotPresent",
+					name: "liferay-proxy",
+					restartPolicy: "Always"
+				]
+			]
+		}
+	}
+
+	Map service = others.find {
+		it.kind == "Service"
+	}
+
+	if (service) {
+		others << ingressFor(clientExtension, service.spec.ports[0].port as int)
+	}
+
+	// The ClientExtension resource first: the operator delivers it and the
+	// PortalK8sAgent answers with the ConfigMaps the workload mounts. Wait for
+	// them so the pod never sits in the kubelet's mount backoff.
+
+	kubectlApply(JsonOutput.toJson([apiVersion: "v1", items: others, kind: "List"]))
+
+	workloads.each {
+		Map workloadObject ->
+
+		podSpecOf(workloadObject).volumes.findAll {
+			it.configMap
+		}.collect {
+			it.configMap.name
+		}.each {
+			String configMapName ->
+
+			logger.lifecycle("  waiting for ${configMapName}")
+
+			exec {
+				commandLine "docker", "exec", k3s, "kubectl", "wait", "--for=create", "configmap/${configMapName}", "--timeout=300s"
+			}
+		}
+	}
+
+	// :latest images don't roll, so recreate Jobs and CronJobs and restart an
+	// existing Deployment.
+
+	boolean deploymentExisted = false
+
+	workloads.each {
+		Map workloadObject ->
+
+		String workloadKind = workloadObject.kind
+		String workloadName = workloadObject.metadata.name
+
+		if (workloadKind == "Deployment") {
+			deploymentExisted = exec {
+				commandLine "docker", "exec", k3s, "kubectl", "get", "deployment", workloadName
+				errorOutput = new ByteArrayOutputStream()
+				ignoreExitValue = true
+				standardOutput = new ByteArrayOutputStream()
+			}.exitValue == 0
+		}
+		else {
+			exec {
+				commandLine "docker", "exec", k3s, "kubectl", "delete", workloadKind.toLowerCase(), workloadName, "--ignore-not-found"
+			}
+		}
+	}
+
+	if (workloads) {
+		kubectlApply(JsonOutput.toJson([apiVersion: "v1", items: workloads, kind: "List"]))
+	}
+
+	if (deploymentExisted) {
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "rollout", "restart", "deployment/${clientExtension.deployName}"
+			ignoreExitValue = true
+		}
+	}
+
+	exec {
+		commandLine "docker", "exec", k3s, "kubectl", "wait", "clientextension/${clientExtension.deployName}", "--for=condition=Ready", "--timeout=300s"
+	}
+
+	if (service) {
+		logger.lifecycle("  browser: http://${clientExtension.ingressHost}")
+	}
+}
+
+// A full deploy also removes the client extensions the chart deployed before
+// that are no longer under client-extensions or moved to another instance. The
+// operator's finalizer removes the ext-provision ConfigMap, so Liferay
+// unregisters them.
+
+void pruneClientExtensions() {
+	String names = captureOutput(
+		["docker", "exec", k3s, "kubectl", "get", "clientextension", "--namespace=${cxNamespace}", "--selector=${managedLabel}=true", "--output=jsonpath={.items[*].metadata.name}"])
+
+	names.trim().split(/\s+/).findAll {
+		it && !cxDeployedNames.contains(it)
+	}.each {
+		String name ->
+
+		logger.lifecycle(">> remove ${name}: no longer deployed")
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "delete", "clientextension", name, "--namespace=${cxNamespace}", "--wait=true"
+		}
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "delete", "cronjob,deployment,job,service,ingress", "--namespace=${cxNamespace}", "--selector=app.kubernetes.io/instance=${name}", "--ignore-not-found"
+		}
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "delete", "ingress", name, "--namespace=${cxNamespace}", "--ignore-not-found"
+		}
+	}
+}
+
+tasks.register("deployDxpOperator") {
+	description = "Install the DXP operator that delivers client extensions to the PortalK8sAgent."
+	group = "liferay k8s"
+
+	doLast {
+		kubectlApply(JsonOutput.toJson([apiVersion: "v1", kind: "Namespace", metadata: [name: dxpOperatorNamespace]]))
+
+		Map operatorValues = [clientExtensions: [enabled: true], fullnameOverride: dxpOperatorName]
+
+		if (dxpOperatorImage) {
+			operatorValues.image = [repository: dxpOperatorImage]
+		}
+
+		kubectlApply(helmTemplate(dxpOperatorName, dxpOperatorChart, dxpOperatorChartVersion, dxpOperatorNamespace, operatorValues, ["--include-crds"]))
+
+		// What the platform's default chart sets up in DXP's namespace: client
+		// extensions may run there, and the operator may write its ConfigMaps.
+
+		kubectlApply(
+			JsonOutput.toJson(
+				[
+					apiVersion: "v1",
+					items: [
+						[
+							apiVersion: "v1",
+							data: [allowedNamespaces: cxNamespace],
+							kind: "ConfigMap",
+							metadata: [labels: ["lxc.liferay.com/metadataType": "client-extension-policy"], name: "client-extension-policy", namespace: cxNamespace]
+						],
+						[
+							apiVersion: "rbac.authorization.k8s.io/v1",
+							kind: "RoleBinding",
+							metadata: [name: "client-extension-delivery-role-binding", namespace: cxNamespace],
+							roleRef: [apiGroup: "rbac.authorization.k8s.io", kind: "ClusterRole", name: "client-extension-delivery-cluster-role"],
+							subjects: [[kind: "ServiceAccount", name: dxpOperatorName, namespace: dxpOperatorNamespace]]
+						]
+					],
+					kind: "List"
+				]))
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "rollout", "status", "deployment/${dxpOperatorName}", "--namespace=${dxpOperatorNamespace}", "--timeout=180s"
+		}
+	}
+}
+
+tasks.register("deployClientExtensions") {
+	dependsOn "deployDxpOperator", "deployIngress"
+	description = "Build (or unpack) each client extension and deploy it into k3s through the platform chart."
+	group = "liferay k8s"
+
+	doLast {
+		cxDeployedNames.clear()
+
+		orderByDependencies(discoverClientExtensions()).each {
+			File entry ->
+
+			deployClientExtension(entry)
+		}
+
+		pruneClientExtensions()
+	}
+}
+
+tasks.register("renderClientExtensions") {
+	description = "Print the chart values and Ingress host of each client extension (no cluster)."
+	group = "liferay k8s"
+
+	doLast {
+		orderByDependencies(discoverClientExtensions()).each {
+			File entry ->
+
+			Map clientExtension = clientExtensionFor(entry)
+
+			if (!clientExtension) {
+				return
+			}
+
+			println "# ===== ${clientExtension.instanceWebId}/${clientExtension.sid} name=${clientExtension.deployName} ingress=${clientExtension.ingressURL} ====="
+
+			println JsonOutput.prettyPrint(new JsonGenerator.Options().disableUnicodeEscaping().build().toJson(valuesFor(clientExtension, descriptorFor(clientExtension))))
+		}
+	}
+}
+
+// The descriptor tasks run before anything reads the descriptors.
+
+gradle.projectsEvaluated {
+	List<Task> descriptorTasks = rootProject.allprojects.collectMany {
+		Project subproject ->
+
+		subproject.tasks.findAll {
+			it.name == "createClientExtensionDescriptor"
+		}
+	}
+
+	["deployClientExtensions", "renderClientExtensions"].each {
+		tasks.named(it).configure {
+			dependsOn descriptorTasks
+		}
+	}
+}
+
+tasks.register("clientExtensionStatus") {
+	description = "Show the ClientExtension resources and their status."
+	group = "liferay k8s"
+
+	doLast {
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "get", "clientextension", "--all-namespaces"
+		}
+	}
+}
+
+// Deploy a minimal traefik ingress controller directly (image pre-imported so
+// the pod never pulls), a lean alternative to k3s's built-in traefik and
+// helm-controller.
+
+tasks.register("deployIngress") {
+	description = "Deploy a minimal traefik ingress controller (hostPort 80) into k3s."
+	group = "liferay k8s"
+
+	doLast {
+		exec {
+			commandLine "bash", "-c", "docker image inspect ${traefikImage} >/dev/null 2>&1 || docker pull -q ${traefikImage}; docker save ${traefikImage} | docker exec -i ${k3s} ctr -a ${containerdSocket} -n k8s.io images import -"
+		}
+
+		kubectlApply(file("compose-recipes/k3s/traefik.yaml").text)
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "-n", "kube-system", "rollout", "status", "deploy/traefik", "--timeout=90s"
+			ignoreExitValue = true
+		}
+	}
+}
+
+// Give the PortalK8sAgent direct API credentials (the production model, no
+// unauthenticated proxy). Apply the ServiceAccount and RBAC, mint a long-lived
+// token, read the cluster CA, and write the PortalK8sAgentConfiguration into
+// Liferay's OSGi configs directory (Felix fileinstall) through docker exec, so
+// the agent reaches the API server directly at k3s:6443 with the token.
+
+tasks.register("deployAgentCredentials") {
+	description = "Deploy the PortalK8sAgent ServiceAccount credentials and configuration to Liferay."
+	group = "liferay k8s"
+
+	doLast {
+		kubectlApply(file("compose-recipes/k3s/agent-rbac.yaml").text)
+
+		String token = ""
+
+		for (int i = 0; i < 30; i++) {
+			ByteArrayOutputStream tokenOut = new ByteArrayOutputStream()
+
+			exec {
+				commandLine "docker", "exec", k3s, "kubectl", "get", "secret", "liferay-portal-k8s-agent-token", "-n", "default", "-o", "jsonpath={.data.token}"
+				ignoreExitValue = true
+				standardOutput = tokenOut
+			}
+
+			token = tokenOut.toString().trim()
+
+			if (token) {
+				break
+			}
+
+			Thread.sleep(2000)
+		}
+
+		if (!token) {
+			throw new GradleException("timed out waiting for the ServiceAccount token")
+		}
+
+		ByteArrayOutputStream caCertOutputStream = new ByteArrayOutputStream()
+
+		exec {
+			commandLine "docker", "exec", k3s, "kubectl", "get", "secret", "liferay-portal-k8s-agent-token", "-n", "default", "-o", "jsonpath={.data.ca\\.crt}"
+			standardOutput = caCertOutputStream
+		}
+
+		String caCertData = caCertOutputStream.toString().trim()
+		String saToken = new String(token.decodeBase64())
+
+		Map<String, String> configFiles = [
+			"com.liferay.portal.k8s.agent.configuration.PortalK8sAgentConfiguration.config": """\
+active="true"
+apiServerHost="k3s"
+apiServerPort="6443"
+apiServerSSL="true"
+caCertData="${caCertData}"
+enabled="true"
+namespace="default"
+saToken="${saToken}"
+portalK8sConfigurationPropertiesMutators.cardinality.minimum=I"2"
+""",
+
+			// Disable the BaseURL mutator's company lookup so it does not overwrite
+			// the baseURL set here (the ingress URL). This leaves the Annotations
+			// and Labels mutators, satisfying cardinality.minimum=2.
+			"com.liferay.portal.k8s.agent.internal.mutator.BaseURLPortalK8sConfigurationPropertiesMutator.config": "_companyLocalService.target=\"(service.vendor=this.is.the.only.way.to.disable.this.component.i.could.find)\"\n"
+		]
+
+		configFiles.each {
+			name, content ->
+
+			exec {
+				commandLine "docker", "exec", "-i", liferayContainer, "sh", "-c", "cat > /opt/liferay/osgi/configs/${name}"
+				standardInput = new ByteArrayInputStream(content.getBytes("UTF-8"))
+			}
+		}
+
+		logger.lifecycle("PortalK8sAgent credentials deployed to Liferay (direct API access at k3s:6443)")
+	}
+}
+
+// Connect to the cluster from the host: writes a kubeconfig pointing at the k3s
+// container's IP (reachable directly on Linux; the k3s serving cert already
+// lists that IP). Re-run after a restart (the container IP can change).
+
+tasks.register("k3sKubeconfig") {
+	description = "Write a host kubeconfig for the k3s cluster to build/kubeconfig."
+	group = "liferay k8s"
+
+	doLast {
+		ByteArrayOutputStream ipOut = new ByteArrayOutputStream()
+
+		exec {
+			commandLine "docker", "inspect", "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", k3s
+			standardOutput = ipOut
+		}
+
+		String containerIp = ipOut.toString().trim()
+
+		if (!containerIp) {
+			logger.warn("k3s container '${k3s}' is not running; skipping kubeconfig")
+
+			return
+		}
+
+		ByteArrayOutputStream configOut = new ByteArrayOutputStream()
+
+		exec {
+			commandLine "docker", "exec", k3s, "cat", "/etc/rancher/k3s/k3s.yaml"
+			standardOutput = configOut
+		}
+
+		File out = file("${buildDir}/kubeconfig")
+
+		out.parentFile.mkdirs()
+
+		out.text = configOut.toString().replace("127.0.0.1", containerIp)
+
+		logger.lifecycle("kubeconfig written: ${out} (server https://${containerIp}:6443)")
+		logger.lifecycle(" export KUBECONFIG=${out}")
+		logger.lifecycle(" kubectl get pods -A")
+
+		// Optionally point the default kubeconfig (~/.kube/config) at this cluster
+		// so host kubectl works with no KUBECONFIG. The user's original is backed
+		// up once to ~/.kube/config.lec-backup before the first overwrite.
+
+		if (project.findProperty("lr.docker.environment.k3s.kubeconfig.default") == "true") {
+			File defaultConfig = new File(System.getProperty("user.home"), ".kube/config")
+
+			defaultConfig.parentFile.mkdirs()
+
+			File backup = new File(defaultConfig.parentFile, "config.lec-backup")
+
+			if (defaultConfig.exists() && !backup.exists()) {
+				backup.text = defaultConfig.text
+
+				logger.lifecycle("backed up existing ~/.kube/config -> ${backup}")
+			}
+
+			defaultConfig.text = out.text
+
+			logger.lifecycle("default kubeconfig overwritten: ${defaultConfig}")
+		}
+	}
+}
+
+// Per client extension: from its project, `../../gradlew deployToK3s` rebuilds
+// just that client extension and deploys it again.
+
+gradle.projectsEvaluated {
+	rootProject.allprojects.each {
+		Project subproject ->
+
+		Task zipTask = subproject.tasks.findByName("buildClientExtensionZip")
+
+		if (!zipTask) {
+			return
+		}
+
+		subproject.tasks.register("deployToK3s") {
+			dependsOn zipTask
+			description = "Rebuild this client extension and deploy it into k3s again."
+			group = "liferay k8s"
+
+			Task descriptorTask = subproject.tasks.findByName("createClientExtensionDescriptor")
+
+			if (descriptorTask) {
+				dependsOn descriptorTask
+			}
+
+			doLast {
+				File zip = zipTask.outputs.files.files.find {
+					it.name.endsWith(".zip")
+				}
+
+				if (!zip) {
+					throw new GradleException("no built zip from ${zipTask.path}")
+				}
+
+				rootProject.deployClientExtension(zip)
+			}
+		}
+	}
+}

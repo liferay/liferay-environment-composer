@@ -97,3 +97,34 @@ spec:
                             service: {name: liferay, port: {number: 8080}}
                         path: /
                         pathType: Prefix
+        # Every other host that no client extension claims also goes to Liferay,
+        # which serves the virtual instance by Host. A client extension of a
+        # virtual instance reaches it at <virtual host>.localtest.me, which the
+        # CoreDNS rewrite below sends here.
+
+        -   http:
+                paths:
+                    -   backend:
+                            service: {name: liferay, port: {number: 8080}}
+                        path: /
+                        pathType: Prefix
+---
+# Let a client extension call another one by its ingress host. localtest.me
+# resolves to 127.0.0.1, which inside a pod is the pod itself (or the socat
+# sidecar that forwards to Liferay), so rewrite <sid>.<vid>.localtest.me to this
+# Service and let traefik route by Host as it does for the browser. k3s's
+# CoreDNS imports *.override keys from the coredns-custom ConfigMap.
+apiVersion: v1
+kind: Service
+metadata: {name: traefik, namespace: kube-system}
+spec:
+    ports:
+        -   {name: web, port: 80, targetPort: web}
+    selector: {app: traefik}
+---
+apiVersion: v1
+data:
+    localtest.override: |
+        rewrite name regex ^(.+)\.localtest\.me\.$ traefik.kube-system.svc.cluster.local. answer auto
+kind: ConfigMap
+metadata: {name: coredns-custom, namespace: kube-system}

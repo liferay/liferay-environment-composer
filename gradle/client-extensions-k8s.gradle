@@ -47,7 +47,9 @@ ext {
 // Settings a Liferay Cloud Native environment keeps in its liferay.yaml
 // (replicas, env, probes, resources, a CronJob schedule, enabled) are read from
 // client-extensions/liferay.yaml or the files that property lists, in the same
-// format and with the same merge rules.
+// format and with the same merge rules. An entry with a descriptor and a
+// version that no client extension in the workspace matches is deployed from
+// its registry, as on the platform.
 // ============================================================================
 
 ext.containerdSocket = "/run/k3s/containerd/containerd.sock"
@@ -690,6 +692,11 @@ Map mergeLiferayYamlEntry(Map defaults, Map entry) {
 	return merged
 }
 
+// The entries matched by client extensions from the workspace. The others with
+// a descriptor and a version are deployed from their registry.
+
+ext.cxLiferayYamlMatched = [] as Set
+
 Map liferayYamlEntryFor(Map clientExtension) {
 	Map liferayYaml = loadLiferayYaml()
 
@@ -706,6 +713,10 @@ Map liferayYamlEntryFor(Map clientExtension) {
 
 	if (!key && !defaults) {
 		return null
+	}
+
+	if (key) {
+		cxLiferayYamlMatched << key
 	}
 
 	return mergeLiferayYamlEntry(defaults, key ? clientExtensions[key] : [:])
@@ -735,7 +746,7 @@ void logReplacedValues(Map liferayYamlValues, Map localValues, String prefix) {
 // the image it built, the label the log tailer selects, and no Gateway API
 // route.
 
-Map valuesFor(Map clientExtension, Map descriptor, Map liferayYamlEntry) {
+Map valuesFor(Map clientExtension, Map descriptor, Map liferayYamlEntry, boolean fromRegistry = false) {
 	Map lcp = clientExtension.lcp
 
 	Map workload = [
@@ -766,11 +777,17 @@ Map valuesFor(Map clientExtension, Map descriptor, Map liferayYamlEntry) {
 		],
 		descriptor: descriptor,
 		fullnameOverride: clientExtension.deployName,
-		image: [pullPolicy: "IfNotPresent", repository: clientExtension.image.substring(0, clientExtension.image.lastIndexOf(":")), tag: clientExtension.image.substring(clientExtension.image.lastIndexOf(":") + 1)],
 		labels: [(managedLabel): "true"],
 		network: [enabled: false],
 		podLabels: [(managedLabel): "true"]
 	]
+
+	// A client extension from a registry runs the image its descriptor names,
+	// which k3s pulls itself.
+
+	if (!fromRegistry) {
+		localValues.image = [pullPolicy: "IfNotPresent", repository: clientExtension.image.substring(0, clientExtension.image.lastIndexOf(":")), tag: clientExtension.image.substring(clientExtension.image.lastIndexOf(":") + 1)]
+	}
 
 	Map liferayYamlValues = (liferayYamlEntry?.values instanceof Map) ? liferayYamlEntry.values : [:]
 
@@ -815,7 +832,7 @@ ext.cxDeployedNames = []
 // extension. Used by deployClientExtensions and each project's deployToK3s.
 
 ext.deployClientExtension = {
-	File entry ->
+	File entry, Map registryDescriptor = null ->
 
 	checkCxChartVersion()
 
@@ -835,22 +852,25 @@ ext.deployClientExtension = {
 		return
 	}
 
-	["descriptor", "separateNamespace", "version"].findAll {
-		liferayYamlEntry?.containsKey(it)
-	}.each {
-		logger.lifecycle("  liferay.yaml ${it} is not used for a client extension from the workspace")
+	if (!registryDescriptor) {
+		["descriptor", "separateNamespace", "version"].findAll {
+			liferayYamlEntry?.containsKey(it)
+		}.each {
+			logger.lifecycle("  liferay.yaml ${it} is not used for a client extension from the workspace")
+		}
 	}
 
 	cxDeployedNames << clientExtension.deployName
 
-	Map descriptor = descriptorFor(clientExtension)
+	Map descriptor = registryDescriptor ? (registryDescriptor + [configs: clientExtension.configs]) : descriptorFor(clientExtension)
 
-	Map values = valuesFor(clientExtension, descriptor, liferayYamlEntry)
+	Map values = valuesFor(clientExtension, descriptor, liferayYamlEntry, registryDescriptor != null)
 
 	// The chart decides from the descriptor type whether there is a workload
-	// (not for configuration).
+	// (not for configuration). A client extension from a registry has its image
+	// there already.
 
-	if (descriptor.type != "configuration") {
+	if ((descriptor.type != "configuration") && !registryDescriptor) {
 		exec {
 			commandLine "docker", "build", "-q", "-t", clientExtension.image, clientExtension.dir.absolutePath
 		}
@@ -1003,6 +1023,74 @@ void pruneClientExtensions() {
 	}
 }
 
+// liferay.yaml entries with a descriptor and a version that no client extension
+// in the workspace matches are deployed from their registry, as on the
+// platform: crane (the image the platform's Argo CD plugin uses) reads the
+// descriptor, and the rest of the deploy treats it like a supplied archive whose
+// service ID is the entry's name.
+
+ext.cxCraneImage = "gcr.io/go-containerregistry/crane:debug@sha256:e505815aa3573ae223c2ddcd004c8d4f7a6608df85da429af1e0f6aff728a1f0"
+
+void deployRegistryClientExtensions() {
+	Map liferayYaml = loadLiferayYaml()
+
+	Map clientExtensions = (liferayYaml.clientExtensions instanceof Map) ? liferayYaml.clientExtensions : [:]
+
+	Map defaults = (liferayYaml.clientExtensionDefaults instanceof Map) ? liferayYaml.clientExtensionDefaults : [:]
+
+	clientExtensions.findAll {
+		String key, entry ->
+
+		(entry instanceof Map) && !cxLiferayYamlMatched.contains(key)
+	}.each {
+		String key, Map entry ->
+
+		Map merged = mergeLiferayYamlEntry(defaults, entry)
+
+		if ((merged.enabled?.toString() == "false") || !merged.descriptor || !merged.version) {
+			return
+		}
+
+		String reference = merged.descriptor.toString().replaceFirst("^oci://", "") + ":" + merged.version
+
+		logger.lifecycle(">> ${key}: descriptor from ${reference}")
+
+		String output = captureOutput(["docker", "run", "--rm", "--entrypoint", "sh", cxCraneImage, "-c", 'crane export "$0" - | tar -xO client-extension-descriptor.json', reference])
+
+		Map descriptor = new JsonSlurper().parseText(output).descriptor
+
+		// What clientExtensionFor reads from a supplied archive: the configuration
+		// and an LCP.json with the service ID, and the kind, port and schedule
+		// from the entry's values.
+
+		Map values = (merged.values instanceof Map) ? merged.values : [:]
+		Map workloadValues = (values.workload instanceof Map) ? values.workload : [:]
+
+		String kind = workloadValues.kind ?: ((descriptor.type == "batch") ? "Job" : "Deployment")
+
+		Map lcp = [id: key, kind: kind]
+
+		if ((kind == "Deployment") && (descriptor.type in ["frontend", "service"])) {
+			lcp.loadBalancer = [targetPort: workloadValues.containerPort ?: 80]
+		}
+
+		if (workloadValues.schedule) {
+			lcp.schedule = workloadValues.schedule
+		}
+
+		File dir = new File(buildDir, "cx-registry/${key}")
+
+		delete dir
+
+		dir.mkdirs()
+
+		new File(dir, "${key}.client-extension-config.json").setText(new JsonGenerator.Options().disableUnicodeEscaping().build().toJson(descriptor.configs ?: [:]), "UTF-8")
+		new File(dir, "LCP.json").text = JsonOutput.toJson(lcp)
+
+		deployClientExtension(dir, descriptor)
+	}
+}
+
 tasks.register("deployDxpOperator") {
 	description = "Install the DXP operator that delivers client extensions to the PortalK8sAgent."
 	group = "liferay k8s"
@@ -1056,12 +1144,15 @@ tasks.register("deployClientExtensions") {
 
 	doLast {
 		cxDeployedNames.clear()
+		cxLiferayYamlMatched.clear()
 
 		orderByDependencies(discoverClientExtensions()).each {
 			File entry ->
 
 			deployClientExtension(entry)
 		}
+
+		deployRegistryClientExtensions()
 
 		pruneClientExtensions()
 	}

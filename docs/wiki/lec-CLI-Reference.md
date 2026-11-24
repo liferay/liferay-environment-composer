@@ -68,6 +68,17 @@ lec importDLStructure <source_dir>   # copy a DL's file structure only
 lec hotfix                           # pick and download a hotfix
 ```
 
+## Smoke-test a hotfix
+
+```sh
+lec hotfix --smoke-test <hotfix>             # test a hotfix URL, local zip, or quarterly hotfix name
+lec hotfix --smoke-test <version> <hotfix>   # same, for hotfixes whose name has no version
+lec hotfix --smoke-test                      # in a project: pick a hotfix for its version and test it
+lec hotfix --smoke-test stop [<container>]   # remove all hotfix smoke test containers, or only one
+```
+
+Each test starts a throwaway `liferay/dxp` container and ends with an `OK` or `KO` verdict. See [Customizing the Liferay Image → Smoke-test a hotfix](Customizing-the-Liferay-Image#smoke-test-a-hotfix-before-deploying-it).
+
 ## Share a workspace
 
 ```sh

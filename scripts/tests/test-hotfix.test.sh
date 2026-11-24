@@ -2,7 +2,7 @@
 
 load helpers/setup
 
-_testHotfix() {
+_smokeTestHotfix() {
 	local container="${1}"
 	shift
 
@@ -12,7 +12,7 @@ _testHotfix() {
 
 	TEST_HOTFIX_CONTAINER="${container}"
 
-	run _lec hotfix --test "${@}"
+	run _lec hotfix --smoke-test "${@}"
 }
 
 setup_file() {
@@ -39,10 +39,10 @@ teardown() {
 @test "Pass for a quarterly hotfix given by name" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	_testHotfix lec-hotfix-24-on-2026.q2.6 liferay-dxp-2026.q2.6-hotfix-24.zip
+	_smokeTestHotfix lec-hotfix-24-on-2026.q2.6 liferay-dxp-2026.q2.6-hotfix-24.zip
 
 	assert_success
-	assert_output --partial "Stop it with: lec hotfix --test stop lec-hotfix-24-on-2026.q2.6"
+	assert_output --partial "Stop it with: lec hotfix --smoke-test stop lec-hotfix-24-on-2026.q2.6"
 	assert_output --partial "[OK] Hotfix installed: hotfix-24"
 	assert_output --partial "[OK] ds:unsatisfied is empty"
 	assert_output --partial "[OK] upgrade:check is empty"
@@ -52,14 +52,14 @@ teardown() {
 @test "Fail for a hotfix of a different version" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	_testHotfix lec-hotfix-24-on-2026.q2.5 2026.q2.5 liferay-dxp-2026.q2.6-hotfix-24.zip
+	_smokeTestHotfix lec-hotfix-24-on-2026.q2.5 2026.q2.5 liferay-dxp-2026.q2.6-hotfix-24.zip
 
 	assert_failure
 	assert_output --partial "[KO] hotfix-24 is not in the installed patches"
 	assert_output --partial "VERDICT: KO"
 }
 
-@test "Stop removes only hotfix test containers" {
+@test "Stop removes only hotfix smoke test containers" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
 	local container
@@ -67,15 +67,15 @@ teardown() {
 
 	local other_container="${container}-other"
 
-	docker create --label lec.hotfix.test=true --name "${container}" busybox:latest >/dev/null
+	docker create --label lec.hotfix.smoke-test=true --name "${container}" busybox:latest >/dev/null
 	docker create --name "${other_container}" busybox:latest >/dev/null
 
-	run _lec hotfix --test stop "${other_container}"
+	run _lec hotfix --smoke-test stop "${other_container}"
 
 	assert_failure
-	assert_output --partial "${other_container} is not a hotfix test container"
+	assert_output --partial "${other_container} is not a hotfix smoke test container"
 
-	run _lec hotfix --test stop "${container}"
+	run _lec hotfix --smoke-test stop "${container}"
 
 	assert_success
 
@@ -93,8 +93,8 @@ teardown() {
 @test "Fail for a hotfix name without a version" {
 	_debug "RUNNING ${BATS_TEST_NAME}"
 
-	run _lec hotfix --test liferay-hotfix-7552-7413.zip
+	run _lec hotfix --smoke-test liferay-hotfix-7552-7413.zip
 
 	assert_failure
-	assert_output --partial "Usage: lec hotfix --test"
+	assert_output --partial "Usage: lec hotfix --smoke-test"
 }

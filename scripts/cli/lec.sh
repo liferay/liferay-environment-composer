@@ -132,10 +132,12 @@ _printHelpAndExit() {
 		  stop                                      Stop a Composer project
 		  clean                                     Stop a Composer project and remove Docker volumes
 		  exportData                                Export container data for a Composer project
-		  hotfix [--test [<version>] [<hotfix>]]    Download a hotfix. The "--test" flag starts a lightweight liferay/dxp container with the hotfix instead,
-		                                            and checks its startup, the log, ds:unsatisfied and upgrade:check. <hotfix> is a URL, a local zip, or a
-		                                            quarterly hotfix name such as liferay-dxp-2026.q2.6-hotfix-24.zip, which also gives the version. Without
-		                                            <hotfix>, select one for the current project's version. "--test stop [<container>]" removes the test containers.
+		  hotfix                                    Download a hotfix
+		  hotfix --smoke-test [<version>] <hotfix>  Start a lightweight liferay/dxp container with a hotfix and check its startup, the log,
+		                                            ds:unsatisfied and upgrade:check. <hotfix> is a URL, a local zip, or a quarterly hotfix name such as
+		                                            liferay-dxp-2026.q2.6-hotfix-24.zip, which also gives the version. Without <hotfix>, select one for the
+		                                            current project's version.
+		  hotfix --smoke-test stop [<container>]    Remove all hotfix smoke test containers, or only the given one
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm [<project identifier>]         Completely tear down and remove one or more Composer projects
@@ -942,7 +944,7 @@ _cmd_completions() {
 
 		case "${command}" in
 		hotfix)
-			echo "--test"
+			echo "--smoke-test"
 			;;
 		init)
 			echo "--service"
@@ -1071,12 +1073,12 @@ cmd_exportData() {
 }
 cmd_hotfix() {
 	local ARGS=()
-	local FLAG_TEST=0
+	local FLAG_SMOKE_TEST=0
 
 	while [[ $# -gt 0 ]]; do
 		case "${1}" in
-		--test)
-			shift && FLAG_TEST=1
+		--smoke-test)
+			shift && FLAG_SMOKE_TEST=1
 			;;
 		*)
 			ARGS+=("${1}")
@@ -1085,13 +1087,13 @@ cmd_hotfix() {
 		esac
 	done
 
-	if [[ "${FLAG_TEST}" -gt 0 ]] && [[ "${ARGS[0]}" == "stop" ]]; then
-		_stopHotfixTests "${ARGS[@]:1}"
+	if [[ "${FLAG_SMOKE_TEST}" -gt 0 ]] && [[ "${ARGS[0]}" == "stop" ]]; then
+		_stopHotfixSmokeTests "${ARGS[@]:1}"
 		return
 	fi
 
-	if [[ "${FLAG_TEST}" -gt 0 ]] && [[ "${#ARGS[@]}" -gt 0 ]]; then
-		_testHotfix "${ARGS[@]}"
+	if [[ "${FLAG_SMOKE_TEST}" -gt 0 ]] && [[ "${#ARGS[@]}" -gt 0 ]]; then
+		_smokeTestHotfix "${ARGS[@]}"
 		return
 	fi
 
@@ -1104,8 +1106,8 @@ cmd_hotfix() {
 	hotfixURL="$(_selectHotfixURL "${product}")"
 	_cancelIfEmpty "${hotfixURL}"
 
-	if [[ "${FLAG_TEST}" -gt 0 ]]; then
-		_testHotfix "${product}" "${hotfixURL}"
+	if [[ "${FLAG_SMOKE_TEST}" -gt 0 ]]; then
+		_smokeTestHotfix "${product}" "${hotfixURL}"
 		return
 	fi
 
@@ -1505,7 +1507,7 @@ cmd_stop() {
 		./gradlew stop
 	)
 }
-_stopHotfixTests() {
+_stopHotfixSmokeTests() {
 	local containers=("${@}")
 
 	if [[ "${#containers[@]}" -eq 0 ]]; then
@@ -1513,19 +1515,19 @@ _stopHotfixTests() {
 
 		while read -r name; do
 			containers+=("${name}")
-		done < <(docker ps -a --filter "label=lec.hotfix.test=true" --format "{{.Names}}")
+		done < <(docker ps -a --filter "label=lec.hotfix.smoke-test=true" --format "{{.Names}}")
 	fi
 
 	if [[ "${#containers[@]}" -eq 0 ]]; then
-		_print_success "There are no hotfix test containers"
+		_print_success "There are no hotfix smoke test containers"
 		return
 	fi
 
 	local container
 
 	for container in "${containers[@]}"; do
-		if [[ "$(docker inspect --format '{{index .Config.Labels "lec.hotfix.test"}}' "${container}" 2>/dev/null)" != "true" ]]; then
-			_errorExit "${container} is not a hotfix test container"
+		if [[ "$(docker inspect --format '{{index .Config.Labels "lec.hotfix.smoke-test"}}' "${container}" 2>/dev/null)" != "true" ]]; then
+			_errorExit "${container} is not a hotfix smoke test container"
 		fi
 
 		_print_step "Removing ${container}"
@@ -1534,7 +1536,7 @@ _stopHotfixTests() {
 
 	_print_success "Done"
 }
-_testHotfix() {
+_smokeTestHotfix() {
 	local hotfix_source
 	local version
 
@@ -1547,7 +1549,7 @@ _testHotfix() {
 	fi
 
 	if [[ -z "${version}" ]] || [[ "${hotfix_source}" != *.zip ]]; then
-		_errorExit "Usage: lec hotfix --test [<version>] <hotfix>, for example: lec hotfix --test liferay-dxp-2026.q2.6-hotfix-24.zip"
+		_errorExit "Usage: lec hotfix --smoke-test [<version>] <hotfix>, for example: lec hotfix --smoke-test liferay-dxp-2026.q2.6-hotfix-24.zip"
 	fi
 
 	if [[ ! -f "${hotfix_source}" ]] && [[ "${hotfix_source}" != http*://* ]]; then
@@ -1614,7 +1616,7 @@ _testHotfix() {
 	fi
 
 	_print_step "Starting ${container}"
-	if ! docker create --label lec.hotfix.test=true --name "${container}" --publish "127.0.0.1::8080" "liferay/dxp:${image_tag}" >/dev/null ||
+	if ! docker create --label lec.hotfix.smoke-test=true --name "${container}" --publish "127.0.0.1::8080" "liferay/dxp:${image_tag}" >/dev/null ||
 		! docker cp "${work_dir}/liferay" "${container}:/mnt/" >/dev/null ||
 		! docker start "${container}" >/dev/null; then
 		_errorExit "Cannot start ${container}"
@@ -1666,7 +1668,7 @@ _testHotfix() {
 	echo "Image: liferay/dxp:${image_tag}"
 	echo "Container: ${container} at http://$(docker port "${container}" 8080 | head -n 1)"
 	echo "Log: ${log_file}"
-	echo "Stop it with: lec hotfix --test stop ${container}"
+	echo "Stop it with: lec hotfix --smoke-test stop ${container}"
 
 	return "${result}"
 }

@@ -41,6 +41,18 @@ lr.docker.environment.hotfix.urls=\
 
 Or run `lec hotfix`: it lists hotfixes for the project's Liferay version, downloads the one you pick, and adds its URL to the property.
 
+### Test a hotfix before deploying it
+
+`lec hotfix --test` checks that a hotfix installs and that the portal starts cleanly with it, without a project. It starts a throwaway `liferay/dxp` container with the hotfix and Hypersonic, then reports whether the hotfix is in the installed patches, the `ERROR` lines and exceptions in the log, and the output of `ds:unsatisfied` and `upgrade:check`. It ends with an `OK` or `KO` verdict and exits with `0` or `1`.
+
+```sh
+lec hotfix --test liferay-dxp-2026.q2.6-hotfix-24.zip
+```
+
+The hotfix can be a URL, a local zip, or just the name of a quarterly hotfix, which also gives the Liferay version and the download URL. For other hotfixes, pass the version first: `lec hotfix --test 7.4-u92 liferay-hotfix-7552-7413.zip`. Inside a project, `lec hotfix --test` without a hotfix lets you pick one for the project's version and tests it without changing the project.
+
+The container stays running for inspection. Remove it with `lec hotfix --test stop`, or `lec hotfix --test stop <container>` for only one. See [lec CLI Reference](lec-CLI-Reference#test-a-hotfix).
+
 Clean up downloaded hotfixes with [`./gradlew cleanPrepareHotfixes`](Gradle-Task-Reference).
 
 ## Enable clustering

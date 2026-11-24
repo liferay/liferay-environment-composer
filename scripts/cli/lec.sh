@@ -132,7 +132,10 @@ _printHelpAndExit() {
 		  stop                                      Stop a Composer project
 		  clean                                     Stop a Composer project and remove Docker volumes
 		  exportData                                Export container data for a Composer project
-		  hotfix                                    Download a hotfix
+		  hotfix [--test [<version>] [<hotfix>]]    Download a hotfix. The "--test" flag starts a lightweight liferay/dxp container with the hotfix instead,
+		                                            and checks its startup, the log, ds:unsatisfied and upgrade:check. <hotfix> is a URL, a local zip, or a
+		                                            quarterly hotfix name such as liferay-dxp-2026.q2.6-hotfix-24.zip, which also gives the version. Without
+		                                            <hotfix>, select one for the current project's version. "--test stop [<container>]" removes the test containers.
 		  list [<entity>]                           List entities of a various types
 		  ports                                     List exposed ports for a Composer project
 		  remove, rm [<project identifier>]         Completely tear down and remove one or more Composer projects
@@ -492,6 +495,87 @@ _clean() {
 	)
 }
 
+_checkHotfix() {
+	local container="${1}"
+	local hotfix_id="${2}"
+	local log_file="${3}"
+
+	local ds_status
+	local error_count
+	local installed_patches
+	local upgrade_status
+	local verdict="OK"
+
+	_print_step "Waiting 30 seconds for late bundles to settle"
+	sleep 30
+
+	docker logs "${container}" >"${log_file}" 2>&1
+
+	_print_step "Patch lines from the log"
+	grep -iE "patch|hotfix" "${log_file}" | grep -vE "^\s+at " | head -n 20
+
+	local errors
+	errors="$(grep -E "^[0-9-]+ [0-9:.]+ ERROR" "${log_file}" | grep -iv "license is expired" | cut -c 25- | sort | uniq -c | sort -rn | head -n 40)"
+
+	_print_step "ERROR lines (count, message)"
+	echo "${errors:-(none)}"
+
+	local exceptions
+	exceptions="$(grep -nE "(Exception|Error)(:|$)" "${log_file}" | grep -vE "^[0-9]+:\s+at " | head -n 20)"
+
+	_print_step "Exceptions (first lines)"
+	echo "${exceptions:-(none)}"
+
+	_print_step "ds:unsatisfied"
+	_runGogoCommand "${container}" "ds:unsatisfied"
+	ds_status=$?
+
+	_print_step "upgrade:check"
+	_runGogoCommand "${container}" "upgrade:check"
+	upgrade_status=$?
+
+	installed_patches="$(grep -o "The following patches are installed: .*" "${log_file}" | tail -n 1 | sed "s/.*installed: //")"
+	error_count="$(grep -E "^[0-9-]+ [0-9:.]+ ERROR" "${log_file}" | grep -civ "license is expired")"
+
+	echo
+	_print_step "Result"
+
+	if grep -qE "(^|[ ,])${hotfix_id}([ ,]|$)" <<<"${installed_patches}"; then
+		echo "  [OK] Hotfix installed: ${installed_patches}"
+	else
+		echo "  [KO] ${hotfix_id} is not in the installed patches (${installed_patches:-none})"
+		verdict="KO"
+	fi
+
+	echo "  [OK] Portal started"
+
+	case "${ds_status}" in
+	0) echo "  [OK] ds:unsatisfied is empty" ;;
+	1) echo "  [KO] ds:unsatisfied lists unsatisfied components" && verdict="KO" ;;
+	*) echo "  [KO] ds:unsatisfied could not run" && verdict="KO" ;;
+	esac
+
+	case "${upgrade_status}" in
+	0) echo "  [OK] upgrade:check is empty" ;;
+	1) echo "  [KO] upgrade:check lists pending upgrades" && verdict="KO" ;;
+	*) echo "  [KO] upgrade:check could not run" && verdict="KO" ;;
+	esac
+
+	if [[ "${error_count}" -gt 0 ]]; then
+		echo "  [??] ${error_count} unexpected ERROR line(s) in the log, review them above"
+	else
+		echo "  [OK] No unexpected ERROR lines in the log"
+	fi
+
+	echo
+
+	if [[ "${verdict}" != "OK" ]]; then
+		_print_error "VERDICT: KO"
+		return 1
+	fi
+
+	_print_success "VERDICT: OK"
+}
 _getComposeProjectName() {
 	local projectDir="${1}"
 
@@ -559,6 +643,78 @@ _removeWorktree() {
 	_git branch -D "${worktree_name}"
 
 	_print_success "Project ${worktree_name} removed"
+}
+_resolveReleaseKey() {
+	local version="${1#dxp-}"
+
+	local candidate
+
+	for candidate in "dxp-${version}" "dxp-${version}-lts" "dxp-${version%-lts}"; do
+		if _isReleaseVersion "${candidate}"; then
+			echo "${candidate}"
+			return
+		fi
+	done
+
+	return 1
+}
+_runGogoCommand() {
+	local container="${1}"
+	local command="${2}"
+
+	local output
+	local result
+
+	# shellcheck disable=SC2016
+	output="$(docker exec "${container}" bash -c '
+		if command -v telnet >/dev/null; then
+			(sleep 2; echo "${0}"; sleep 20; echo "disconnect"; sleep 1; echo "y"; sleep 1) | telnet localhost 11311 2>&1
+		else
+			exec 3<>/dev/tcp/localhost/11311
+			(sleep 2; echo "${0}"; sleep 20; echo "disconnect"; sleep 1; echo "y") >&3 &
+			timeout 26 cat <&3
+		fi
+	' "${command}" | tr -d '\r')"
+
+	if ! grep -q "g!" <<<"${output}"; then
+		echo "(could not reach Gogo Shell)"
+		return 2
+	fi
+
+	result="$(sed -n "\\|${command}|,/disconnect/p" <<<"${output}" | grep -vE "^(g! )?(${command}|disconnect)?\s*$")"
+
+	if [[ -n "${result}" ]]; then
+		echo "${result}"
+		return 1
+	fi
+
+	echo "(empty)"
+}
+_selectHotfixURL() {
+	local dxpVersion="${1#dxp-}"
+
+	if [[ ${dxpVersion} == 7.0* ]]; then
+		dxpVersion=7.0.10
+	elif [[ ${dxpVersion} == 7.1* ]]; then
+		dxpVersion=7.1.10
+	elif [[ ${dxpVersion} == 7.2* ]]; then
+		dxpVersion=7.2.10
+	elif [ "${dxpVersion}" == "7.3-u36" ]; then
+		dxpVersion=7.3.10-u36
+	elif [[ ${dxpVersion} == 7.3* ]]; then
+		dxpVersion=7.3.10
+	elif [[ ${dxpVersion} == 7.4* ]]; then
+		dxpVersion=7.4.13
+	fi
+
+	local hotfixFileName
+	hotfixFileName=$(curl -s "https://hotfixes.liferay.com/${dxpVersion}/" | grep -o '<a href="[^"]*">' | cut -d'"' -f 2 | grep 'hotfix-' | _select "Select a hotfix number" --exact --query="hotfix-")
+
+	if [[ -z "${hotfixFileName}" ]]; then
+		return
+	fi
+
+	echo "https://hotfixes.liferay.com/${dxpVersion}/${hotfixFileName}"
 }
 _selectLiferayRelease() {
 	local promptMessage="Select a Liferay release"
@@ -785,6 +941,9 @@ _cmd_completions() {
 		local command="${2}"
 
 		case "${command}" in
+		hotfix)
+			echo "--test"
+			;;
 		init)
 			echo "--service"
 			echo "--start"
@@ -911,46 +1070,56 @@ cmd_exportData() {
 	)
 }
 cmd_hotfix() {
+	local ARGS=()
+	local FLAG_TEST=0
+
+	while [[ $# -gt 0 ]]; do
+		case "${1}" in
+		--test)
+			shift && FLAG_TEST=1
+			;;
+		*)
+			ARGS+=("${1}")
+			shift
+			;;
+		esac
+	done
+
+	if [[ "${FLAG_TEST}" -gt 0 ]] && [[ "${ARGS[0]}" == "stop" ]]; then
+		_stopHotfixTests "${ARGS[@]:1}"
+		return
+	fi
+
+	if [[ "${FLAG_TEST}" -gt 0 ]] && [[ "${#ARGS[@]}" -gt 0 ]]; then
+		_testHotfix "${ARGS[@]}"
+		return
+	fi
+
 	_checkProjectDirectory "${PWD}"
+
+	local product
+	product="$(grep '^liferay.workspace.product=' "${PROJECT_DIRECTORY}/gradle.properties" | cut -d'=' -f 2)"
+
+	local hotfixURL
+	hotfixURL="$(_selectHotfixURL "${product}")"
+	_cancelIfEmpty "${hotfixURL}"
+
+	if [[ "${FLAG_TEST}" -gt 0 ]]; then
+		_testHotfix "${product}" "${hotfixURL}"
+		return
+	fi
 
 	(
 		cd "${PROJECT_DIRECTORY}" || exit
 
-		local dxpVersion
-		dxpVersion=$(grep '^liferay.workspace.product=' gradle.properties | cut -d'=' -f 2 | sed 's/^dxp-//g')
-
-		if [[ ${dxpVersion} == 7.0* ]]; then
-			dxpVersion=7.0.10
-		elif [[ ${dxpVersion} == 7.1* ]]; then
-			dxpVersion=7.1.10
-		elif [[ ${dxpVersion} == 7.2* ]]; then
-			dxpVersion=7.2.10
-		elif [ "${dxpVersion}" == "7.3-u36" ]; then
-			dxpVersion=7.3.10-u36
-		elif [[ ${dxpVersion} == 7.3* ]]; then
-			dxpVersion=7.3.10
-		elif [[ ${dxpVersion} == 7.4* ]]; then
-			dxpVersion=7.4.13
-		fi
-
-		local hotfixFileName
-		hotfixFileName=$(curl -s "https://hotfixes.liferay.com/${dxpVersion}/" | grep -o '<a href="[^"]*">' | cut -d'"' -f 2 | grep 'hotfix-' | _select "Select a hotfix number" --exact --query="hotfix-")
-
-		if [ "" == "${hotfixFileName}" ]; then
-			exit 0
-		fi
-
 		local hotfixLocalPath
-		hotfixLocalPath="configs/common/patching/${hotfixFileName}"
-
-		local hotfixURL
-		hotfixURL="https://hotfixes.liferay.com/${dxpVersion}/${hotfixFileName}"
+		hotfixLocalPath="configs/common/patching/${hotfixURL##*/}"
 
 		test ! -f "${hotfixLocalPath}" && _print_step "Downloading hotfix ${hotfixURL}" && curl --progress-bar "${hotfixURL}" --output "${hotfixLocalPath}"
 		_writeProperty "lr.docker.environment.hotfix.urls" "${hotfixURL}" gradle.properties
 	)
 
-	_print_success "$(grep --colour=never '^lr.docker.environment.hotfix.urls=' gradle.properties)"
+	_print_success "$(grep --colour=never '^lr.docker.environment.hotfix.urls=' "${PROJECT_DIRECTORY}/gradle.properties")"
 }
 cmd_importDLStructure() {
 	_checkProjectDirectory "${PWD}"
@@ -1335,6 +1504,171 @@ cmd_stop() {
 		_print_step "Stopping environment ${C_BLUE}${PROJECT_DIRECTORY}${C_NC}"
 		./gradlew stop
 	)
+}
+_stopHotfixTests() {
+	local containers=("${@}")
+
+	if [[ "${#containers[@]}" -eq 0 ]]; then
+		local name
+
+		while read -r name; do
+			containers+=("${name}")
+		done < <(docker ps -a --filter "label=lec.hotfix.test=true" --format "{{.Names}}")
+	fi
+
+	if [[ "${#containers[@]}" -eq 0 ]]; then
+		_print_success "There are no hotfix test containers"
+		return
+	fi
+
+	local container
+
+	for container in "${containers[@]}"; do
+		if [[ "$(docker inspect --format '{{index .Config.Labels "lec.hotfix.test"}}' "${container}" 2>/dev/null)" != "true" ]]; then
+			_errorExit "${container} is not a hotfix test container"
+		fi
+
+		_print_step "Removing ${container}"
+		docker rm -f "${container}" >/dev/null
+	done
+
+	_print_success "Done"
+}
+_testHotfix() {
+	local hotfix_source
+	local version
+
+	if [[ $# -eq 1 ]]; then
+		hotfix_source="${1}"
+		version="$(grep -oE "20[0-9]{2}\.q[1-4]\.[0-9]+(-lts)?" <<<"${hotfix_source}" | head -n 1)"
+	elif [[ $# -eq 2 ]]; then
+		version="${1}"
+		hotfix_source="${2}"
+	fi
+
+	if [[ -z "${version}" ]] || [[ "${hotfix_source}" != *.zip ]]; then
+		_errorExit "Usage: lec hotfix --test [<version>] <hotfix>, for example: lec hotfix --test liferay-dxp-2026.q2.6-hotfix-24.zip"
+	fi
+
+	if [[ ! -f "${hotfix_source}" ]] && [[ "${hotfix_source}" != http*://* ]]; then
+		local hotfix_version
+		hotfix_version="$(grep -oE "20[0-9]{2}\.q[1-4]\.[0-9]+(-lts)?" <<<"${hotfix_source}" | head -n 1)"
+
+		if [[ -z "${hotfix_version}" ]]; then
+			_errorExit "${hotfix_source} is not a local file, and its name does not include a quarterly version to build its URL"
+		fi
+
+		hotfix_source="https://hotfixes.liferay.com/${hotfix_version}/$(basename "${hotfix_source}")"
+	fi
+
+	if ! docker info &>/dev/null; then
+		_errorExit "Docker is not running"
+	fi
+
+	local hotfix_id
+	hotfix_id="$(basename "${hotfix_source}" .zip | grep -oE "hotfix-[0-9]+(-[0-9]+)?")"
+
+	if [[ -z "${hotfix_id}" ]]; then
+		_errorExit "Cannot get the hotfix ID from ${hotfix_source}"
+	fi
+
+	local release_key
+	release_key="$(_resolveReleaseKey "${version}")"
+
+	if [[ -z "${release_key}" ]]; then
+		_errorExit "'${version}' is not a valid Liferay version"
+	fi
+
+	local image_tag="${release_key#dxp-}"
+
+	if [[ "${image_tag}" == 7.4-u* ]]; then
+		image_tag="7.4.13-u${image_tag#7.4-u}"
+	fi
+
+	local container="lec-${hotfix_id}-on-${image_tag}"
+
+	if docker container inspect "${container}" &>/dev/null; then
+		_errorExit "Container ${container} already exists. Remove it with: docker rm -f ${container}"
+	fi
+
+	local work_dir="${LIFERAY_WORKSPACE_HOME}/hotfix-tests/${container}"
+	local hotfix_file
+	hotfix_file="${work_dir}/liferay/patching/$(basename "${hotfix_source}")"
+
+	mkdir -p "${work_dir}/liferay/patching"
+
+	if [[ -f "${hotfix_source}" ]]; then
+		cp "${hotfix_source}" "${hotfix_file}"
+	elif [[ ! -s "${hotfix_file}" ]]; then
+		_print_step "Downloading ${hotfix_source}"
+
+		if ! curl --fail --location --progress-bar --output "${hotfix_file}" "${hotfix_source}"; then
+			rm -f "${hotfix_file}"
+			_errorExit "Cannot download ${hotfix_source}"
+		fi
+	fi
+
+	_print_step "Pulling liferay/dxp:${image_tag}"
+	if ! docker pull --quiet "liferay/dxp:${image_tag}" >/dev/null; then
+		_errorExit "Cannot pull liferay/dxp:${image_tag}"
+	fi
+
+	_print_step "Starting ${container}"
+	if ! docker create --label lec.hotfix.test=true --name "${container}" --publish "127.0.0.1::8080" "liferay/dxp:${image_tag}" >/dev/null ||
+		! docker cp "${work_dir}/liferay" "${container}:/mnt/" >/dev/null ||
+		! docker start "${container}" >/dev/null; then
+		_errorExit "Cannot start ${container}"
+	fi
+
+	local elapsed=0
+	local log_file="${work_dir}/startup.log"
+	local start_time
+	local status="TIMEOUT"
+
+	start_time="$(date +%s)"
+
+	while [[ "${elapsed}" -lt 1500 ]]; do
+		if [[ "$(docker inspect --format '{{.State.Running}}' "${container}")" != "true" ]]; then
+			status="EXITED"
+			break
+		fi
+
+		if docker logs "${container}" 2>&1 | grep -q "Server startup in"; then
+			status="STARTED"
+			break
+		fi
+
+		sleep 5
+
+		elapsed="$(($(date +%s) - start_time))"
+	done
+
+	elapsed="$(($(date +%s) - start_time))"
+
+	docker logs "${container}" >"${log_file}" 2>&1
+
+	_print_step "Startup: ${status} after ${elapsed}s"
+
+	local result=0
+
+	if [[ "${status}" == "STARTED" ]]; then
+		_checkHotfix "${container}" "${hotfix_id}" "${log_file}"
+		result=$?
+	else
+		_print_step "Last 60 log lines"
+		tail -n 60 "${log_file}"
+
+		echo
+		_print_error "VERDICT: KO (the portal did not start)"
+		result=1
+	fi
+
+	echo "Image: liferay/dxp:${image_tag}"
+	echo "Container: ${container} at http://$(docker port "${container}" 8080 | head -n 1)"
+	echo "Log: ${log_file}"
+	echo "Stop it with: lec hotfix --test stop ${container}"
+
+	return "${result}"
 }
 cmd_update() {
 	local current_tag
